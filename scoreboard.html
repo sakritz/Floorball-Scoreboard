@@ -1,0 +1,2358 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Floorball Scoreboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,900;1,700&family=Barlow:wght@400;500;600&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+/* ─── RESET & BASE ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black:   #080a0e;
+  --dark:    #0f1218;
+  --panel:   #141820;
+  --card:    #1a1f2e;
+  --border:  rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --lime:    #c8ff00;
+  --cyan:    #22c55e;
+  --red:     #ff3b3b;
+  --orange:  #ff8c00;
+  --purple:  #b44fff;
+  --white:   #f2f5ff;
+  --muted:   #4a5170;
+  --muted2:  #6a7190;
+  /* dynamic team colors – set by JS */
+  --sb-home: #c8ff00;
+  --sb-away: #22c55e;
+  --sb-home-text: #000;
+  --sb-away-text: #000;
+  --sb-home-glow: rgba(200,255,0,0.28);
+  --sb-away-glow: rgba(34,197,94,0.28);
+  --sb-home-glow-dim: rgba(200,255,0,0.08);
+  --sb-away-glow-dim: rgba(34,197,94,0.08);
+  --sb-home-jersey: #0d2e0d;
+  --sb-away-jersey: #0a1a0a;
+}
+
+body {
+  background: var(--black);
+  color: var(--white);
+  font-family: 'Barlow Condensed', sans-serif;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   SCOREBOARD VIEW
+══════════════════════════════════════════════════════════════════════ */
+
+#view-scoreboard {
+  display: none;
+  width: 100vw; height: 100vh;
+  flex-direction: column;
+  background: #080a0e;
+  position: relative;
+  overflow: hidden;
+  font-family: 'Barlow Condensed', sans-serif;
+  color: #fff;
+}
+
+/* ── TOP BAR ── */
+.sb-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 48px;
+  height: 44px;
+  background: rgba(0,0,0,.5);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  flex-shrink: 0;
+  position: relative; z-index: 10;
+}
+.sb-live {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; font-weight: 700; letter-spacing: 4px; color: #ff3b3b; text-transform: uppercase;
+}
+.sb-live-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #ff3b3b; box-shadow: 0 0 8px #ff3b3b;
+  animation: sbBlink 1.4s ease-in-out infinite;
+}
+@keyframes sbBlink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+.sb-topbar-center {
+  display: flex; align-items: center; gap: 16px;
+}
+.sb-period-dots {
+  display: flex; gap: 7px; align-items: center;
+}
+.sb-period-label {
+  font-size: 12px; font-weight: 700; letter-spacing: 4px;
+  color: rgba(255,255,255,.5); text-transform: uppercase;
+}
+.sb-status-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border: 1px solid; font-size: 10px; font-weight: 700;
+  letter-spacing: 3px; text-transform: uppercase; transition: all .3s;
+}
+.sb-status-pill.running {
+  color: var(--sb-home,#c8ff00);
+  border-color: rgba(200,255,0,.4);
+  background: rgba(200,255,0,.06);
+}
+.sb-status-pill.stopped {
+  color: rgba(255,255,255,.25);
+  border-color: rgba(255,255,255,.1);
+  background: transparent;
+}
+.sb-status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.sb-status-pill.running .sb-status-dot { animation: sbBlink 1s step-end infinite; }
+
+/* ── MAIN STAGE ── */
+.sb-main {
+  flex: 1; min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 0 48px;
+  position: relative; z-index: 5;
+}
+
+/* ── TEAM BLOCKS ── */
+.sb-team {
+  display: flex; flex-direction: column; gap: 12px;
+}
+.sb-team.home { align-items: flex-start; }
+.sb-team.away { align-items: flex-end; }
+
+.sb-team-header {
+  display: flex; align-items: center; gap: 14px;
+}
+.sb-team.away .sb-team-header { flex-direction: row-reverse; }
+
+.sb-logo {
+  width: 72px; height: 72px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; font-weight: 900; overflow: hidden; flex-shrink: 0;
+  border: 2px solid rgba(255,255,255,.1);
+}
+.sb-team.home .sb-logo { border-color: rgba(var(--tv-home-rgb,200,255,0),.3); background: rgba(var(--tv-home-rgb,200,255,0),.06); color: var(--sb-home,#c8ff00); }
+.sb-team.away .sb-logo { border-color: rgba(var(--tv-away-rgb,34,197,94),.3); background: rgba(var(--tv-away-rgb,34,197,94),.06); color: var(--sb-away,#22c55e); }
+.sb-logo img { width:100%; height:100%; object-fit:contain; }
+
+.sb-jersey-bar {
+  height: 4px; width: 72px; flex-shrink: 0;
+  margin-top: -6px;
+}
+
+.sb-team-name {
+  font-size: clamp(20px, 3.2vw, 52px);
+  font-weight: 900; letter-spacing: 2px; text-transform: uppercase; line-height: 1.1;
+  word-break: break-word; overflow-wrap: break-word; max-width: 100%;
+}
+.sb-team.home .sb-team-name { color: var(--sb-home, #c8ff00); }
+.sb-team.away .sb-team-name { color: var(--sb-away, #22c55e); }
+
+.sb-team-sub {
+  font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+  color: rgba(255,255,255,.28); margin-top: 2px;
+}
+
+.sb-score {
+  font-size: clamp(120px, 18vw, 240px);
+  font-weight: 900; line-height: .9; letter-spacing: -4px;
+  font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.sb-team.home .sb-score { color: var(--sb-home,#c8ff00); text-shadow: 0 0 80px rgba(var(--tv-home-rgb,200,255,0),.35); }
+.sb-team.away .sb-score { color: var(--sb-away,#22c55e); text-shadow: 0 0 80px rgba(var(--tv-away-rgb,34,197,94),.35); }
+.score-pop { animation: scorePop .5s cubic-bezier(.36,2,.4,.8); }
+@keyframes scorePop { 0%{transform:scale(1)} 40%{transform:scale(1.1)} 100%{transform:scale(1)} }
+
+/* penalty chips under score */
+.sb-pen-chips {
+  display: flex; flex-direction: column; gap: 5px; min-height: 0;
+}
+.sb-pen-chip {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 12px;
+  background: rgba(255,45,85,.1); border: 1px solid rgba(255,45,85,.3);
+  font-size: 14px; font-weight: 700; letter-spacing: 1px;
+  animation: chipIn .3s ease;
+}
+.sb-pen-chip.away { flex-direction: row-reverse; }
+@keyframes chipIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+.sb-pen-chip-num { color: #ff5555; font-size: 12px; min-width: 24px; }
+.sb-pen-chip-time { color: #fff; font-variant-numeric: tabular-nums; font-size: 16px; letter-spacing: 2px; }
+.sb-pen-chip-type { color: rgba(255,255,255,.4); font-size: 10px; border: 1px solid rgba(255,255,255,.2); padding: 1px 4px; }
+
+/* ── CENTER ── */
+.sb-center {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 0 40px; flex-shrink: 0;
+}
+.sb-clock {
+  font-size: clamp(56px, 8.5vw, 110px);
+  font-weight: 900; letter-spacing: 6px; text-align: center;
+  font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
+  font-variant-numeric: tabular-nums; transition: color .3s;
+}
+.sb-clock.running { color: #fff; text-shadow: 0 0 40px rgba(255,255,255,.3); }
+.sb-clock.stopped { color: rgba(255,255,255,.2); }
+.sb-clock-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 4px;
+  text-transform: uppercase; color: rgba(255,255,255,.25);
+}
+.sb-sep { width: 1px; height: 80px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,.12), transparent); }
+
+/* ── BOTTOM TICKER ── */
+.sb-ticker {
+  flex-shrink: 0; height: 50px;
+  background: rgba(0,0,0,.6);
+  border-top: 1px solid rgba(255,255,255,.06);
+  display: flex; align-items: stretch;
+  position: relative; z-index: 10;
+}
+.sb-ticker-cell {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 24px; border-right: 1px solid rgba(255,255,255,.06);
+  flex: 1; min-width: 0; position: relative;
+}
+.sb-ticker-cell:last-child { border-right: none; }
+.sb-ticker-cell::before {
+  content: ''; position: absolute; left: 0; top: 10px; bottom: 10px;
+  width: 3px;
+}
+.sb-ticker-cell.cell-home::before { background: var(--sb-home,#c8ff00); }
+.sb-ticker-cell.cell-away::before { background: var(--sb-away,#22c55e); }
+.sb-ticker-cell.cell-neutral::before { background: rgba(255,255,255,.2); }
+.sb-ticker-label { font-size: 9px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,.3); white-space: nowrap; flex-shrink: 0; }
+.sb-ticker-value { font-size: 14px; font-weight: 700; letter-spacing: 1px; color: rgba(255,255,255,.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-ticker-accent { font-size: 18px; font-weight: 900; letter-spacing: 2px; font-variant-numeric: tabular-nums; }
+.sb-ticker-accent.home { color: var(--sb-home,#c8ff00); }
+.sb-ticker-accent.away { color: var(--sb-away,#22c55e); }
+
+/* ── OVERLAYS ── */
+.sb-overlay {
+  position: absolute; inset: 0; z-index: 50;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  pointer-events: none; opacity: 0; transition: opacity .3s;
+}
+.sb-overlay.visible { opacity: 1; }
+#sb-goal-overlay { background: transparent; }
+.sb-goal-text {
+  font-size: clamp(100px, 18vw, 220px); font-weight: 900; letter-spacing: 8px;
+  animation: goalBurst 2.4s ease forwards; text-shadow: 0 0 120px currentColor;
+}
+@keyframes goalBurst {
+  0%   { transform: scale(.4) rotate(-6deg); opacity: 0; }
+  12%  { transform: scale(1.15) rotate(1deg); opacity: 1; }
+  80%  { transform: scale(1) rotate(0deg); opacity: 1; }
+  100% { transform: scale(1.05); opacity: 0; }
+}
+#sb-timeout-overlay { background: rgba(0,0,0,.85); }
+.sb-timeout-box { display:flex; flex-direction:column; align-items:center; gap:16px; }
+.sb-timeout-label { font-size:80px; font-weight:900; letter-spacing:12px; color:var(--orange,#ff9500); text-shadow:0 0 60px rgba(255,149,0,.5); animation:pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.7} }
+.sb-timeout-team { font-size:28px; font-weight:700; letter-spacing:6px; color:rgba(255,255,255,.4); }
+.sb-timeout-count { font-size:72px; font-weight:900; letter-spacing:4px; color:#fff; }
+#sb-pause-overlay { background: rgba(0,0,0,.85); }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ══════════════════════════════════════════════════════════════════════
+   CONTROLLER VIEW  ·  Layout A · TV-Broadcast
+══════════════════════════════════════════════════════════════════════ */
+
+
+:root {
+  --ct-bg:       #0a0c12;
+  --ct-surface:  #13161e;
+  --ct-card:     #1a1e28;
+  --ct-border:   #262b38;
+  --ct-muted:    #5b6172;
+  --ct-muted2:   #7d8290;
+  --ct-text:     #f0f4ff;
+  --lime:        #c8ff00;
+  --cyan:        #22c55e;
+  --orange:      #ff9500;
+  --red:         #ff2d55;
+  --green:       #16d27a;
+}
+
+#view-controller {
+  display: none;
+  width: 100vw; height: 100vh;
+  flex-direction: column;
+  background: var(--ct-bg);
+  overflow: hidden;
+  font-family: 'Barlow Condensed', sans-serif;
+  color: var(--ct-text);
+}
+
+/* ── TOPBAR ── */
+.ct-topbar {
+  background: var(--ct-surface);
+  border-bottom: 1px solid var(--ct-border);
+  /* lime accent line at very top */
+  box-shadow: 0 -3px 0 0 var(--lime) inset;
+  padding: 0 24px;
+  height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0; gap: 16px;
+}
+.ct-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 20px; font-weight: 900; letter-spacing: 4px;
+  color: var(--lime); text-transform: uppercase; flex-shrink: 0;
+}
+.ct-logo-icon {
+  font-size: 28px; line-height: 1;
+}
+.ct-top-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.ct-period-chip {
+  font-size: 12px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+  padding: 7px 16px; background: var(--ct-card); border: 1px solid var(--ct-border);
+  color: var(--ct-muted2);
+}
+.open-sb-btn {
+  background: var(--lime); border: none; color: #0a0a0a;
+  font-size: 13px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+  padding: 10px 28px; cursor: pointer; transition: filter .15s; white-space: nowrap;
+  font-family: 'Barlow Condensed', sans-serif; display: flex; align-items: center; gap: 8px;
+  transform: skewX(-8deg);
+}
+.open-sb-btn:hover { filter: brightness(1.1); }
+.open-sb-btn.preview {
+  background: var(--ct-card); border: 1px solid var(--ct-border); color: var(--ct-muted2);
+}
+.open-sb-btn.preview:hover { border-color: var(--ct-muted2); color: var(--ct-text); }
+
+/* ── CONTROL BAR ── */
+.ct-control-bar {
+  background: var(--ct-surface);
+  border-bottom: 1px solid var(--ct-border);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;          /* vertically center content */
+  flex-shrink: 0; flex: 1;
+  min-height: 110px; max-height: 320px;
+  position: relative; overflow: hidden;
+  padding: 20px 0;              /* breathing room */
+}
+
+/* thin horizontal separator between team sides */
+.ct-control-bar::after {
+  display: none;                /* no vertical dividers */
+}
+
+.ct-team-bar {
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 32px; position: relative;
+}
+.ct-team-bar.home { justify-content: flex-start; }
+.ct-team-bar.away { justify-content: flex-end; }
+
+.ct-bar-name {
+  font-size: var(--cb-name, 18px); font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+  line-height: 1.15; color: var(--ct-text);
+  min-width: 0; word-break: break-word; overflow-wrap: break-word;
+}
+.ct-team-bar.home .ct-bar-name { color: var(--lime); }
+.ct-team-bar.away .ct-bar-name { color: var(--cyan); }
+.ct-team-bar.away .ct-bar-name { text-align: right; }
+
+.ct-bar-score {
+  font-size: var(--cb-score, 100px); font-weight: 900; line-height: 1;
+  min-width: 70px; text-align: center; flex-shrink: 0;
+  font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
+}
+.ct-team-bar.home .ct-bar-score { color: var(--lime); }
+.ct-team-bar.away .ct-bar-score { color: var(--cyan); }
+
+.ct-bar-adj {
+  width: var(--cb-adj, 56px); height: var(--cb-adj, 56px);
+  border: none; cursor: pointer;
+  font-size: var(--cb-adj-icon, 28px); font-weight: 300;
+  display: flex; align-items: center; justify-content: center;
+  transition: filter .12s; flex-shrink: 0;
+  font-family: 'Barlow Condensed', sans-serif;
+  transform: skewX(-8deg);
+}
+.ct-bar-adj span { transform: skewX(8deg); display:inline-block; }
+.ct-bar-adj:active { filter: brightness(.8); }
+.ct-bar-adj.plus.home  { background: var(--lime); color: #0a0a0a; }
+.ct-bar-adj.plus.away  { background: var(--cyan); color: #0a0a0a; }
+.ct-bar-adj.plus       { background: var(--lime); color: #0a0a0a; } /* fallback */
+.ct-bar-adj.minus {
+  background: transparent; color: var(--ct-muted);
+  border: 1px solid var(--ct-border);
+  font-size: var(--cb-adj-icon, 28px);
+}
+
+/* clock center column */
+.ct-clock-bar {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 12px; padding: 0 40px;
+  min-width: 260px; position: relative;
+}
+.ct-bar-clock {
+  font-size: var(--cb-clock, 84px); font-weight: 400; letter-spacing: 4px;
+  font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
+  font-variant-numeric: tabular-nums; line-height: 1;
+  transition: color .3s;
+}
+.ct-bar-clock.running { color: var(--ct-text); }
+.ct-bar-clock.stopped { color: var(--ct-muted); }
+
+.ct-bar-toggle {
+  width: 100%; padding: var(--cb-btn-pad, 13px) 40px;
+  font-size: var(--cb-btn, 15px); letter-spacing: 4px; text-transform: uppercase;
+  border: none; cursor: pointer;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 800; transition: filter .12s;
+  transform: skewX(-8deg);
+}
+.ct-bar-toggle:active { filter: brightness(.85); }
+.ct-bar-toggle.start { background: var(--green); color: #062815; }
+.ct-bar-toggle.stop  { background: var(--red);   color: #fff; }
+
+/* ── TAB BAR ── */
+.ct-tabbar {
+  background: var(--ct-surface);
+  border-bottom: 1px solid var(--ct-border);
+  display: flex; align-items: stretch;
+  flex-shrink: 0; height: 44px; padding: 0 4px;
+}
+.ct-tab {
+  padding: 0 20px;
+  font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--ct-muted); cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  border-bottom: 3px solid transparent; margin-bottom: -1px;
+  transition: color .15s, border-color .15s; white-space: nowrap;
+}
+.ct-tab:hover { color: var(--ct-muted2); }
+.ct-tab.active { color: var(--ct-text); border-bottom-color: var(--lime); }
+
+/* ── TAB CONTENT ── */
+.ct-tab-content { flex: 1; overflow: hidden; min-height: 0; display: none; }
+/* spiel tab scrolls as one unit */
+.ct-tab-content.active { display: flex; }
+
+.ct-tab-content.tab-spiel { display: none; }
+.ct-tab-content.tab-spiel.active {
+  display: grid; grid-template-columns: 1fr 1fr;
+  overflow-y: auto;    /* whole tab scrolls together */
+  align-content: start;
+  flex: 1; min-height: 0;
+}
+.ct-spiel-col {
+  display: flex; flex-direction: column; padding: 14px; gap: 10px;
+  /* no overflow-y: auto – parent scrolls */
+}
+.ct-spiel-col:first-child { border-right: 1px solid var(--ct-border); }
+
+.ct-tab-content.tab-teams { display: none; }
+.ct-tab-content.tab-teams.active { display: grid; grid-template-columns: 1fr 1fr; }
+.ct-teams-col {
+  display: flex; flex-direction: column; overflow-y: auto; padding: 14px; gap: 10px;
+  scrollbar-width: thin; scrollbar-color: var(--ct-card) transparent;
+}
+.ct-teams-col:first-child { border-right: 1px solid var(--ct-border); }
+
+.ct-tab-content.tab-settings { display: none; }
+.ct-tab-content.tab-settings.active {
+  display: flex; overflow-y: auto; padding: 14px; gap: 14px; align-items: flex-start;
+}
+.ct-settings-col { flex: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+.ct-tab-content.tab-danger { display: none; }
+.ct-tab-content.tab-danger.active {
+  display: flex; overflow-y: auto; padding: 14px; gap: 14px; align-items: flex-start;
+}
+.ct-danger-inner { flex: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+/* ── CARDS ── */
+.ct-card {
+  background: var(--ct-card);
+  border: 1px solid var(--ct-border);
+  border-radius: 0;
+  overflow: hidden;
+}
+.ct-card-head {
+  padding: 12px 14px 12px 18px;
+  font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--ct-muted2);
+  display: flex; align-items: center; justify-content: space-between;
+  position: relative;
+  /* no bottom border – cleaner look like screenshot */
+}
+/* thick left bar as pseudo-element */
+.ct-card-head::before {
+  content: '';
+  position: absolute; left: 0; top: 8px; bottom: 8px;
+  width: 4px;
+}
+.ct-card-head.lime::before   { background: var(--lime); }
+.ct-card-head.cyan::before   { background: var(--cyan); }
+.ct-card-head.neutral::before{ background: var(--ct-muted); }
+.ct-card-head.danger::before { background: var(--red); }
+.ct-card-body { padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; }
+
+/* collapsible */
+.ct-card.collapsible .ct-card-head { cursor: pointer; user-select: none; }
+.ct-card.collapsible .ct-card-head::after {
+  content: '▲'; font-size: 9px; color: var(--ct-muted); transition: transform .2s;
+  margin-left: auto; padding-left: 10px;
+}
+.ct-card.collapsible.collapsed .ct-card-head { border-bottom-color: transparent; }
+.ct-card.collapsible.collapsed .ct-card-head::after { transform: rotate(180deg); }
+.ct-card.collapsible .ct-card-body {
+  display: grid; grid-template-rows: 1fr;
+  transition: grid-template-rows .25s ease, padding .25s ease;
+  overflow: visible;   /* allow dynamic content to grow freely */
+}
+.ct-card.collapsible.collapsed .ct-card-body {
+  grid-template-rows: 0fr; padding-top: 0; padding-bottom: 0;
+  overflow: hidden;    /* clip only when actually collapsed */
+}
+.ct-card.collapsible .ct-card-body > .ct-card-body-inner {
+  min-height: 0; display: flex; flex-direction: column; gap: 10px;
+}
+
+.danger-zone { border-color: rgba(255,45,85,.3) !important; }
+.danger-zone .ct-card-head { background: rgba(255,45,85,.05); }
+
+/* ── FORM ELEMENTS ── */
+label.ct-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--ct-muted); display: block; margin-bottom: 4px;
+}
+input[type=text], input[type=number], select {
+  width: 100%; background: var(--ct-surface); border: 1px solid var(--ct-border);
+  border-radius: 0; color: var(--ct-text);
+  font-family: 'Barlow Condensed', sans-serif; font-size: 15px;
+  padding: 9px 12px; outline: none; transition: border-color .2s;
+}
+input:focus, select:focus { border-color: var(--lime); }
+select option { background: var(--ct-card); }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border: none; cursor: pointer;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+  transition: filter .12s; user-select: none;
+  padding: 12px 22px; font-size: 14px; width: 100%;
+  border-radius: 0;
+  transform: skewX(-8deg);
+}
+.btn > * { transform: skewX(8deg); }
+/* skew needs extra side padding to avoid content clipping */
+.btn:active { filter: brightness(.85); }
+
+/* filled solid buttons – Design A style */
+.btn-lime   { background: var(--lime);   color: #0a0a0a; }
+.btn-cyan   { background: var(--cyan);   color: #0a0a0a; }
+.btn-red    { background: var(--red);    color: #fff; }
+.btn-orange { background: var(--orange); color: #0a0a0a; }
+.btn-green  { background: var(--green);  color: #062815; }
+
+/* ghost / outline */
+.btn-ghost {
+  background: transparent; border: 1px solid var(--ct-border);
+  color: var(--ct-muted2);
+}
+.btn-ghost:hover { border-color: var(--ct-muted2); color: var(--ct-text); }
+.btn-danger-ghost {
+  background: transparent; border: 1px solid rgba(255,45,85,.4); color: var(--red);
+}
+.btn-danger-ghost:hover { background: rgba(255,45,85,.08); }
+
+.btn-sm { padding: 7px 14px; font-size: 12px; width: auto; }
+
+/* ── PERIOD PILLS ── */
+.period-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.period-pill {
+  flex: 1; min-width: 40px; padding: 8px 10px;
+  border: 1px solid var(--ct-border); background: var(--ct-surface);
+  color: var(--ct-muted2);
+  font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 2px;
+  cursor: pointer; text-align: center; transition: all .15s; text-transform: uppercase;
+  border-radius: 0;
+  transform: skewX(-8deg);
+}
+.period-pill.active { background: var(--lime); color: #0a0a0a; border-color: var(--lime); }
+
+/* ── CLOCK SET ── */
+.clock-set-row { display: flex; gap: 6px; align-items: center; }
+.clock-set-row input { text-align: center; font-size: 20px; font-weight: 700; letter-spacing: 2px; }
+.clock-colon { font-size: 24px; font-weight: 700; color: var(--ct-muted); }
+
+/* ── PENALTIES ── */
+.penalty-item {
+  display: flex; align-items: center; gap: 12px;
+  background: rgba(255,45,85,.07); border: 1px solid rgba(255,45,85,.3);
+  padding: 12px 14px; animation: fadeUp .25s ease;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+.pen-num  { font-size: 18px; font-weight: 700; color: var(--red); min-width: 36px; letter-spacing: 1px; }
+.pen-time { font-size: 30px; font-weight: 900; color: var(--ct-text); letter-spacing: 2px; flex: 1; font-variant-numeric: tabular-nums; font-family: 'Bebas Neue','Barlow Condensed',sans-serif; }
+.pen-badge {
+  font-size: 11px; font-weight: 700; letter-spacing: 1px;
+  border: 1px solid var(--ct-border); padding: 4px 8px; color: var(--ct-muted2);
+}
+.pen-del {
+  width: 36px; height: 36px;
+  background: rgba(255,45,85,.2); border: 1px solid rgba(255,45,85,.4);
+  color: var(--red); cursor: pointer; font-size: 18px;
+  display: flex; align-items: center; justify-content: center; transition: background .15s;
+  flex-shrink: 0; font-weight: 900;
+}
+.pen-del:hover { background: rgba(255,45,85,.45); }
+
+/* add form – hidden by default */
+.pen-add-form {
+  display: none; flex-direction: column; gap: 9px;
+  padding-top: 4px; border-top: 1px solid var(--ct-border);
+  animation: fadeUp .2s ease;
+}
+.pen-add-form.open { display: flex; }
+
+.pen-add-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px; cursor: pointer; font-weight: 800; letter-spacing: 3px;
+  font-size: 13px; text-transform: uppercase; font-family: 'Barlow Condensed',sans-serif;
+  background: rgba(255,45,85,.12); border: 1px solid rgba(255,45,85,.3);
+  color: var(--red); transition: background .15s; width: 100%;
+  transform: skewX(-8deg);
+}
+.pen-add-btn span { transform: skewX(8deg); display:inline-block; }
+.pen-add-btn:hover { background: rgba(255,45,85,.22); }
+
+.empty-msg { font-size: 12px; color: var(--ct-muted); letter-spacing: 1px; text-align: center; padding: 10px 0; }
+
+/* ── TIMEOUT ── */
+.timeout-badge {
+  font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  padding: 8px 12px; border: 1px solid; display: block; width: 100%; text-align: left;
+}
+.timeout-badge.avail { color: var(--orange); border-color: var(--orange); background: rgba(255,149,0,.06); }
+.timeout-badge.used  { color: var(--ct-muted); border-color: var(--ct-border); text-decoration: line-through; }
+.active-timeout-box {
+  background: rgba(255,149,0,.08); border: 1px solid rgba(255,149,0,.3);
+  padding: 12px; text-align: center; display: flex; flex-direction: column; gap: 6px;
+}
+.active-timeout-label { font-size: 11px; font-weight: 700; letter-spacing: 4px; color: var(--orange); text-transform: uppercase; }
+.active-timeout-count { font-size: 40px; font-weight: 900; color: var(--ct-text); letter-spacing: 4px; }
+.active-timeout-team  { font-size: 11px; color: var(--ct-muted2); letter-spacing: 2px; text-transform: uppercase; }
+
+/* ── LOGO UPLOAD ── */
+.logo-row { display: flex; align-items: center; gap: 10px; }
+.logo-thumb {
+  width: 44px; height: 44px;
+  background: var(--ct-surface); border: 1px solid var(--ct-border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 900; overflow: hidden; flex-shrink: 0;
+}
+.logo-thumb img { width: 100%; height: 100%; object-fit: contain; }
+input[type=file] { display: none; }
+.file-btn {
+  flex: 1; padding: 8px 10px;
+  background: var(--ct-surface); border: 1px solid var(--ct-border);
+  color: var(--ct-muted2); font-size: 12px; font-weight: 700; letter-spacing: 1px;
+  cursor: pointer; text-align: center; transition: border-color .15s;
+}
+.file-btn:hover { border-color: var(--ct-muted2); color: var(--ct-text); }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.divider { height: 1px; background: var(--ct-border); margin: 4px 0; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     SCOREBOARD VIEW
+══════════════════════════════════════════════════════ -->
+<div id="view-scoreboard">
+
+  <!-- TOP BAR -->
+  <div class="sb-topbar">
+    <div class="sb-live">
+      <div class="sb-live-dot"></div>
+      LIVE
+    </div>
+    <div class="sb-topbar-center">
+      <div class="sb-period-dots" id="sb-dots"></div>
+      <span class="sb-period-label" id="sb-period-label">1. DRITTEL</span>
+    </div>
+    <div class="sb-status-pill stopped" id="sb-status">
+      <div class="sb-status-dot"></div>
+      <span id="sb-status-text">GESTOPPT</span>
+    </div>
+  </div>
+
+  <!-- MAIN STAGE -->
+  <div class="sb-main">
+
+    <!-- HOME -->
+    <div class="sb-team home">
+      <div class="sb-team-header">
+        <div class="sb-logo" id="sb-home-logo">H</div>
+        <div>
+          <div class="sb-team-name" id="sb-home-name">HEIMTEAM</div>
+          <div class="sb-team-sub">HEIM</div>
+        </div>
+      </div>
+      <div class="sb-jersey-bar" id="sb-home-jersey-bar"></div>
+      <div class="sb-score" id="sb-home-score">0</div>
+      <div class="sb-pen-chips" id="sb-home-pen-chips"></div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="sb-center">
+      <div class="sb-sep"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <div class="sb-clock stopped" id="sb-clock">20:00</div>
+        <div class="sb-clock-label" id="sb-clock-label">VERBLEIBEND</div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,.3);text-transform:uppercase" id="sb-period-badge">1. DRITTEL</div>
+      </div>
+      <div class="sb-sep"></div>
+    </div>
+
+    <!-- AWAY -->
+    <div class="sb-team away">
+      <div class="sb-team-header">
+        <div class="sb-logo" id="sb-away-logo">G</div>
+        <div style="text-align:right">
+          <div class="sb-team-name" id="sb-away-name">GASTTEAM</div>
+          <div class="sb-team-sub">GAST</div>
+        </div>
+      </div>
+      <div class="sb-jersey-bar" id="sb-away-jersey-bar"></div>
+      <div class="sb-score" id="sb-away-score">0</div>
+      <div class="sb-pen-chips" id="sb-away-pen-chips"></div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM TICKER -->
+  <div class="sb-ticker" id="sb-ticker"></div>
+
+  <!-- GOAL OVERLAY -->
+  <div class="sb-overlay" id="sb-goal-overlay">
+    <div class="sb-goal-text" id="sb-goal-text">TOR!</div>
+  </div>
+
+  <!-- TIMEOUT OVERLAY -->
+  <div class="sb-overlay" id="sb-timeout-overlay">
+    <div class="sb-timeout-box">
+      <div class="sb-timeout-label">AUSZEIT</div>
+      <div class="sb-timeout-team" id="sb-timeout-team-label"></div>
+      <div class="sb-timeout-count" id="sb-timeout-count">0:30</div>
+    </div>
+  </div>
+
+  <!-- PAUSE OVERLAY -->
+  <div class="sb-overlay" id="sb-pause-overlay">
+    <div class="sb-timeout-box">
+      <div class="sb-timeout-label" style="color:#b44fff;text-shadow:0 0 60px rgba(180,79,255,.5)">PAUSE</div>
+      <div class="sb-timeout-team" id="sb-pause-next-label"></div>
+      <div class="sb-timeout-count" id="sb-pause-count">10:00</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     CONTROLLER VIEW
+══════════════════════════════════════════════════════ -->
+<div id="view-controller">
+
+  <!-- TOPBAR -->
+  <div class="ct-topbar">
+    <div class="ct-logo">
+      <img src="data:image/png;base64,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" style="height:38px;width:38px;object-fit:contain;flex-shrink:0" alt="Floorball Logo">
+      FLOORBALL
+    </div>
+    <div class="ct-top-right">
+      <div class="ct-period-chip" id="ct-period-chip">1. DRITTEL</div>
+      <button class="open-sb-btn preview" onclick="togglePip()" id="ct-pip-btn">⧉ Vorschau</button>
+      <button class="open-sb-btn" onclick="openScoreboard()">📺 SCOREBOARD ÖFFNEN</button>
+    </div>
+  </div>
+
+  <!-- ALWAYS-VISIBLE CONTROL BAR: scores + clock -->
+  <div class="ct-control-bar">
+
+    <!-- HOME: [−] [Score] [+] [Name + indicators] -->
+    <div class="ct-team-bar home">
+      <button class="ct-bar-adj minus" onclick="adjScore('home',-1)"><span>−</span></button>
+      <div class="ct-bar-score" id="ct-home-score">0</div>
+      <button class="ct-bar-adj plus home" onclick="adjScore('home',1)"><span>+</span></button>
+      <div style="min-width:0">
+        <div class="ct-bar-name" id="ct-bar-home-name">HEIMTEAM</div>
+        <div id="ct-home-pen-count" style="font-size:10px;letter-spacing:2px;color:var(--red);margin-top:4px;display:none;font-weight:700">● STRAFE</div>
+        <div id="ct-home-to-running" style="font-size:10px;letter-spacing:2px;color:var(--orange);margin-top:4px;display:none;font-weight:700">⏱ AUSZEIT</div>
+      </div>
+    </div>
+
+    <!-- CLOCK: big clock on top, button below -->
+    <div class="ct-clock-bar">
+      <div class="ct-bar-clock stopped" id="ct-bar-clock">20:00</div>
+      <button class="ct-bar-toggle start" id="ct-toggle-btn" onclick="toggleClock()">▶ STARTEN</button>
+    </div>
+
+    <!-- AWAY: [Name + indicators] [−] [Score] [+] -->
+    <div class="ct-team-bar away">
+      <div style="min-width:0;text-align:right;word-break:break-word;overflow-wrap:break-word">
+        <div class="ct-bar-name" id="ct-bar-away-name">GASTTEAM</div>
+        <div id="ct-away-pen-count" style="font-size:10px;letter-spacing:2px;color:var(--red);margin-top:4px;display:none;font-weight:700">STRAFE ●</div>
+        <div id="ct-away-to-running" style="font-size:10px;letter-spacing:2px;color:var(--orange);margin-top:4px;display:none;font-weight:700">AUSZEIT ⏱</div>
+      </div>
+      <button class="ct-bar-adj minus" onclick="adjScore('away',-1)"><span>−</span></button>
+      <div class="ct-bar-score" id="ct-away-score">0</div>
+      <button class="ct-bar-adj plus away" onclick="adjScore('away',1)"><span>+</span></button>
+    </div>
+
+  </div>
+
+  <!-- TAB BAR -->
+  <div class="ct-tabbar">
+    <div class="ct-tab active" onclick="switchTab('spiel')"    id="tab-btn-spiel">🎮 Spiel</div>
+    <div class="ct-tab"       onclick="switchTab('teams')"    id="tab-btn-teams">👕 Teams</div>
+    <div class="ct-tab"       onclick="switchTab('settings')" id="tab-btn-settings">⚙ Einstellungen</div>
+    <div class="ct-tab"       onclick="switchTab('danger')"   id="tab-btn-danger" style="color:var(--red);opacity:.7">⚠ Danger Zone</div>
+  </div>
+
+  <!-- PiP SCOREBOARD PREVIEW – real mini scoreboard, no iframe -->
+  <div id="ct-pip" style="
+    display:none;
+    position:fixed;
+    bottom:16px; right:16px;
+    width:420px; height:236px;
+    border-radius:10px;
+    overflow:hidden;
+    border:1px solid var(--border2);
+    box-shadow:0 8px 40px rgba(0,0,0,.7);
+    z-index:200;
+    background:var(--black);
+    cursor:default;
+  ">
+    <!-- Title bar -->
+    <div style="position:absolute;top:0;left:0;right:0;z-index:10;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:4px 10px;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);
+      border-bottom:1px solid rgba(255,255,255,.06)">
+      <span style="font-size:9px;font-weight:700;letter-spacing:3px;color:var(--muted2)">📺 SCOREBOARD VORSCHAU</span>
+      <button onclick="togglePip()" style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:13px;padding:0;line-height:1">✕</button>
+    </div>
+
+    <!-- Mini scoreboard – self-contained, no dependency on sb-* classes -->
+    <div id="pip-inner" style="
+      position:absolute; top:26px; left:0; right:0; bottom:0;
+      background:#080a0e;
+      display:flex; flex-direction:column;
+      font-family:'Barlow Condensed',sans-serif;
+      overflow:hidden;
+    ">
+      <!-- top bar -->
+      <div style="display:flex;align-items:center;justify-content:space-between;
+        padding:6px 14px;background:rgba(0,0,0,.5);border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div id="pip-dots" style="display:flex;gap:5px;align-items:center"></div>
+          <span id="pip-period-label" style="font-size:11px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,.4);text-transform:uppercase">1. DRITTEL</span>
+        </div>
+        <div id="pip-status" style="font-size:10px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,.3);text-transform:uppercase">GESTOPPT</div>
+      </div>
+
+      <!-- main stage -->
+      <div style="flex:1;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 16px;min-height:0">
+        <!-- home -->
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div id="pip-home-logo" style="width:32px;height:32px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);overflow:hidden">H</div>
+            <div id="pip-home-name" style="font-size:14px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#c8ff00">HEIM</div>
+          </div>
+          <div id="pip-home-score" style="font-size:60px;font-weight:900;line-height:1;color:#c8ff00;font-family:'Bebas Neue','Barlow Condensed',sans-serif">0</div>
+        </div>
+        <!-- center -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:0 20px">
+          <div id="pip-clock" style="font-size:38px;font-weight:400;letter-spacing:3px;color:rgba(255,255,255,.25);font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-variant-numeric:tabular-nums">20:00</div>
+        </div>
+        <!-- away -->
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+          <div style="display:flex;align-items:center;gap:8px;flex-direction:row-reverse">
+            <div id="pip-away-logo" style="width:32px;height:32px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);overflow:hidden">G</div>
+            <div id="pip-away-name" style="font-size:14px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#00d4ff">GAST</div>
+          </div>
+          <div id="pip-away-score" style="font-size:60px;font-weight:900;line-height:1;color:#00d4ff;font-family:'Bebas Neue','Barlow Condensed',sans-serif">0</div>
+        </div>
+      </div>
+
+      <!-- ticker -->
+      <div id="pip-ticker" style="flex-shrink:0;padding:6px 14px;background:rgba(0,0,0,.4);
+        border-top:1px solid rgba(255,255,255,.06);font-size:11px;
+        display:flex;gap:16px;align-items:center;min-height:28px">
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: SPIEL ── -->
+  <div class="ct-tab-content tab-spiel active" id="tab-spiel">
+
+    <!-- HOME side -->
+    <div class="ct-spiel-col">
+
+      <!-- Timeout -->
+      <div class="ct-card collapsible collapsed" id="card-home-to">
+        <div class="ct-card-head lime" onclick="toggleCard('card-home-to')">Auszeit · Heim</div>
+        <div class="ct-card-body">
+          <div class="ct-card-body-inner">
+            <div class="timeout-badge avail" id="ct-home-to-badge">1× VERFÜGBAR</div>
+            <button class="btn btn-orange" id="ct-home-to-btn" onclick="startTimeout('home')">⏱ Auszeit starten</button>
+            <button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="resetTO('home')">↺ Zurücksetzen</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active timeout (home) -->
+      <div class="ct-card" id="ct-to-active-card" style="display:none">
+        <div class="ct-card-head neutral">Auszeit läuft</div>
+        <div class="ct-card-body">
+          <div class="active-timeout-box">
+            <div class="active-timeout-label">Auszeit</div>
+            <div class="active-timeout-team" id="ct-to-team-label"></div>
+            <div class="active-timeout-count" id="ct-to-count">0:30</div>
+            <button class="btn btn-ghost btn-sm" style="width:auto;margin:0 auto" onclick="endTimeout()">✕ Beenden</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Penalties home -->
+      <div class="ct-card collapsible collapsed" id="card-home-pen">
+        <div class="ct-card-head lime" onclick="togglePenCard('home')" style="justify-content:space-between">
+          <span>Strafzeit · Heim</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span id="ct-home-pen-count-badge" style="display:none;font-size:10px;
+              background:var(--red);color:#fff;padding:1px 6px;font-weight:700;letter-spacing:1px"></span>
+            <button onclick="event.stopPropagation();togglePenAdd('home')" id="ct-home-pen-add-btn"
+              style="display:none;background:var(--red);border:none;color:#fff;width:22px;height:22px;
+              cursor:pointer;font-size:15px;font-weight:900;align-items:center;
+              justify-content:center;flex-shrink:0;transform:skewX(-8deg)">
+              <span style="transform:skewX(8deg)">+</span>
+            </button>
+          </div>
+        </div>
+        <div class="ct-card-body" style="gap:0">
+          <div class="ct-card-body-inner" style="gap:8px">
+            <div id="ct-home-pen-list" style="display:flex;flex-direction:column;gap:8px">
+              <div class="empty-msg">Keine aktiven Strafen</div>
+            </div>
+            <div class="pen-add-form" id="ct-home-pen-form">
+              <div style="display:grid;grid-template-columns:80px 1fr;gap:8px;align-items:end">
+                <div>
+                  <label class="ct-label">#</label>
+                  <input type="number" id="ct-home-pen-num" placeholder="#" min="2" max="99">
+                </div>
+                <div>
+                  <label class="ct-label">Strafart</label>
+                  <select id="ct-home-pen-type">
+                    <option value="120">2 Min</option>
+                    <option value="240">4 Min (doppelt)</option>
+                    <option value="600">10 Min (pers.)</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-red" onclick="addPenaltyAndClose('home')">+ Eintragen</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- AWAY side -->
+    <div class="ct-spiel-col">
+
+      <!-- Timeout away -->
+      <div class="ct-card collapsible collapsed" id="card-away-to">
+        <div class="ct-card-head cyan" onclick="toggleCard('card-away-to')">Auszeit · Gast</div>
+        <div class="ct-card-body">
+          <div class="ct-card-body-inner">
+            <div class="timeout-badge avail" id="ct-away-to-badge">1× VERFÜGBAR</div>
+            <button class="btn btn-orange" id="ct-away-to-btn" onclick="startTimeout('away')">⏱ Auszeit starten</button>
+            <button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="resetTO('away')">↺ Zurücksetzen</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Penalties away -->
+      <div class="ct-card collapsible collapsed" id="card-away-pen">
+        <div class="ct-card-head cyan" onclick="togglePenCard('away')" style="justify-content:space-between">
+          <span>Strafzeit · Gast</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span id="ct-away-pen-count-badge" style="display:none;font-size:10px;
+              background:var(--red);color:#fff;padding:1px 6px;font-weight:700;letter-spacing:1px"></span>
+            <button onclick="event.stopPropagation();togglePenAdd('away')" id="ct-away-pen-add-btn"
+              style="display:none;background:var(--red);border:none;color:#fff;width:22px;height:22px;
+              cursor:pointer;font-size:15px;font-weight:900;align-items:center;
+              justify-content:center;flex-shrink:0;transform:skewX(-8deg)">
+              <span style="transform:skewX(8deg)">+</span>
+            </button>
+          </div>
+        </div>
+        <div class="ct-card-body" style="gap:0">
+          <div class="ct-card-body-inner" style="gap:8px">
+            <div id="ct-away-pen-list" style="display:flex;flex-direction:column;gap:8px">
+              <div class="empty-msg">Keine aktiven Strafen</div>
+            </div>
+            <div class="pen-add-form" id="ct-away-pen-form">
+              <div style="display:grid;grid-template-columns:80px 1fr;gap:8px;align-items:end">
+                <div>
+                  <label class="ct-label">#</label>
+                  <input type="number" id="ct-away-pen-num" placeholder="#" min="2" max="99">
+                </div>
+                <div>
+                  <label class="ct-label">Strafart</label>
+                  <select id="ct-away-pen-type">
+                    <option value="120">2 Min</option>
+                    <option value="240">4 Min (doppelt)</option>
+                    <option value="600">10 Min (pers.)</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-red" onclick="addPenaltyAndClose('away')">+ Eintragen</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── TAB: TEAMS ── -->
+  <div class="ct-tab-content tab-teams" id="tab-teams">
+
+    <div class="ct-teams-col">
+      <div class="ct-card">
+        <div class="ct-card-head lime">🏠 Heimteam</div>
+        <div class="ct-card-body">
+          <div>
+            <label class="ct-label">Name</label>
+            <input type="text" id="ct-home-name" value="HEIMTEAM" oninput="onNameChange()">
+          </div>
+          <div>
+            <label class="ct-label">Logo</label>
+            <div class="logo-row">
+              <div class="logo-thumb" id="ct-home-logo-prev">H</div>
+              <label class="file-btn" for="ct-home-logo-file">📁 Hochladen</label>
+              <input type="file" id="ct-home-logo-file" accept="image/*" onchange="onLogo('home',this)">
+              <button class="btn btn-ghost btn-sm" style="width:auto" onclick="removeLogo('home')">✕</button>
+            </div>
+          </div>
+          <div>
+            <label class="ct-label">Akzentfarbe <span style="font-weight:400;opacity:.6">(Tore, Name, Glow)</span></label>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="color" id="ct-home-accent" value="#c8ff00"
+                oninput="onColorChange('home','Accent',this.value)"
+                style="width:44px;height:36px;border:1px solid var(--border2);border-radius:7px;background:var(--card);cursor:pointer;padding:2px">
+              <span id="ct-home-accent-hex" style="font-size:13px;color:var(--muted2);letter-spacing:2px;font-family:monospace">#c8ff00</span>
+              <button class="btn btn-ghost btn-sm" style="width:auto;font-size:11px" onclick="resetColor('home','Accent')">↺</button>
+            </div>
+          </div>
+          <div>
+            <label class="ct-label">Trikotfarbe <span style="font-weight:400;opacity:.6">(Balken im Scoreboard)</span></label>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="color" id="ct-home-jersey" value="#0d2e0d"
+                oninput="onColorChange('home','Jersey',this.value)"
+                style="width:44px;height:36px;border:1px solid var(--border2);border-radius:7px;background:var(--card);cursor:pointer;padding:2px">
+              <span id="ct-home-jersey-hex" style="font-size:13px;color:var(--muted2);letter-spacing:2px;font-family:monospace">#0d2e0d</span>
+              <button class="btn btn-ghost btn-sm" style="width:auto;font-size:11px" onclick="resetColor('home','Jersey')">↺</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ct-teams-col">
+      <div class="ct-card">
+        <div class="ct-card-head cyan">✈️ Gastteam</div>
+        <div class="ct-card-body">
+          <div>
+            <label class="ct-label">Name</label>
+            <input type="text" id="ct-away-name" value="GASTTEAM" oninput="onNameChange()">
+          </div>
+          <div>
+            <label class="ct-label">Logo</label>
+            <div class="logo-row">
+              <div class="logo-thumb" id="ct-away-logo-prev">G</div>
+              <label class="file-btn" for="ct-away-logo-file">📁 Hochladen</label>
+              <input type="file" id="ct-away-logo-file" accept="image/*" onchange="onLogo('away',this)">
+              <button class="btn btn-ghost btn-sm" style="width:auto" onclick="removeLogo('away')">✕</button>
+            </div>
+          </div>
+          <div>
+            <label class="ct-label">Akzentfarbe <span style="font-weight:400;opacity:.6">(Tore, Name, Glow)</span></label>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="color" id="ct-away-accent" value="#22c55e"
+                oninput="onColorChange('away','Accent',this.value)"
+                style="width:44px;height:36px;border:1px solid var(--border2);border-radius:7px;background:var(--card);cursor:pointer;padding:2px">
+              <span id="ct-away-accent-hex" style="font-size:13px;color:var(--muted2);letter-spacing:2px;font-family:monospace">#22c55e</span>
+              <button class="btn btn-ghost btn-sm" style="width:auto;font-size:11px" onclick="resetColor('away','Accent')">↺</button>
+            </div>
+          </div>
+          <div>
+            <label class="ct-label">Trikotfarbe <span style="font-weight:400;opacity:.6">(Balken im Scoreboard)</span></label>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="color" id="ct-away-jersey" value="#0a1a0a"
+                oninput="onColorChange('away','Jersey',this.value)"
+                style="width:44px;height:36px;border:1px solid var(--border2);border-radius:7px;background:var(--card);cursor:pointer;padding:2px">
+              <span id="ct-away-jersey-hex" style="font-size:13px;color:var(--muted2);letter-spacing:2px;font-family:monospace">#0a1a0a</span>
+              <button class="btn btn-ghost btn-sm" style="width:auto;font-size:11px" onclick="resetColor('away','Jersey')">↺</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: EINSTELLUNGEN ── -->
+  <div class="ct-tab-content tab-settings" id="tab-settings">
+
+    <!-- LEFT col: Abschnitt + Uhranzeige -->
+    <div class="ct-settings-col">
+
+      <div class="ct-card">
+        <div class="ct-card-head neutral">Abschnitt</div>
+        <div class="ct-card-body">
+          <div>
+            <label class="ct-label">Spielformat</label>
+            <select id="ct-format" onchange="onFormatChange()">
+              <option value="3">Großfeld (3 × 20 Min)</option>
+              <option value="3s">Großfeld Spieltag (3 × 15 Min)</option>
+              <option value="2">Kleinfeld (2 × 20 Min)</option>
+            </select>
+          </div>
+          <label class="ct-label">Aktueller Abschnitt</label>
+          <div class="period-pills" id="ct-period-pills"></div>
+          <div class="grid2">
+            <button class="btn btn-ghost btn-sm" onclick="prevPeriod()">← Zurück</button>
+            <button class="btn btn-cyan btn-sm"  onclick="nextPeriod()">Weiter →</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ct-card">
+        <div class="ct-card-head neutral">⏱ Uhranzeige</div>
+        <div class="ct-card-body">
+          <div style="font-size:11px;color:var(--ct-muted);letter-spacing:1px;line-height:1.5">
+            Steuerung und Präsentation separat einstellbar.
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;margin-top:2px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px">Steuerung</span>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:11px;letter-spacing:1px;color:var(--ct-text)" id="ct-dir-ctrl-label">↓ RUNTER</span>
+                <div id="ct-dir-ctrl-toggle" onclick="toggleDir('ctrl')"
+                  style="width:44px;height:24px;border-radius:4px;background:var(--ct-muted);cursor:pointer;position:relative;transition:background .2s;border:1px solid var(--ct-border)">
+                  <div id="ct-dir-ctrl-knob" style="position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;transition:left .2s"></div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px">Präsentation</span>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:11px;letter-spacing:1px;color:var(--ct-text)" id="ct-dir-sb-label">↓ RUNTER</span>
+                <div id="ct-dir-sb-toggle" onclick="toggleDir('sb')"
+                  style="width:44px;height:24px;border-radius:4px;background:var(--ct-muted);cursor:pointer;position:relative;transition:background .2s;border:1px solid var(--ct-border)">
+                  <div id="ct-dir-sb-knob" style="position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;transition:left .2s"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT col: Pause + Buzzer -->
+    <div class="ct-settings-col">
+
+      <div class="ct-card">
+        <div class="ct-card-head neutral">Pause</div>
+        <div class="ct-card-body">
+          <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;line-height:1.5">
+            Großfeld: 10 Min · Spieltag: 7 Min · Kleinfeld: 5 Min
+          </div>
+          <button class="btn btn-ghost" id="ct-pause-btn" onclick="startPause()"
+            style="border-color:rgba(180,79,255,.4);color:#b44fff">
+            ⏱ Pause starten
+          </button>
+          <div id="ct-pause-active" style="display:none">
+            <div class="active-timeout-box" style="background:rgba(180,79,255,.08);border-color:rgba(180,79,255,.3)">
+              <div class="active-timeout-label" style="color:#b44fff">Pause läuft</div>
+              <div class="active-timeout-count" id="ct-pause-count">10:00</div>
+              <button class="btn btn-ghost btn-sm" style="width:auto;margin:0 auto" onclick="endPause()">✕ Beenden</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ct-card">
+        <div class="ct-card-head neutral">🔔 Buzzer</div>
+        <div class="ct-card-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px">
+            <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px">Sound bei Ablauf</div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex-shrink:0">
+              <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--ct-muted2)" id="ct-buzzer-label">AN</div>
+              <div id="ct-buzzer-toggle" onclick="toggleBuzzer()"
+                style="width:44px;height:24px;border-radius:4px;background:var(--lime);cursor:pointer;position:relative;transition:background .2s;border:1px solid rgba(255,255,255,.15)">
+                <div id="ct-buzzer-knob"
+                  style="position:absolute;top:2px;left:22px;width:18px;height:18px;background:#000;transition:left .2s"></div>
+              </div>
+            </label>
+          </div>
+          <button class="btn btn-ghost" onclick="playBuzzer()" style="font-size:12px">▶ Test-Buzzer</button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ── TAB: DANGER ZONE ── -->
+  <div class="ct-tab-content tab-danger" id="tab-danger">
+
+    <!-- Uhr überschreiben -->
+    <div class="ct-danger-inner">
+      <div class="ct-card danger-zone">
+        <div class="ct-card-head danger">⚠ Uhr überschreiben</div>
+        <div class="ct-card-body">
+          <div style="font-size:12px;color:var(--muted2);letter-spacing:1px;line-height:1.5">
+            Spieluhr direkt auf den eingegebenen Wert setzen. Uhr muss gestoppt sein.
+          </div>
+          <label class="ct-label">Zeit setzen (MM : SS)</label>
+          <div class="clock-set-row">
+            <input type="number" id="ct-set-min" value="20" min="0" max="99" style="width:64px">
+            <span class="clock-colon">:</span>
+            <input type="number" id="ct-set-sec" value="0"  min="0" max="59" style="width:64px">
+            <button class="btn btn-ghost btn-sm" style="width:auto" onclick="setClock()">✓ Setzen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spiel zurücksetzen -->
+    <div class="ct-danger-inner">
+      <div class="ct-card danger-zone">
+        <div class="ct-card-head danger">⚠ Spiel zurücksetzen</div>
+        <div class="ct-card-body">
+          <div style="font-size:12px;color:var(--muted2);letter-spacing:1px;line-height:1.5">
+            Setzt Tore, Spielzeit, Strafen und Auszeiten auf Null zurück. Teamnamen und Farben bleiben erhalten.
+          </div>
+          <button class="btn btn-danger-ghost" onclick="resetGame()">🔄 Jetzt zurücksetzen</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SHARED JS
+══════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════════
+     SHARED JS
+══════════════════════════════════════════════════════ -->
+<script>
+/* ─── ROUTING ─────────────────────────────────────────────────────── */
+const isScoreboard = new URLSearchParams(location.search).get('view') === 'scoreboard';
+
+document.getElementById('view-scoreboard').style.display = isScoreboard ? 'flex' : 'none';
+document.getElementById('view-controller').style.display = isScoreboard ? 'none' : 'flex';
+
+if (isScoreboard) document.title = 'Scoreboard';
+else document.title = 'Floorball Controller';
+
+/* ─── BROADCAST CHANNEL ───────────────────────────────────────────── */
+// Both windows opened from the same file:// URL share the same origin,
+// so BroadcastChannel works perfectly.
+const BC = new BroadcastChannel('floorball_v2');
+
+/* ─── STATE (controller only) ─────────────────────────────────────── */
+let S = {
+  homeName: 'HEIMTEAM', awayName: 'GASTTEAM',
+  homeLogo: null,       awayLogo: null,
+  homeAccent: '#c8ff00', awayAccent: '#22c55e',
+  homeJersey: '#0d2e0d',  awayJersey: '#0a1a0a',
+  homeScore: 0,         awayScore: 0,
+  clock: 1200,          running: false,
+  period: 1,            maxPeriods: 3,
+  periodSecs: 1200,
+  pauseSecs: 600,        // derived from format
+  buzzerEnabled: true,
+  ctrlCountUp: false,   // controller shows count-up
+  sbCountUp: false,     // scoreboard shows count-up
+  homePenalties: [],    awayPenalties: [],
+  homeToUsed: false,    awayToUsed: false,
+  activeTimeout: null,  // { team, remaining }
+  pause: null,          // { remaining, duration } – inter-period break
+};
+
+let clockTimer = null;
+let prevHomeScore = 0, prevAwayScore = 0;
+
+/* ─── BUZZER ──────────────────────────────────────────────────────── */
+function toggleDir(which) {
+  const key = which === 'ctrl' ? 'ctrlCountUp' : 'sbCountUp';
+  S[key] = !S[key];
+  updateDirToggles();
+  pushAndRender();
+}
+
+function updateDirToggles() {
+  ['ctrl','sb'].forEach(which => {
+    const key = which === 'ctrl' ? 'ctrlCountUp' : 'sbCountUp';
+    const on  = S[key];
+    const tog = document.getElementById('ct-dir-' + which + '-toggle');
+    const knob= document.getElementById('ct-dir-' + which + '-knob');
+    const lbl = document.getElementById('ct-dir-' + which + '-label');
+    if (!tog) return;
+    tog.style.background = on ? 'var(--lime)' : 'var(--muted)';
+    knob.style.left = on ? '22px' : '2px';
+    lbl.textContent  = on ? '↑ HOCH' : '↓ RUNTER';
+    lbl.style.color  = on ? 'var(--lime)' : 'var(--white)';
+  });
+}
+
+// ── BUZZER – langer elektronischer Ton ─────────────────────────────
+function buildBuzzerOptions() {} // no-op, no selector needed
+
+function toggleBuzzer() {
+  S.buzzerEnabled = !S.buzzerEnabled;
+  const toggle = document.getElementById('ct-buzzer-toggle');
+  const knob   = document.getElementById('ct-buzzer-knob');
+  const label  = document.getElementById('ct-buzzer-label');
+  if (S.buzzerEnabled) {
+    toggle.style.background = 'var(--lime)';
+    knob.style.left = '22px';
+    label.textContent = 'AN';
+  } else {
+    toggle.style.background = 'var(--ct-muted)';
+    knob.style.left = '2px';
+    label.textContent = 'AUS';
+  }
+  pushAndRender();
+}
+
+function playBuzzer() {
+  if (!S.buzzerEnabled) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const dur = 2.4; // long MIEEEEP
+
+    // Main tone: square wave at ~440 Hz – classic electric buzzer
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    // Slight detune for that "not quite clean" buzzer feel
+    const osc2  = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+
+    osc.connect(gain);   gain.connect(ctx.destination);
+    osc2.connect(gain2); gain2.connect(ctx.destination);
+
+    osc.type  = 'square'; osc.frequency.value  = 440;
+    osc2.type = 'square'; osc2.frequency.value = 447; // slight detune = buzzy beating
+
+    // Attack fast, hold, then sharp cut
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.55, ctx.currentTime + 0.02);
+    gain.gain.setValueAtTime(0.55, ctx.currentTime + dur - 0.05);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + dur);
+
+    gain2.gain.setValueAtTime(0, ctx.currentTime);
+    gain2.gain.linearRampToValueAtTime(0.45, ctx.currentTime + 0.02);
+    gain2.gain.setValueAtTime(0.45, ctx.currentTime + dur - 0.05);
+    gain2.gain.linearRampToValueAtTime(0, ctx.currentTime + dur);
+
+    osc.start(ctx.currentTime);  osc.stop(ctx.currentTime + dur + 0.05);
+    osc2.start(ctx.currentTime); osc2.stop(ctx.currentTime + dur + 0.05);
+
+    setTimeout(() => ctx.close(), (dur + 0.2) * 1000);
+  } catch(e) {}
+}
+
+/* ─── CONTROLLER LOGIC ────────────────────────────────────────────── */
+if (!isScoreboard) {
+  initController();
+}
+
+function initController() {
+  buildPeriodPills();
+  applyControllerColors();
+  switchTab('spiel');
+  renderController();
+
+  // Respond to scoreboard asking for a state push
+  BC.onmessage = e => {
+    if (e.data.type === 'REQ_STATE') push();
+  };
+
+  // Watch control bar height and scale fonts accordingly
+  const cb = document.querySelector('.ct-control-bar');
+  if (cb && window.ResizeObserver) {
+    new ResizeObserver(updateControlBarSizes).observe(cb);
+  }
+  updateControlBarSizes();
+
+  // Spacebar toggles clock unless focus is in a text/number input
+  document.addEventListener('keydown', e => {
+    if (e.code !== 'Space') return;
+    const tag  = document.activeElement?.tagName?.toLowerCase();
+    const type = document.activeElement?.type?.toLowerCase();
+    const isText = tag === 'textarea' ||
+      (tag === 'input' && (type === 'text' || type === 'number' || type === 'search'));
+    if (isText) return;
+    e.preventDefault();
+    toggleClock();
+  });
+}
+
+function push() {
+  BC.postMessage({ type: 'STATE', payload: JSON.parse(JSON.stringify(S)) });
+}
+
+// ── Responsive control bar sizing ──
+function updateControlBarSizes() {
+  const bar = document.getElementById('view-controller');
+  if (!bar) return;
+  const cb = bar.querySelector('.ct-control-bar');
+  if (!cb) return;
+  const h = cb.getBoundingClientRect().height;
+
+  // Scale relative to height: base is 136px
+  const ratio = h / 180;  // new base height
+  const clamp = (min, val, max) => Math.min(max, Math.max(min, val));
+
+  const score   = clamp(52,  Math.round(100 * ratio), 130) + 'px';
+  const clock   = clamp(56,  Math.round(84  * ratio), 140) + 'px';
+  const name    = clamp(13,  Math.round(18  * ratio),  28) + 'px';
+  const adj     = clamp(40,  Math.round(56  * ratio),  80) + 'px';
+  const adjIcon = clamp(20,  Math.round(28  * ratio),  40) + 'px';
+  const btnPad  = clamp(8,   Math.round(13  * ratio),  20) + 'px';
+  const btn     = clamp(13,  Math.round(15  * ratio),  20) + 'px';
+
+  const root = document.documentElement;
+  root.style.setProperty('--cb-score',    score);
+  root.style.setProperty('--cb-clock',    clock);
+  root.style.setProperty('--cb-name',     name);
+  root.style.setProperty('--cb-adj',      adj);
+  root.style.setProperty('--cb-adj-icon', adjIcon);
+  root.style.setProperty('--cb-btn-pad',  btnPad);
+  root.style.setProperty('--cb-btn',      btn);
+}
+
+// ── Clock ──
+function toggleClock() {
+  S.running ? stopClock() : startClock();
+}
+
+function startClock() {
+  if (S.running) return;
+  S.running = true;
+  clockTimer = setInterval(() => {
+    if (S.clock > 0) {
+      S.clock--;
+      tickPenalties();
+      tickTimeout();
+    } else {
+      stopClock();
+      playBuzzer();
+    }
+    pushAndRender();
+  }, 1000);
+  pushAndRender();
+}
+
+function stopClock() {
+  S.running = false;
+  clearInterval(clockTimer); clockTimer = null;
+  pushAndRender();
+}
+
+function setClock() {
+  const m = parseInt(document.getElementById('ct-set-min').value) || 0;
+  const s = parseInt(document.getElementById('ct-set-sec').value) || 0;
+  S.clock = m * 60 + s;
+  pushAndRender();
+}
+
+// ── Score ──
+function adjScore(side, delta) {
+  if (side === 'home') S.homeScore = Math.max(0, S.homeScore + delta);
+  else                 S.awayScore = Math.max(0, S.awayScore + delta);
+  pushAndRender();
+}
+
+// ── Names / Logos ──
+
+function onColorChange(side, field, value) {
+  // field: 'Accent' or 'Jersey'
+  S[side + field] = value;
+  const hexEl = document.getElementById('ct-' + side + '-' + field.toLowerCase() + '-hex');
+  if (hexEl) hexEl.textContent = value;
+  applyControllerColors();
+  pushAndRender();
+}
+
+function resetColor(side, field) {
+  const defaults = { homeAccent: '#c8ff00', awayAccent: '#22c55e', homeJersey: '#0d2e0d', awayJersey: '#0a1a0a' };
+  const key = side + field;
+  const def = defaults[key] || '#ffffff';
+  S[key] = def;
+  const inputEl = document.getElementById('ct-' + side + '-' + field.toLowerCase());
+  const hexEl   = document.getElementById('ct-' + side + '-' + field.toLowerCase() + '-hex');
+  if (inputEl) inputEl.value = def;
+  if (hexEl)   hexEl.textContent = def;
+  applyControllerColors();
+  pushAndRender();
+}
+
+// returns perceived luminance 0..1
+function luminance(hex) {
+  const r = parseInt(hex.slice(1,3),16)/255;
+  const g = parseInt(hex.slice(3,5),16)/255;
+  const b = parseInt(hex.slice(5,7),16)/255;
+  const toL = c => c <= 0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4);
+  return 0.2126*toL(r) + 0.7152*toL(g) + 0.0722*toL(b);
+}
+
+function contrastText(hex) {
+  return luminance(hex) > 0.35 ? '#000000' : '#ffffff';
+}
+
+// hex -> rgba string for glow
+function hexGlow(hex, alpha=0.3) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function applyControllerColors() {
+  // Card head accents
+  document.querySelectorAll('.ct-card-head.lime').forEach(el =>
+    el.style.borderLeftColor = S.homeAccent);
+  document.querySelectorAll('.ct-card-head.cyan').forEach(el =>
+    el.style.borderLeftColor = S.awayAccent);
+  // Score + name colors
+  const hs = document.getElementById('ct-home-score');
+  const as = document.getElementById('ct-away-score');
+  const hn = document.getElementById('ct-bar-home-name');
+  const an = document.getElementById('ct-bar-away-name');
+  if (hs) hs.style.color = S.homeAccent;
+  if (as) as.style.color = S.awayAccent;
+  if (hn) hn.style.color = S.homeAccent;
+  if (an) an.style.color = S.awayAccent;
+  // Top accent bars on control bar team sections
+  const hbar = document.querySelector('.ct-team-bar.home');
+  const abar = document.querySelector('.ct-team-bar.away');
+  if (hbar) hbar.style.setProperty('--team-accent', S.homeAccent);
+  if (abar) abar.style.setProperty('--team-accent', S.awayAccent);
+  // Also update the plus adj buttons
+  document.querySelectorAll('.ct-bar-adj.plus.home').forEach(b => {
+    b.style.background = S.homeAccent; b.style.color = '#0a0a0a';
+  });
+  document.querySelectorAll('.ct-bar-adj.plus.away').forEach(b => {
+    b.style.background = S.awayAccent; b.style.color = '#0a0a0a';
+  });
+}
+
+function applyScoreboardColors(s) {
+  const hc = s.homeAccent  || '#c8ff00';
+  const ac = s.awayAccent  || '#22c55e';
+  const hj = s.homeJersey  || '#0d2e0d';
+  const aj = s.awayJersey  || '#0a1a0a';
+  const root = document.documentElement;
+  root.style.setProperty('--sb-home', hc);
+  root.style.setProperty('--sb-away', ac);
+  root.style.setProperty('--sb-home-text', contrastText(hc));
+  root.style.setProperty('--sb-away-text', contrastText(ac));
+  root.style.setProperty('--sb-home-glow', hexGlow(hc, 0.28));
+  root.style.setProperty('--sb-away-glow', hexGlow(ac, 0.28));
+  root.style.setProperty('--sb-home-glow-dim', hexGlow(hc, 0.08));
+  root.style.setProperty('--sb-away-glow-dim', hexGlow(ac, 0.08));
+  // Jersey bars – set directly on elements so they update live
+  const hBar = document.getElementById('sb-home-jersey-bar');
+  const aBar = document.getElementById('sb-away-jersey-bar');
+  if (hBar) hBar.style.background = hj;
+  if (aBar) aBar.style.background = aj;
+}
+
+function onNameChange() {
+  S.homeName = document.getElementById('ct-home-name').value || 'HEIMTEAM';
+  S.awayName = document.getElementById('ct-away-name').value || 'GASTTEAM';
+  updateLogoThumbs();
+  pushAndRender();
+}
+
+function onLogo(side, input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    S[side + 'Logo'] = e.target.result;
+    updateLogoThumbs();
+    pushAndRender();
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeLogo(side) {
+  S[side + 'Logo'] = null;
+  document.getElementById('ct-' + side + '-logo-file').value = '';
+  updateLogoThumbs();
+  pushAndRender();
+}
+
+function updateLogoThumbs() {
+  ['home','away'].forEach(side => {
+    const el = document.getElementById('ct-' + side + '-logo-prev');
+    const logo = S[side + 'Logo'];
+    const name = side === 'home' ? S.homeName : S.awayName;
+    el.innerHTML = logo ? `<img src="${logo}">` : name.charAt(0);
+  });
+}
+
+// ── Period / Format ──
+function onFormatChange() {
+  const val = document.getElementById('ct-format').value;
+  if (val === '3s') {
+    S.maxPeriods = 3;
+    S.periodSecs = 900;  // 15 min
+    S.pauseSecs  = 420;  // 7 min
+  } else if (val === '2') {
+    S.maxPeriods = 2;
+    S.periodSecs = 1200;
+    S.pauseSecs  = 300;  // 5 min
+  } else {
+    S.maxPeriods = 3;
+    S.periodSecs = 1200;
+    S.pauseSecs  = 600;  // 10 min
+  }
+  S.period = 1;
+  S.clock  = S.periodSecs;
+  document.getElementById('ct-set-min').value = Math.floor(S.periodSecs / 60);
+  document.getElementById('ct-set-sec').value = 0;
+  buildPeriodPills();
+  pushAndRender();
+}
+
+function buildPeriodPills() {
+  const c = document.getElementById('ct-period-pills'); if (!c) return;
+  c.innerHTML = '';
+  const labels3 = ['D1','D2','D3','VL'];
+  const labels2 = ['H1','H2','VL'];
+  const labels = S.maxPeriods === 3 ? labels3 : labels2;
+  for (let i = 1; i <= S.maxPeriods + 1; i++) {
+    const b = document.createElement('div');
+    b.className = 'period-pill' + (i === S.period ? ' active' : '');
+    b.textContent = labels[i-1] || 'VL';
+    b.onclick = () => setPeriod(i);
+    c.appendChild(b);
+  }
+}
+
+function setPeriod(p) {
+  stopClock();
+  S.period = p;
+  const isOT = p > S.maxPeriods;
+  S.clock = isOT ? 600 : S.periodSecs;
+  const [m,s] = [Math.floor(S.clock/60), S.clock%60];
+  document.getElementById('ct-set-min').value = m;
+  document.getElementById('ct-set-sec').value = s;
+  buildPeriodPills();
+  pushAndRender();
+}
+
+function nextPeriod() { if (S.period <= S.maxPeriods) setPeriod(S.period + 1); }
+function prevPeriod() { if (S.period > 1) setPeriod(S.period - 1); }
+
+// ── Penalties ──
+function addPenalty(side) {
+  const num  = document.getElementById('ct-' + side + '-pen-num').value || '?';
+  const secs = parseInt(document.getElementById('ct-' + side + '-pen-type').value);
+  S[side + 'Penalties'].push({ id: Date.now(), number: num, secs, remaining: secs });
+  document.getElementById('ct-' + side + '-pen-num').value = '';
+  pushAndRender();
+}
+
+function removePenalty(side, id) {
+  S[side + 'Penalties'] = S[side + 'Penalties'].filter(p => p.id !== id);
+  pushAndRender();
+}
+
+function tickPenalties() {
+  ['home','away'].forEach(side => {
+    S[side + 'Penalties'] = S[side + 'Penalties']
+      .map(p => ({ ...p, remaining: p.remaining - 1 }))
+      .filter(p => p.remaining > 0);
+  });
+}
+
+// ── Timeout – runs independently from the game clock ──
+let toTimer = null;
+let pauseTimer = null;
+
+function startTimeout(side) {
+  if (S[side + 'ToUsed'] || S.activeTimeout) return;
+  S[side + 'ToUsed'] = true;
+  S.activeTimeout = { team: side, remaining: 30 };
+  clearInterval(toTimer);
+  toTimer = setInterval(() => {
+    if (S.activeTimeout) {
+      S.activeTimeout.remaining--;
+      if (S.activeTimeout.remaining <= 0) {
+        S.activeTimeout = null;
+        clearInterval(toTimer); toTimer = null;
+      }
+    } else {
+      clearInterval(toTimer); toTimer = null;
+    }
+    pushAndRender();
+  }, 1000);
+  pushAndRender();
+}
+
+function endTimeout() {
+  S.activeTimeout = null;
+  clearInterval(toTimer); toTimer = null;
+  S.pause = null;
+  clearInterval(pauseTimer); pauseTimer = null;
+  pushAndRender();
+}
+
+function startPause() {
+  if (S.pause) return;
+  const duration = S.pauseSecs || 600;
+  S.pause = { remaining: duration, duration };
+  clearInterval(pauseTimer);
+  pauseTimer = setInterval(() => {
+    if (S.pause) {
+      S.pause.remaining--;
+      if (S.pause.remaining <= 0) {
+        S.pause = null;
+        clearInterval(pauseTimer); pauseTimer = null;
+      }
+    } else {
+      clearInterval(pauseTimer); pauseTimer = null;
+    }
+    pushAndRender();
+  }, 1000);
+  pushAndRender();
+}
+
+function endPause() {
+  S.pause = null;
+  clearInterval(pauseTimer); pauseTimer = null;
+  pushAndRender();
+}
+
+function resetTO(side) {
+  S[side + 'ToUsed'] = false;
+  pushAndRender();
+}
+
+// no longer called from clock tick but kept for safety
+function tickTimeout() {}
+
+// ── Reset ──
+function resetGame() {
+  if (!confirm('Spiel wirklich zurücksetzen?')) return;
+  stopClock();
+  S.homeScore = 0; S.awayScore = 0;
+  S.clock = S.periodSecs;
+  S.period = 1;
+  S.homePenalties = []; S.awayPenalties = [];
+  S.homeToUsed = false; S.awayToUsed = false;
+  S.activeTimeout = null;
+  clearInterval(toTimer); toTimer = null;
+  S.pause = null;
+  clearInterval(pauseTimer); pauseTimer = null;
+  document.getElementById('ct-set-min').value = 20;
+  document.getElementById('ct-set-sec').value = 0;
+  buildPeriodPills();
+  pushAndRender();
+}
+
+// ── PiP Preview ──
+let pipOpen = false;
+
+function togglePip() {
+  pipOpen = !pipOpen;
+  const pip = document.getElementById('ct-pip');
+  const btn = document.getElementById('ct-pip-btn');
+  pip.style.display         = pipOpen ? 'block' : 'none';
+  btn.style.background      = pipOpen ? 'rgba(200,255,0,.12)' : 'rgba(255,255,255,.04)';
+  btn.style.borderColor     = pipOpen ? 'rgba(200,255,0,.4)'  : 'rgba(255,255,255,.15)';
+  btn.style.color           = pipOpen ? 'var(--lime)' : 'var(--muted2)';
+  if (pipOpen) renderPip(S);
+}
+
+// ── PiP mini-scoreboard renderer ──
+function renderPip(s) {
+  if (!pipOpen || !s) return;
+  const fmt = t => { if(t<0)t=0; const m=Math.floor(t/60),sc=t%60; return `${m}:${String(sc).padStart(2,'0')}`; };
+  const fmtClock = t => {
+    const disp = s.sbCountUp ? (s.periodSecs - t) : t;
+    const d = Math.max(0, disp);
+    return `${Math.floor(d/60)}:${String(d%60).padStart(2,'0')}`;
+  };
+  const set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+
+  const hc = s.homeAccent || '#c8ff00';
+  const ac = s.awayAccent || '#22c55e';
+
+  // Team names + logos + colors
+  set('pip-home-name', s.homeName);
+  set('pip-away-name', s.awayName);
+  document.getElementById('pip-home-name').style.color = hc;
+  document.getElementById('pip-away-name').style.color = ac;
+  document.getElementById('pip-home-score').style.color = hc;
+  document.getElementById('pip-away-score').style.color = ac;
+
+  ['home','away'].forEach(side => {
+    const el   = document.getElementById('pip-' + side + '-logo');
+    const logo = s[side + 'Logo'];
+    const name = side==='home' ? s.homeName : s.awayName;
+    if (el) el.innerHTML = logo
+      ? `<img src="${logo}" style="width:100%;height:100%;object-fit:contain">`
+      : name.charAt(0);
+  });
+
+  // Scores
+  set('pip-home-score', s.homeScore);
+  set('pip-away-score', s.awayScore);
+
+  // Clock
+  const clockEl = document.getElementById('pip-clock');
+  if (clockEl) {
+    clockEl.textContent = fmtClock(s.clock);
+    clockEl.style.color = s.running ? '#ffffff' : 'rgba(255,255,255,.25)';
+  }
+
+  // Status + period
+  set('pip-status', s.running ? '▶ LÄUFT' : '■ GESTOPPT');
+  const pn3 = ['1. DRITTEL','2. DRITTEL','3. DRITTEL','VERLÄNGERUNG'];
+  const pn2 = ['1. HALBZEIT','2. HALBZEIT','VERLÄNGERUNG'];
+  const pn  = s.maxPeriods===3 ? pn3 : pn2;
+  set('pip-period-label', pn[s.period-1] || 'ENDE');
+
+  // Dots
+  const dotsEl = document.getElementById('pip-dots');
+  if (dotsEl) {
+    dotsEl.innerHTML = '';
+    for (let i=1; i<=s.maxPeriods; i++) {
+      const d = document.createElement('div');
+      d.style.cssText = `width:7px;height:7px;border-radius:50%;flex-shrink:0;`;
+      d.style.background = i===s.period ? hc : i<s.period ? 'rgba(255,255,255,.3)' : 'rgba(255,255,255,.1)';
+      if (i===s.period) d.style.boxShadow = `0 0 6px ${hc}`;
+      dotsEl.appendChild(d);
+    }
+  }
+
+  // Ticker: penalties
+  const ticker = document.getElementById('pip-ticker');
+  if (ticker) {
+    const allPens = [
+      ...s.homePenalties.map(p=>({...p, side:'home'})),
+      ...s.awayPenalties.map(p=>({...p, side:'away'})),
+    ];
+    if (allPens.length) {
+      ticker.innerHTML = allPens.map(p => {
+        const c = p.side==='home' ? hc : ac;
+        return `<span style="color:${c};font-weight:700">#${p.number}</span>
+                <span style="color:#fff;font-variant-numeric:tabular-nums">${fmt(p.remaining)}</span>
+                <span style="color:rgba(255,255,255,.3);margin-right:8px">${p.secs<=120?'2MIN':p.secs<=240?'4MIN':'10MIN'}</span>`;
+      }).join('');
+    } else {
+      ticker.innerHTML = '';
+    }
+  }
+}
+
+// ── Open Scoreboard ──
+function openScoreboard() {
+  const sb = window.open(location.pathname + '?view=scoreboard', 'floorball_sb',
+    'width=1280,height=720,menubar=no,toolbar=no,location=no');
+  // Push state once loaded
+  setTimeout(() => push(), 800);
+}
+
+// ── Render controller UI ──
+// ── Tab switching ──
+function toggleCard(id) {
+  document.getElementById(id).classList.toggle('collapsed');
+}
+
+function togglePenCard(side) {
+  const card = document.getElementById('card-' + side + '-pen');
+  const isCollapsed = card.classList.toggle('collapsed');
+  const addBtn = document.getElementById('ct-' + side + '-pen-add-btn');
+  // show + button only when open
+  addBtn.style.display = isCollapsed ? 'none' : 'flex';
+  // close form when collapsing
+  if (isCollapsed) {
+    const form = document.getElementById('ct-' + side + '-pen-form');
+    form.classList.remove('open');
+    addBtn.querySelector('span').textContent = '+';
+  }
+}
+
+function togglePenAdd(side) {
+  const form = document.getElementById('ct-' + side + '-pen-form');
+  const btn  = document.getElementById('ct-' + side + '-pen-add-btn');
+  const open = form.classList.toggle('open');
+  btn.querySelector('span').textContent = open ? '×' : '+';
+  if (open) setTimeout(() => document.getElementById('ct-' + side + '-pen-num').focus(), 50);
+}
+
+function addPenaltyAndClose(side) {
+  addPenalty(side);
+  const form = document.getElementById('ct-' + side + '-pen-form');
+  const btn  = document.getElementById('ct-' + side + '-pen-add-btn');
+  form.classList.remove('open');
+  btn.querySelector('span').textContent = '+';
+}
+
+function switchTab(tab) {
+  ['spiel','teams','settings','danger'].forEach(t => {
+    document.getElementById('tab-btn-' + t).classList.toggle('active', t === tab);
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+  });
+}
+
+function renderController() {
+  const s = S;
+  const fmt = t => { const m=Math.floor(t/60),sc=t%60; return `${m}:${String(sc).padStart(2,'0')}`; };
+  const fmtClock = t => {
+    const disp = S.ctrlCountUp ? (S.periodSecs - t) : t;
+    const d = Math.max(0, disp);
+    return `${Math.floor(d/60)}:${String(d%60).padStart(2,'0')}`;
+  };
+
+  // Clock in control bar
+  const clockStr = fmtClock(s.clock);
+  const barClock = document.getElementById('ct-bar-clock');
+  barClock.textContent = clockStr;
+  barClock.className = 'ct-bar-clock ' + (s.running ? 'running' : 'stopped');
+
+  // Toggle btn
+  const tb = document.getElementById('ct-toggle-btn');
+  tb.textContent = s.running ? '⏸ STOPPEN' : '▶ STARTEN';
+  tb.className = 'ct-bar-toggle ' + (s.running ? 'stop' : 'start');
+
+  // Period chip
+  const pnames3 = ['1. DRITTEL','2. DRITTEL','3. DRITTEL','VERLÄNGERUNG'];
+  const pnames2 = ['1. HALBZEIT','2. HALBZEIT','VERLÄNGERUNG'];
+  const pnames  = s.maxPeriods === 3 ? pnames3 : pnames2;
+  document.getElementById('ct-period-chip').textContent = pnames[s.period-1] || 'ENDE';
+
+  // Scores + team names in bar
+  document.getElementById('ct-home-score').textContent = s.homeScore;
+  document.getElementById('ct-away-score').textContent = s.awayScore;
+  document.getElementById('ct-bar-home-name').textContent = s.homeName;
+  document.getElementById('ct-bar-away-name').textContent = s.awayName;
+
+  // Bar color accents
+  document.getElementById('ct-home-score').style.color = s.homeAccent || 'var(--lime)';
+  document.getElementById('ct-away-score').style.color = s.awayAccent || 'var(--cyan)';
+  document.getElementById('ct-bar-home-name').style.color = s.homeAccent || 'var(--lime)';
+  document.getElementById('ct-bar-away-name').style.color = s.awayAccent || 'var(--cyan)';
+
+  // Penalty indicators in bar – show count + shortest remaining time
+  const homePenEl = document.getElementById('ct-home-pen-count');
+  const awayPenEl = document.getElementById('ct-away-pen-count');
+  if (s.homePenalties.length) {
+    const shortest = Math.min(...s.homePenalties.map(p=>p.remaining));
+    const m=Math.floor(shortest/60), sc=shortest%60;
+    homePenEl.textContent = `● STRAFE ${m}:${String(sc).padStart(2,'0')}`;
+    homePenEl.style.display = 'block';
+  } else {
+    homePenEl.style.display = 'none';
+  }
+  if (s.awayPenalties.length) {
+    const shortest = Math.min(...s.awayPenalties.map(p=>p.remaining));
+    const m=Math.floor(shortest/60), sc=shortest%60;
+    awayPenEl.textContent = `STRAFE ${m}:${String(sc).padStart(2,'0')} ●`;
+    awayPenEl.style.display = 'block';
+  } else {
+    awayPenEl.style.display = 'none';
+  }
+
+  // Timeout indicators in bar
+  document.getElementById('ct-home-to-running').style.display =
+    (s.activeTimeout && s.activeTimeout.team === 'home') ? 'block' : 'none';
+  document.getElementById('ct-away-to-running').style.display =
+    (s.activeTimeout && s.activeTimeout.team === 'away') ? 'block' : 'none';
+
+  // Timeouts
+  ['home','away'].forEach(side => {
+    const used = s[side + 'ToUsed'];
+    const badge = document.getElementById('ct-' + side + '-to-badge');
+    const btn   = document.getElementById('ct-' + side + '-to-btn');
+    badge.textContent = used ? '1× VERBRAUCHT' : '1× VERFÜGBAR';
+    badge.className = 'timeout-badge ' + (used ? 'used' : 'avail');
+    btn.disabled = used || !!s.activeTimeout;
+    btn.style.opacity = (used || !!s.activeTimeout) ? '.4' : '1';
+  });
+
+  // Active timeout box
+  const toCard = document.getElementById('ct-to-active-card');
+  if (s.activeTimeout) {
+    toCard.style.display = 'block';
+    document.getElementById('ct-to-count').textContent = fmt(s.activeTimeout.remaining);
+    document.getElementById('ct-to-team-label').textContent =
+      s.activeTimeout.team === 'home' ? s.homeName : s.awayName;
+  } else {
+    toCard.style.display = 'none';
+  }
+
+  // Dir toggle sync
+  updateDirToggles();
+
+  // Buzzer toggle sync
+  const bt = document.getElementById('ct-buzzer-toggle');
+  const bk = document.getElementById('ct-buzzer-knob');
+  const bl = document.getElementById('ct-buzzer-label');
+  if (bt) {
+    bt.style.background = s.buzzerEnabled ? 'var(--lime)' : 'var(--muted)';
+    bk.style.left = s.buzzerEnabled ? '22px' : '2px';
+    bl.textContent = s.buzzerEnabled ? 'AN' : 'AUS';
+  }
+
+  // Penalty lists + count badges in header
+  renderPenList('home', s.homePenalties, fmt);
+  renderPenList('away', s.awayPenalties, fmt);
+  ['home','away'].forEach(side => {
+    const badge = document.getElementById('ct-' + side + '-pen-count-badge');
+    if (!badge) return;
+    const count = s[side + 'Penalties'].length;
+    if (count) {
+      badge.textContent = count + ' AKTIV';
+      badge.style.display = 'inline';
+    } else {
+      badge.style.display = 'none';
+    }
+  });
+
+  // Pause
+  const pauseActive = document.getElementById('ct-pause-active');
+  const pauseBtn    = document.getElementById('ct-pause-btn');
+  if (s.pause) {
+    pauseActive.style.display = 'block';
+    pauseBtn.style.display    = 'none';
+    document.getElementById('ct-pause-count').textContent = fmt(s.pause.remaining);
+  } else {
+    pauseActive.style.display = 'none';
+    pauseBtn.style.display    = 'block';
+  }
+}
+
+function renderPenList(side, pens, fmt) {
+  const c = document.getElementById('ct-' + side + '-pen-list');
+  const typeLabel = secs => secs<=120?'2 MIN':secs<=240?'4 MIN':'10 MIN';
+
+  if (!pens.length) {
+    c.innerHTML = '<div class="empty-msg">Keine aktiven Strafen</div>';
+    return;
+  }
+
+  // index existing rendered items by id
+  const existing = {};
+  c.querySelectorAll('.penalty-item[data-id]').forEach(el => {
+    existing[el.dataset.id] = el;
+  });
+  const currentIds = new Set(pens.map(p => String(p.id)));
+
+  // remove stale entries
+  Object.keys(existing).forEach(id => { if (!currentIds.has(id)) existing[id].remove(); });
+
+  // remove empty-msg if present
+  const emptyEl = c.querySelector('.empty-msg');
+  if (emptyEl) emptyEl.remove();
+
+  // update or create
+  pens.forEach(p => {
+    const idStr = String(p.id);
+    if (existing[idStr]) {
+      // only update the time — no DOM rebuild, no animation re-trigger
+      existing[idStr].querySelector('.pen-time').textContent = fmt(p.remaining);
+    } else {
+      const d = document.createElement('div');
+      d.className = 'penalty-item';
+      d.dataset.id = idStr;
+      d.innerHTML = `
+        <div class="pen-num">#${p.number}</div>
+        <div class="pen-time">${fmt(p.remaining)}</div>
+        <div class="pen-badge">${typeLabel(p.secs)}</div>
+        <div class="pen-del" onclick="removePenalty('${side}',${p.id})">\u2715</div>
+      `;
+      c.appendChild(d);
+    }
+  });
+}
+
+function pushAndRender() {
+  push();
+  renderController();
+  renderPip(S);
+}
+
+/* ─── SCOREBOARD RENDER ────────────────────────────────────────────── */
+if (isScoreboard) {
+  initScoreboard();
+}
+
+function initScoreboard() {
+  // Ask controller for current state
+  BC.postMessage({ type: 'REQ_STATE' });
+
+  BC.onmessage = e => {
+    if (e.data.type === 'STATE') {
+      renderScoreboard(e.data.payload);
+    }
+  };
+}
+
+let sbPrevHome = null, sbPrevAway = null;  // null = not yet initialised
+let goalTimer = null;
+let s_colors = { home: '#c8ff00', away: '#22c55e' };
+
+function renderScoreboard(s) {
+  if (!s) return;
+
+  // Colors
+  applyScoreboardColors(s);
+  s_colors = { home: s.homeAccent||'#c8ff00', away: s.awayAccent||'#22c55e' };
+  const toRgb = hex => {
+    const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+    return `${r},${g},${b}`;
+  };
+  const root = document.documentElement;
+  root.style.setProperty('--tv-home-rgb', toRgb(s.homeAccent||'#c8ff00'));
+  root.style.setProperty('--tv-away-rgb', toRgb(s.awayAccent||'#22c55e'));
+
+  const fmt = t => { if(t<0)t=0; const m=Math.floor(t/60),sc=t%60; return `${m}:${String(sc).padStart(2,'0')}`; };
+  const fmtClock = t => {
+    const disp = s.sbCountUp ? (s.periodSecs - t) : t;
+    const d = Math.max(0, disp);
+    return `${Math.floor(d/60)}:${String(d%60).padStart(2,'0')}`;
+  };
+
+  const pn3 = ['1. DRITTEL','2. DRITTEL','3. DRITTEL','VERLÄNGERUNG'];
+  const pn2 = ['1. HALBZEIT','2. HALBZEIT','VERLÄNGERUNG'];
+  const pn  = s.maxPeriods===3 ? pn3 : pn2;
+  const periodName = pn[s.period-1] || 'ENDE';
+
+  // Names + logos + jersey bars
+  const setText = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+  setText('sb-home-name', s.homeName);
+  setText('sb-away-name', s.awayName);
+  setText('sb-period-label', periodName);
+  setText('sb-period-badge', periodName);
+  setText('sb-clock-label', s.sbCountUp ? 'GESPIELT' : 'VERBLEIBEND');
+
+  ['home','away'].forEach(side => {
+    const el = document.getElementById('sb-' + side + '-logo');
+    const logo = s[side + 'Logo'];
+    const name = side==='home' ? s.homeName : s.awayName;
+    if (el) el.innerHTML = logo ? `<img src="${logo}">` : name.charAt(0);
+  });
+  const hBar = document.getElementById('sb-home-jersey-bar');
+  const aBar = document.getElementById('sb-away-jersey-bar');
+  if (hBar) hBar.style.background = s.homeJersey || '#0d2e0d';
+  if (aBar) aBar.style.background = s.awayJersey || '#0a1a0a';
+
+  // Scores + goal flash
+  const homeEl = document.getElementById('sb-home-score');
+  const awayEl = document.getElementById('sb-away-score');
+  if (sbPrevHome === null) {
+    sbPrevHome = s.homeScore; sbPrevAway = s.awayScore;
+  } else {
+    if (s.homeScore > sbPrevHome) triggerGoal('home', homeEl, s.homeName);
+    if (s.awayScore > sbPrevAway) triggerGoal('away', awayEl, s.awayName);
+    sbPrevHome = s.homeScore; sbPrevAway = s.awayScore;
+  }
+  homeEl.textContent = s.homeScore;
+  awayEl.textContent = s.awayScore;
+
+  // Clock
+  const clockEl = document.getElementById('sb-clock');
+  if (clockEl) {
+    clockEl.textContent = fmtClock(s.clock);
+    clockEl.className = 'sb-clock ' + (s.running ? 'running' : 'stopped');
+  }
+
+  // Status
+  const pill = document.getElementById('sb-status');
+  if (pill) {
+    pill.className = 'sb-status-pill ' + (s.running ? 'running' : 'stopped');
+    setText('sb-status-text', s.running ? 'LÄUFT' : 'GESTOPPT');
+  }
+
+  // Period dots
+  const dotsEl = document.getElementById('sb-dots');
+  if (dotsEl) {
+    dotsEl.innerHTML = '';
+    for (let i=1; i<=s.maxPeriods; i++) {
+      const d = document.createElement('div');
+      const hc = s.homeAccent || '#c8ff00';
+      d.style.cssText = `width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:all .4s;`;
+      if (i===s.period) { d.style.background=hc; d.style.boxShadow=`0 0 8px ${hc}`; }
+      else if (i<s.period) { d.style.background='rgba(255,255,255,.3)'; }
+      else { d.style.background='rgba(255,255,255,.1)'; d.style.border='1px solid rgba(255,255,255,.2)'; }
+      dotsEl.appendChild(d);
+    }
+  }
+
+  // Penalty chips under scores
+  const typeLabel = secs => secs<=120?'2 MIN':secs<=240?'4 MIN':'10 MIN';
+  ['home','away'].forEach(side => {
+    const c = document.getElementById('sb-' + side + '-pen-chips');
+    if (!c) return;
+    const pens = s[side + 'Penalties'] || [];
+    // smart update – only rebuild if count changed
+    const existing = c.querySelectorAll('.sb-pen-chip[data-id]');
+    const existingMap = {};
+    existing.forEach(el => { existingMap[el.dataset.id] = el; });
+    const currentIds = new Set(pens.map(p => String(p.id)));
+    Object.keys(existingMap).forEach(id => { if (!currentIds.has(id)) existingMap[id].remove(); });
+    pens.forEach(p => {
+      const idStr = String(p.id);
+      if (existingMap[idStr]) {
+        existingMap[idStr].querySelector('.sb-pen-chip-time').textContent = fmt(p.remaining);
+      } else {
+        const el = document.createElement('div');
+        el.className = 'sb-pen-chip' + (side==='away'?' away':'');
+        el.dataset.id = idStr;
+        el.innerHTML = `
+          <div class="sb-pen-chip-num">#${p.number}</div>
+          <div class="sb-pen-chip-time">${fmt(p.remaining)}</div>
+          <div class="sb-pen-chip-type">${typeLabel(p.secs)}</div>`;
+        c.appendChild(el);
+      }
+    });
+  });
+
+  // Ticker
+  const ticker = document.getElementById('sb-ticker');
+  if (ticker) {
+    const cells = [];
+    const allPens = [
+      ...s.homePenalties.map(p=>({...p, side:'home'})),
+      ...s.awayPenalties.map(p=>({...p, side:'away'})),
+    ].sort((a,b)=>a.remaining-b.remaining);
+    if (allPens.length) {
+      const p = allPens[0];
+      cells.push(`<div class="sb-ticker-cell cell-${p.side}">
+        <div><div class="sb-ticker-label">STRAFE ${p.side==='home'?'HEIM':'GAST'}</div>
+        <div class="sb-ticker-value">#${p.number} · ${typeLabel(p.secs)}</div></div>
+        <div class="sb-ticker-accent ${p.side}">${fmt(p.remaining)}</div>
+      </div>`);
+    }
+    const homePens = s.homePenalties.length, awayPens = s.awayPenalties.length;
+    if (homePens !== awayPens) {
+      const ppSide = homePens > awayPens ? 'away' : 'home';
+      cells.push(`<div class="sb-ticker-cell cell-${ppSide}">
+        <div><div class="sb-ticker-label">POWER PLAY</div>
+        <div class="sb-ticker-value" style="font-size:18px;font-weight:900">${homePens>awayPens?`${5+awayPens-homePens} vs ${5}`:`${5} vs ${5+homePens-awayPens}`}</div></div>
+      </div>`);
+    }
+    if (s.activeTimeout) {
+      cells.push(`<div class="sb-ticker-cell cell-neutral">
+        <div><div class="sb-ticker-label">AUSZEIT</div>
+        <div class="sb-ticker-value">${s.activeTimeout.team==='home'?s.homeName:s.awayName}</div></div>
+        <div class="sb-ticker-accent" style="color:var(--orange,#ff9500)">${fmt(s.activeTimeout.remaining)}</div>
+      </div>`);
+    }
+    cells.push(`<div class="sb-ticker-cell cell-neutral">
+      <div><div class="sb-ticker-label">ABSCHNITT</div>
+      <div class="sb-ticker-value">${periodName} · ${s.period}/${s.maxPeriods}</div></div>
+    </div>`);
+    ticker.innerHTML = cells.join('');
+  }
+
+  // Overlays
+  const toOv = document.getElementById('sb-timeout-overlay');
+  if (s.activeTimeout) {
+    toOv.classList.add('visible');
+    setText('sb-timeout-team-label', s.activeTimeout.team==='home' ? s.homeName : s.awayName);
+    setText('sb-timeout-count', fmt(s.activeTimeout.remaining));
+  } else {
+    toOv.classList.remove('visible');
+  }
+  const pauseOv = document.getElementById('sb-pause-overlay');
+  if (s.pause) {
+    pauseOv.classList.add('visible');
+    setText('sb-pause-count', fmt(s.pause.remaining));
+    const nextPn3 = ['2. DRITTEL','3. DRITTEL','VERLÄNGERUNG'];
+    const nextPn2 = ['2. HALBZEIT','VERLÄNGERUNG'];
+    setText('sb-pause-next-label', 'WEITER: ' + ((s.maxPeriods===3?nextPn3:nextPn2)[s.period-1]||''));
+  } else {
+    pauseOv.classList.remove('visible');
+  }
+}
+
+
+function renderSbPenalties(side, pens, fmt) {
+  const c = document.getElementById('sb-' + side + '-penalties');
+  const typeLabel = secs => secs<=120?'2 MIN':secs<=240?'4 MIN':'10 MIN';
+
+  if (!pens || !pens.length) { c.innerHTML = ''; return; }
+
+  // index existing
+  const existing = {};
+  c.querySelectorAll('.sb-penalty[data-id]').forEach(el => { existing[el.dataset.id] = el; });
+  const currentIds = new Set(pens.map(p => String(p.id)));
+
+  // remove stale
+  Object.keys(existing).forEach(id => { if (!currentIds.has(id)) existing[id].remove(); });
+
+  // update or create
+  pens.forEach(p => {
+    const idStr = String(p.id);
+    if (existing[idStr]) {
+      existing[idStr].querySelector('.sb-pen-time').textContent = fmt(p.remaining);
+    } else {
+      const el = document.createElement('div');
+      el.className = 'sb-penalty';
+      el.dataset.id = idStr;
+      el.innerHTML = `
+        <div class="sb-pen-num">#${p.number}</div>
+        <div class="sb-pen-time">${fmt(p.remaining)}</div>
+        <div class="sb-pen-type">${typeLabel(p.secs)}</div>
+      `;
+      c.appendChild(el);
+    }
+  });
+}
+
+function triggerGoal(side, el, teamName) {
+  el.classList.remove('score-pop');
+  void el.offsetWidth;
+  el.classList.add('score-pop');
+
+  const ov  = document.getElementById('sb-goal-overlay');
+  const txt = document.getElementById('sb-goal-text');
+  txt.textContent = 'TOR!';
+  txt.style.color = side==='home' ? (s_colors.home||'#c8ff00') : (s_colors.away||'#22c55e');
+  ov.classList.add('visible');
+  clearTimeout(goalTimer);
+  goalTimer = setTimeout(() => ov.classList.remove('visible'), 2600);
+}
+</script>
+</body>
+</html>
