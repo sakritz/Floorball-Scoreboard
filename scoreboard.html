@@ -975,7 +975,7 @@ input[type=file] { display: none; }
                   <label class="ct-label">Strafart</label>
                   <select id="ct-home-pen-type">
                     <option value="120">2 Min</option>
-                    <option value="240">4 Min (doppelt)</option>
+                    <option value="double">2+2 Min (doppelt)</option>
                     <option value="600">10 Min (pers.)</option>
                   </select>
                 </div>
@@ -1033,7 +1033,7 @@ input[type=file] { display: none; }
                   <label class="ct-label">Strafart</label>
                   <select id="ct-away-pen-type">
                     <option value="120">2 Min</option>
-                    <option value="240">4 Min (doppelt)</option>
+                    <option value="double">2+2 Min (doppelt)</option>
                     <option value="600">10 Min (pers.)</option>
                   </select>
                 </div>
@@ -1739,22 +1739,66 @@ function prevPeriod() { if (S.period > 1) setPeriod(S.period - 1); }
 // ── Penalties ──
 function addPenalty(side) {
   const num  = document.getElementById('ct-' + side + '-pen-num').value || '?';
-  const secs = parseInt(document.getElementById('ct-' + side + '-pen-type').value);
-  S[side + 'Penalties'].push({ id: Date.now(), number: num, secs, remaining: secs });
+  const raw  = document.getElementById('ct-' + side + '-pen-type').value;
+
+  if (raw === 'double') {
+    // Doppelte Zeitstrafe = 2 × 2 Min nacheinander (Regel 6.6)
+    // Second penalty starts only after first expires – we track both,
+    // but only the first (lowest id) ticks while the other waits
+    const id1 = Date.now();
+    const id2 = id1 + 1;
+    S[side + 'Penalties'].push({ id: id1, number: num, secs: 120, remaining: 120, doubleFirst: true,  doubleId: id2 });
+    S[side + 'Penalties'].push({ id: id2, number: num, secs: 120, remaining: 120, doubleSecond: true, doubleId: id1, waiting: true });
+  } else {
+    const secs = parseInt(raw);
+    S[side + 'Penalties'].push({ id: Date.now(), number: num, secs, remaining: secs });
+  }
   document.getElementById('ct-' + side + '-pen-num').value = '';
   pushAndRender();
 }
 
 function removePenalty(side, id) {
-  S[side + 'Penalties'] = S[side + 'Penalties'].filter(p => p.id !== id);
+  const pens = S[side + 'Penalties'];
+  const removed = pens.find(p => p.id === id);
+
+  // If removing a doubleFirst, activate its waiting second part immediately
+  if (removed && removed.doubleFirst) {
+    S[side + 'Penalties'] = pens
+      .filter(p => p.id !== id)
+      .map(p => (p.doubleSecond && p.doubleId === removed.id)
+        ? { ...p, waiting: false }
+        : p);
+  } else {
+    S[side + 'Penalties'] = pens.filter(p => p.id !== id);
+  }
   pushAndRender();
 }
 
 function tickPenalties() {
   ['home','away'].forEach(side => {
-    S[side + 'Penalties'] = S[side + 'Penalties']
-      .map(p => ({ ...p, remaining: p.remaining - 1 }))
-      .filter(p => p.remaining > 0);
+    const pens = S[side + 'Penalties'];
+    // Find which double-first penalties just expired this tick
+    const expiredDoubleFirstIds = new Set();
+
+    const ticked = pens.map(p => {
+      if (p.waiting) return p; // don't tick waiting second part
+      return { ...p, remaining: p.remaining - 1 };
+    });
+
+    // Find expired double-first entries
+    ticked.forEach(p => {
+      if (p.doubleFirst && p.remaining <= 0) expiredDoubleFirstIds.add(p.doubleId);
+    });
+
+    // Activate waiting second parts whose first just expired
+    const activated = ticked.map(p => {
+      if (p.doubleSecond && expiredDoubleFirstIds.has(p.id)) {
+        return { ...p, waiting: false };
+      }
+      return p;
+    });
+
+    S[side + 'Penalties'] = activated.filter(p => p.remaining > 0);
   });
 }
 
@@ -1931,8 +1975,8 @@ function renderPip(s) {
       ticker.innerHTML = allPens.map(p => {
         const c = p.side==='home' ? hc : ac;
         return `<span style="color:${c};font-weight:700">#${p.number}</span>
-                <span style="color:#fff;font-variant-numeric:tabular-nums">${fmt(p.remaining)}</span>
-                <span style="color:rgba(255,255,255,.3);margin-right:8px">${p.secs<=120?'2MIN':p.secs<=240?'4MIN':'10MIN'}</span>`;
+                <span style="color:#fff;font-variant-numeric:tabular-nums">${p.waiting ? '– –' : fmt(p.remaining)}</span>
+                <span style="color:rgba(255,255,255,.3);margin-right:8px">${typeLabel(p.secs, p)}</span>`;
       }).join('');
     } else {
       ticker.innerHTML = '';
@@ -2033,7 +2077,8 @@ function renderController() {
   const homePenEl = document.getElementById('ct-home-pen-count');
   const awayPenEl = document.getElementById('ct-away-pen-count');
   if (s.homePenalties.length) {
-    const shortest = Math.min(...s.homePenalties.map(p=>p.remaining));
+    const active = s.homePenalties.filter(p=>!p.waiting);
+    const shortest = active.length ? Math.min(...active.map(p=>p.remaining)) : Math.min(...s.homePenalties.map(p=>p.remaining));
     const m=Math.floor(shortest/60), sc=shortest%60;
     homePenEl.textContent = `● STRAFE ${m}:${String(sc).padStart(2,'0')}`;
     homePenEl.style.display = 'block';
@@ -2041,7 +2086,8 @@ function renderController() {
     homePenEl.style.display = 'none';
   }
   if (s.awayPenalties.length) {
-    const shortest = Math.min(...s.awayPenalties.map(p=>p.remaining));
+    const active = s.awayPenalties.filter(p=>!p.waiting);
+    const shortest = active.length ? Math.min(...active.map(p=>p.remaining)) : Math.min(...s.awayPenalties.map(p=>p.remaining));
     const m=Math.floor(shortest/60), sc=shortest%60;
     awayPenEl.textContent = `STRAFE ${m}:${String(sc).padStart(2,'0')} ●`;
     awayPenEl.style.display = 'block';
@@ -2120,7 +2166,7 @@ function renderController() {
 
 function renderPenList(side, pens, fmt) {
   const c = document.getElementById('ct-' + side + '-pen-list');
-  const typeLabel = secs => secs<=120?'2 MIN':secs<=240?'4 MIN':'10 MIN';
+  const typeLabel = (secs, p) => { if (p && p.doubleFirst) return '2+2 MIN (1)'; if (p && p.doubleSecond) return '2+2 MIN (2)'; if (p && p.waiting) return '2+2 MIN (2)'; return secs<=120?'2 MIN':'10 MIN'; };
 
   if (!pens.length) {
     c.innerHTML = '<div class="empty-msg">Keine aktiven Strafen</div>';
@@ -2276,7 +2322,7 @@ function renderScoreboard(s) {
   }
 
   // Penalty chips under scores
-  const typeLabel = secs => secs<=120?'2 MIN':secs<=240?'4 MIN':'10 MIN';
+  const typeLabel = (secs, p) => { if (p && p.doubleFirst) return '2+2 MIN (1)'; if (p && p.doubleSecond) return '2+2 MIN (2)'; if (p && p.waiting) return '2+2 MIN (2)'; return secs<=120?'2 MIN':'10 MIN'; };
   ['home','away'].forEach(side => {
     const c = document.getElementById('sb-' + side + '-pen-chips');
     if (!c) return;
@@ -2290,15 +2336,15 @@ function renderScoreboard(s) {
     pens.forEach(p => {
       const idStr = String(p.id);
       if (existingMap[idStr]) {
-        existingMap[idStr].querySelector('.sb-pen-chip-time').textContent = fmt(p.remaining);
+        existingMap[idStr].querySelector('.sb-pen-chip-time').textContent = p.waiting ? '– –' : fmt(p.remaining);
       } else {
         const el = document.createElement('div');
         el.className = 'sb-pen-chip' + (side==='away'?' away':'');
         el.dataset.id = idStr;
         el.innerHTML = `
           <div class="sb-pen-chip-num">#${p.number}</div>
-          <div class="sb-pen-chip-time">${fmt(p.remaining)}</div>
-          <div class="sb-pen-chip-type">${typeLabel(p.secs)}</div>`;
+          <div class="sb-pen-chip-time">${p.waiting ? '– –' : fmt(p.remaining)}</div>
+          <div class="sb-pen-chip-type">${typeLabel(p.secs, p)}</div>`;
         c.appendChild(el);
       }
     });
@@ -2366,7 +2412,7 @@ function renderScoreboard(s) {
 
 function renderSbPenalties(side, pens, fmt) {
   const c = document.getElementById('sb-' + side + '-penalties');
-  const typeLabel = secs => secs<=120?'2 MIN':secs<=240?'4 MIN':'10 MIN';
+  const typeLabel = (secs, p) => { if (p && p.doubleFirst) return '2+2 MIN (1)'; if (p && p.doubleSecond) return '2+2 MIN (2)'; if (p && p.waiting) return '2+2 MIN (2)'; return secs<=120?'2 MIN':'10 MIN'; };
 
   if (!pens || !pens.length) { c.innerHTML = ''; return; }
 
