@@ -423,8 +423,11 @@ body {
   display: flex; align-items: stretch;
   flex-shrink: 0; height: 44px; padding: 0 4px;
 }
+/* spacer pushes right-group to end */
+.ct-tab-spacer { flex: 1; }
+
 .ct-tab {
-  padding: 0 20px;
+  padding: 0 18px;
   font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
   color: var(--ct-muted); cursor: pointer;
   display: flex; align-items: center; gap: 6px;
@@ -433,6 +436,8 @@ body {
 }
 .ct-tab:hover { color: var(--ct-muted2); }
 .ct-tab.active { color: var(--ct-text); border-bottom-color: var(--lime); }
+.ct-tab.right { border-left: 1px solid var(--ct-border); }
+.ct-tab.right:first-of-type { border-left: 1px solid var(--ct-border); }
 
 /* ── TAB CONTENT ── */
 .ct-tab-content { flex: 1; overflow: hidden; min-height: 0; display: none; }
@@ -453,22 +458,31 @@ body {
 .ct-spiel-col:first-child { border-right: 1px solid var(--ct-border); }
 
 .ct-tab-content.tab-teams { display: none; }
-.ct-tab-content.tab-teams.active { display: grid; grid-template-columns: 1fr 1fr; }
+.ct-tab-content.tab-teams.active { display: grid; grid-template-columns: 1fr 1fr; flex: 1; min-height: 0; overflow-y: auto; }
 .ct-teams-col {
   display: flex; flex-direction: column; overflow-y: auto; padding: 14px; gap: 10px;
   scrollbar-width: thin; scrollbar-color: var(--ct-card) transparent;
 }
 .ct-teams-col:first-child { border-right: 1px solid var(--ct-border); }
 
+.ct-tab-content.tab-admin { display: none; }
+.ct-tab-content.tab-admin.active {
+  display: flex; overflow-y: auto; padding: 14px; gap: 14px; align-items: flex-start;
+  flex: 1; min-height: 0;
+}
+.ct-admin-col { flex: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
 .ct-tab-content.tab-settings { display: none; }
 .ct-tab-content.tab-settings.active {
   display: flex; overflow-y: auto; padding: 14px; gap: 14px; align-items: flex-start;
+  flex: 1; min-height: 0;
 }
 .ct-settings-col { flex: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 
 .ct-tab-content.tab-danger { display: none; }
 .ct-tab-content.tab-danger.active {
   display: flex; overflow-y: auto; padding: 14px; gap: 14px; align-items: flex-start;
+  flex: 1; min-height: 0;
 }
 .ct-danger-inner { flex: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 
@@ -819,10 +833,12 @@ input[type=file] { display: none; }
 
   <!-- TAB BAR -->
   <div class="ct-tabbar">
-    <div class="ct-tab active" onclick="switchTab('spiel')"    id="tab-btn-spiel">🎮 Spiel</div>
-    <div class="ct-tab"       onclick="switchTab('teams')"    id="tab-btn-teams">👕 Teams</div>
-    <div class="ct-tab"       onclick="switchTab('settings')" id="tab-btn-settings">⚙ Einstellungen</div>
-    <div class="ct-tab"       onclick="switchTab('danger')"   id="tab-btn-danger" style="color:var(--red);opacity:.7">⚠ Danger Zone</div>
+    <div class="ct-tab active" onclick="switchTab('spiel')"    id="tab-btn-spiel">Spiel</div>
+    <div class="ct-tab"        onclick="switchTab('admin')"    id="tab-btn-admin">Spieladmin</div>
+    <div class="ct-tab"        onclick="switchTab('teams')"    id="tab-btn-teams">Teams</div>
+    <div class="ct-tab-spacer"></div>
+    <div class="ct-tab right"  onclick="switchTab('settings')" id="tab-btn-settings">⚙ Einstellungen</div>
+    <div class="ct-tab right"  onclick="switchTab('danger')"   id="tab-btn-danger" style="color:var(--red);opacity:.7">⚠ Danger Zone</div>
   </div>
 
   <!-- PiP SCOREBOARD PREVIEW – real mini scoreboard, no iframe -->
@@ -1117,23 +1133,30 @@ input[type=file] { display: none; }
     </div>
   </div>
 
-  <!-- ── TAB: EINSTELLUNGEN ── -->
-  <div class="ct-tab-content tab-settings" id="tab-settings">
+  <!-- ── TAB: SPIELADMINISTRATION ── -->
+  <div class="ct-tab-content tab-admin" id="tab-admin">
 
-    <!-- LEFT col: Abschnitt + Uhranzeige -->
-    <div class="ct-settings-col">
-
+    <div class="ct-admin-col">
       <div class="ct-card">
-        <div class="ct-card-head neutral">Abschnitt</div>
+        <div class="ct-card-head neutral">Spielformat</div>
         <div class="ct-card-body">
           <div>
-            <label class="ct-label">Spielformat</label>
+            <label class="ct-label">Format</label>
             <select id="ct-format" onchange="onFormatChange()">
               <option value="3">Großfeld (3 × 20 Min)</option>
               <option value="3s">Großfeld Spieltag (3 × 15 Min)</option>
               <option value="2">Kleinfeld (2 × 20 Min)</option>
             </select>
           </div>
+          <div style="font-size:11px;color:var(--ct-muted);letter-spacing:1px;line-height:1.5;margin-top:2px">
+            ⚠ Änderung setzt die Spielzeit zurück.
+          </div>
+        </div>
+      </div>
+
+      <div class="ct-card">
+        <div class="ct-card-head neutral">Abschnitt</div>
+        <div class="ct-card-body">
           <label class="ct-label">Aktueller Abschnitt</label>
           <div class="period-pills" id="ct-period-pills"></div>
           <div class="grid2">
@@ -1142,6 +1165,38 @@ input[type=file] { display: none; }
           </div>
         </div>
       </div>
+    </div>
+
+    <div class="ct-admin-col">
+      <div class="ct-card">
+        <div class="ct-card-head neutral">Pause</div>
+        <div class="ct-card-body">
+          <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;line-height:1.5">
+            Großfeld: 10 Min · Spieltag: 7 Min · Kleinfeld: 5 Min
+          </div>
+          <button class="btn btn-ghost" id="ct-pause-btn" onclick="startPause()"
+            style="border-color:rgba(180,79,255,.4);color:#b44fff">
+            ⏱ Pause starten
+          </button>
+          <div id="ct-pause-active" style="display:none">
+            <div class="active-timeout-box" style="background:rgba(180,79,255,.08);border-color:rgba(180,79,255,.3)">
+              <div class="active-timeout-label" style="color:#b44fff">Pause läuft</div>
+              <div class="active-timeout-count" id="ct-pause-count">10:00</div>
+              <button class="btn btn-ghost btn-sm" style="width:auto;margin:0 auto" onclick="endPause()">✕ Beenden</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ── TAB: EINSTELLUNGEN ── -->
+  <div class="ct-tab-content tab-settings" id="tab-settings">
+
+    <!-- LEFT col: Uhranzeige -->
+    <div class="ct-settings-col">
 
       <div class="ct-card">
         <div class="ct-card-head neutral">⏱ Uhranzeige</div>
@@ -1176,28 +1231,8 @@ input[type=file] { display: none; }
 
     </div>
 
-    <!-- RIGHT col: Pause + Buzzer -->
+    <!-- RIGHT col: Buzzer -->
     <div class="ct-settings-col">
-
-      <div class="ct-card">
-        <div class="ct-card-head neutral">Pause</div>
-        <div class="ct-card-body">
-          <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;line-height:1.5">
-            Großfeld: 10 Min · Spieltag: 7 Min · Kleinfeld: 5 Min
-          </div>
-          <button class="btn btn-ghost" id="ct-pause-btn" onclick="startPause()"
-            style="border-color:rgba(180,79,255,.4);color:#b44fff">
-            ⏱ Pause starten
-          </button>
-          <div id="ct-pause-active" style="display:none">
-            <div class="active-timeout-box" style="background:rgba(180,79,255,.08);border-color:rgba(180,79,255,.3)">
-              <div class="active-timeout-label" style="color:#b44fff">Pause läuft</div>
-              <div class="active-timeout-count" id="ct-pause-count">10:00</div>
-              <button class="btn btn-ghost btn-sm" style="width:auto;margin:0 auto" onclick="endPause()">✕ Beenden</button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div class="ct-card">
         <div class="ct-card-head neutral">🔔 Buzzer</div>
@@ -1293,6 +1328,7 @@ let S = {
   periodSecs: 1200,
   pauseSecs: 600,        // derived from format
   buzzerEnabled: true,
+  gameStarted: false,    // true once clock has run for the first time
   ctrlCountUp: false,   // controller shows count-up
   sbCountUp: false,     // scoreboard shows count-up
   homePenalties: [],    awayPenalties: [],
@@ -1463,6 +1499,7 @@ function toggleClock() {
 function startClock() {
   if (S.running) return;
   S.running = true;
+  S.gameStarted = true;
   clockTimer = setInterval(() => {
     if (S.clock > 0) {
       S.clock--;
@@ -1629,21 +1666,31 @@ function updateLogoThumbs() {
 // ── Period / Format ──
 function onFormatChange() {
   const val = document.getElementById('ct-format').value;
+  if (S.gameStarted) {
+    const ok = confirm('Das Spiel hat bereits begonnen.\nFormat ändern setzt Spielzeit und Abschnitt zurück. Fortfahren?');
+    if (!ok) {
+      // revert select to current format
+      const cur = S.maxPeriods === 2 ? '2' : S.periodSecs === 900 ? '3s' : '3';
+      document.getElementById('ct-format').value = cur;
+      return;
+    }
+  }
   if (val === '3s') {
     S.maxPeriods = 3;
-    S.periodSecs = 900;  // 15 min
-    S.pauseSecs  = 420;  // 7 min
+    S.periodSecs = 900;
+    S.pauseSecs  = 420;
   } else if (val === '2') {
     S.maxPeriods = 2;
     S.periodSecs = 1200;
-    S.pauseSecs  = 300;  // 5 min
+    S.pauseSecs  = 300;
   } else {
     S.maxPeriods = 3;
     S.periodSecs = 1200;
-    S.pauseSecs  = 600;  // 10 min
+    S.pauseSecs  = 600;
   }
   S.period = 1;
   S.clock  = S.periodSecs;
+  S.gameStarted = false; // reset game started after format change
   document.getElementById('ct-set-min').value = Math.floor(S.periodSecs / 60);
   document.getElementById('ct-set-sec').value = 0;
   buildPeriodPills();
@@ -1665,7 +1712,16 @@ function buildPeriodPills() {
   }
 }
 
-function setPeriod(p) {
+function setPeriod(p, skipConfirm) {
+  // Ask for confirmation if clock still has time left
+  if (!skipConfirm && S.clock > 0 && S.gameStarted) {
+    const pn3 = ['1. Drittel','2. Drittel','3. Drittel','Verlängerung'];
+    const pn2 = ['1. Halbzeit','2. Halbzeit','Verlängerung'];
+    const pn  = S.maxPeriods === 3 ? pn3 : pn2;
+    const target = pn[p-1] || 'Verlängerung';
+    const ok = confirm(`Wechsel zu ${target}?\nDie Spieluhr wird zurückgesetzt. Fortfahren?`);
+    if (!ok) return;
+  }
   stopClock();
   S.period = p;
   const isOT = p > S.maxPeriods;
@@ -1778,6 +1834,7 @@ function resetGame() {
   S.homePenalties = []; S.awayPenalties = [];
   S.homeToUsed = false; S.awayToUsed = false;
   S.activeTimeout = null;
+  S.gameStarted = false;
   clearInterval(toTimer); toTimer = null;
   S.pause = null;
   clearInterval(pauseTimer); pauseTimer = null;
@@ -1928,7 +1985,7 @@ function addPenaltyAndClose(side) {
 }
 
 function switchTab(tab) {
-  ['spiel','teams','settings','danger'].forEach(t => {
+  ['spiel','admin','teams','settings','danger'].forEach(t => {
     document.getElementById('tab-btn-' + t).classList.toggle('active', t === tab);
     document.getElementById('tab-' + t).classList.toggle('active', t === tab);
   });
