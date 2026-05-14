@@ -1338,6 +1338,11 @@ let S = {
 };
 
 let clockTimer = null;
+// Wall-clock tracking: S.clock stores whole seconds (display),
+// clockMs stores the precise remaining time in milliseconds.
+// On stop we capture the exact remainder; on start we use it.
+let clockMs = null;          // null = not yet initialised from S.clock
+let clockStartedAt = null;   // Date.now() when clock last started
 let prevHomeScore = 0, prevAwayScore = 0;
 
 /* ─── BUZZER ──────────────────────────────────────────────────────── */
@@ -1500,23 +1505,58 @@ function startClock() {
   if (S.running) return;
   S.running = true;
   S.gameStarted = true;
+
+  // Initialise precise ms tracker from display value if not yet set
+  if (clockMs === null) clockMs = S.clock * 1000;
+  clockStartedAt = Date.now();
+
   clockTimer = setInterval(() => {
-    if (S.clock > 0) {
-      S.clock--;
+    const now = Date.now();
+    const elapsedMs = now - clockStartedAt;
+    clockStartedAt = now;
+
+    const prevSecs = Math.ceil(clockMs / 1000);
+    clockMs = Math.max(0, clockMs - elapsedMs);
+    const newSecs  = Math.ceil(clockMs / 1000);
+
+    // Tick penalties/timeout once per elapsed whole second
+    const tickCount = prevSecs - newSecs;
+    for (let i = 0; i < tickCount; i++) {
       tickPenalties();
       tickTimeout();
-    } else {
+    }
+
+    // Update display (whole seconds)
+    S.clock = Math.ceil(clockMs / 1000);
+
+    if (clockMs <= 0) {
       stopClock();
       playBuzzer();
+      return;
     }
     pushAndRender();
-  }, 1000);
+  }, 100); // 100ms poll – smooth and accurate
   pushAndRender();
 }
 
 function stopClock() {
+  if (S.running && clockStartedAt !== null) {
+    // Capture any remaining ms since last interval tick
+    const elapsedMs = Date.now() - clockStartedAt;
+    const prevSecs = Math.ceil(clockMs / 1000);
+    clockMs = Math.max(0, clockMs - elapsedMs);
+    const newSecs  = Math.ceil(clockMs / 1000);
+
+    const tickCount = prevSecs - newSecs;
+    for (let i = 0; i < tickCount; i++) {
+      tickPenalties();
+      tickTimeout();
+    }
+    S.clock = Math.ceil(clockMs / 1000);
+  }
   S.running = false;
   clearInterval(clockTimer); clockTimer = null;
+  clockStartedAt = null;
   pushAndRender();
 }
 
@@ -1524,6 +1564,7 @@ function setClock() {
   const m = parseInt(document.getElementById('ct-set-min').value) || 0;
   const s = parseInt(document.getElementById('ct-set-sec').value) || 0;
   S.clock = m * 60 + s;
+  clockMs = S.clock * 1000; // reset precise tracker too
   pushAndRender();
 }
 
@@ -1690,7 +1731,8 @@ function onFormatChange() {
   }
   S.period = 1;
   S.clock  = S.periodSecs;
-  S.gameStarted = false; // reset game started after format change
+  clockMs = S.clock * 1000;
+  S.gameStarted = false;
   document.getElementById('ct-set-min').value = Math.floor(S.periodSecs / 60);
   document.getElementById('ct-set-sec').value = 0;
   buildPeriodPills();
@@ -1726,6 +1768,7 @@ function setPeriod(p, skipConfirm) {
   S.period = p;
   const isOT = p > S.maxPeriods;
   S.clock = isOT ? 600 : S.periodSecs;
+  clockMs = S.clock * 1000;
   const [m,s] = [Math.floor(S.clock/60), S.clock%60];
   document.getElementById('ct-set-min').value = m;
   document.getElementById('ct-set-sec').value = s;
@@ -1965,22 +2008,44 @@ function renderPip(s) {
   }
 
   // Ticker: penalties
+  // local typeLabel for pip context
+  const pipTypeLabel = (secs, p) => {
+    if (p && p.doubleFirst)  return '2+2(1)';
+    if (p && p.doubleSecond) return '2+2(2)';
+    return secs <= 120 ? '2MIN' : '10MIN';
+  };
+
   const ticker = document.getElementById('pip-ticker');
   if (ticker) {
+    const parts = [];
+
+    // Pause overlay notice
+    if (s.pause) {
+      parts.push(`<span style="color:#b44fff;font-weight:700;letter-spacing:1px">⏸ PAUSE</span>
+                  <span style="color:#fff;font-variant-numeric:tabular-nums;margin-right:12px">${fmt(s.pause.remaining)}</span>`);
+    }
+
+    // Active timeout
+    if (s.activeTimeout) {
+      const tc = s.activeTimeout.team === 'home' ? hc : ac;
+      parts.push(`<span style="color:${tc};font-weight:700">⏱ AUSZEIT</span>
+                  <span style="color:#fff;font-variant-numeric:tabular-nums;margin-right:12px">${fmt(s.activeTimeout.remaining)}</span>`);
+    }
+
+    // Penalties
     const allPens = [
       ...s.homePenalties.map(p=>({...p, side:'home'})),
       ...s.awayPenalties.map(p=>({...p, side:'away'})),
     ];
-    if (allPens.length) {
-      ticker.innerHTML = allPens.map(p => {
-        const c = p.side==='home' ? hc : ac;
-        return `<span style="color:${c};font-weight:700">#${p.number}</span>
-                <span style="color:#fff;font-variant-numeric:tabular-nums">${p.waiting ? '– –' : fmt(p.remaining)}</span>
-                <span style="color:rgba(255,255,255,.3);margin-right:8px">${typeLabel(p.secs, p)}</span>`;
-      }).join('');
-    } else {
-      ticker.innerHTML = '';
-    }
+    allPens.forEach(p => {
+      const c = p.side === 'home' ? hc : ac;
+      parts.push(`<span style="color:${c};font-weight:700">#${p.number}</span>
+                  <span style="color:#fff;font-variant-numeric:tabular-nums">${p.waiting ? '– –' : fmt(p.remaining)}</span>
+                  <span style="color:rgba(255,255,255,.3);margin-right:10px">${pipTypeLabel(p.secs, p)}</span>`);
+    });
+
+    ticker.innerHTML = parts.join('');
+    ticker.style.display = parts.length ? 'flex' : 'none';
   }
 }
 
