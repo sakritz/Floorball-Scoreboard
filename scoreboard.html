@@ -419,7 +419,62 @@ body {
 .ct-bar-toggle.start { background: var(--green); color: #062815; }
 .ct-bar-toggle.stop  { background: var(--red);   color: #fff; }
 
-/* ── RESIZE HANDLE ── */
+/* ── Inline SVG Icons ── */
+.ph-icon { display: inline-flex; align-items: center; vertical-align: middle; }
+.ph-icon svg { width: 1em; height: 1em; fill: currentColor; }
+.ph-sm  svg { width: 14px; height: 14px; }
+.ph-md  svg { width: 18px; height: 18px; }
+.ph-lg  svg { width: 22px; height: 22px; }
+.ct-event-item .ev-del {
+  cursor: pointer; color: var(--ct-muted); padding: 2px 6px;
+  font-size: 13px; flex-shrink: 0; opacity: .5; transition: opacity .15s, color .15s;
+  background: none; border: none;
+}
+.ct-event-item .ev-del:hover { color: var(--red); opacity: 1; }
+
+/* ── EVENTS TAB ── */
+.ct-tab-content.tab-events { display: none; }
+.ct-tab-content.tab-events.active {
+  display: flex; overflow-y: auto; padding: 14px; gap: 14px; align-items: flex-start;
+  flex: 1; min-height: 0;
+}
+.ct-events-inner { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.ct-event-item {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+  background: var(--ct-card); border: 1px solid var(--ct-border);
+  font-size: 12px; letter-spacing: .5px;
+}
+.ct-event-item .ev-time { font-variant-numeric: tabular-nums; font-weight: 900; color: var(--ct-muted2); min-width: 38px; font-size: 11px; }
+.ct-event-item .ev-icon { font-size: 14px; flex-shrink: 0; }
+.ct-event-item .ev-main { flex: 1; font-weight: 700; }
+.ct-event-item .ev-sub  { font-size: 11px; color: var(--ct-muted2); }
+.ct-event-item .ev-del  { cursor: pointer; color: var(--ct-muted); font-size: 14px; padding: 0 4px; }
+.ct-event-item .ev-del:hover { color: var(--red); }
+.ct-event-item.ev-home { border-left: 3px solid var(--ct-home, #c8ff00); }
+.ct-event-item.ev-away { border-left: 3px solid var(--ct-away, #22c55e); }
+.ct-event-item.ev-neutral { border-left: 3px solid rgba(255,255,255,.2); }
+
+/* Goal dialog */
+#ct-goal-dialog {
+  display: none; position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,.7); align-items: center; justify-content: center;
+}
+#ct-goal-dialog.open { display: flex; }
+.ct-goal-dialog-box {
+  background: var(--ct-surface); border: 1px solid var(--ct-border);
+  padding: 20px; width: 300px; display: flex; flex-direction: column; gap: 12px;
+}
+.ct-goal-dialog-title {
+  font-size: 13px; font-weight: 900; letter-spacing: 3px; text-align: center;
+}
+.ct-goal-dialog-box input {
+  background: var(--ct-card); border: 1px solid var(--ct-border);
+  color: var(--ct-text); padding: 8px 10px; font-size: 13px; font-weight: 700;
+  letter-spacing: 1px; width: 100%; box-sizing: border-box;
+}
+.ct-goal-dialog-box input::placeholder { color: var(--ct-muted); font-weight: 400; }
+
+
 .ct-resize-handle {
   flex-shrink: 0;
   height: 8px;
@@ -708,6 +763,25 @@ input[type=file] { display: none; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .divider { height: 1px; background: var(--ct-border); margin: 4px 0; }
 </style>
+<!-- Inline SVG icon sprite – no CDN needed -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <!-- flag-pennant -->
+  <symbol id="ph-flag-pennant" viewBox="0 0 256 256">
+    <path fill="currentColor" d="M232 56a8 8 0 0 0-8-8H48V32a8 8 0 0 0-16 0v192a8 8 0 0 0 16 0v-72h160a8 8 0 0 0 6.39-12.8ZM48 136V64h158.25L137.6 100.8a8 8 0 0 0 0 12.8l68.65 51.49Z"/>
+  </symbol>
+  <!-- warning-circle -->
+  <symbol id="ph-warning-circle" viewBox="0 0 256 256">
+    <path fill="currentColor" d="M236.8 188.09 149.35 36.22a24.76 24.76 0 0 0-42.7 0L19.2 188.09a23.51 23.51 0 0 0 0 23.72A24.35 24.35 0 0 0 40.55 224h174.9a24.35 24.35 0 0 0 21.33-12.19 23.51 23.51 0 0 0 .02-23.72ZM120 104a8 8 0 0 1 16 0v40a8 8 0 0 1-16 0Zm8 88a12 12 0 1 1 12-12 12 12 0 0 1-12 12Z"/>
+  </symbol>
+  <!-- hourglass-medium -->
+  <symbol id="ph-hourglass-medium" viewBox="0 0 256 256">
+    <path fill="currentColor" d="M200 75.64V40a16 16 0 0 0-16-16H72A16 16 0 0 0 56 40v35.64a16.07 16.07 0 0 0 5.42 11.96L112 131.93v-7.86L61.42 80.4A.09.09 0 0 1 61.38 80H194.62a.09.09 0 0 1 0 .4L144 124.07v7.86l50.58-44.33A16.07 16.07 0 0 0 200 75.64ZM72 40h112v32H72Zm122.58 144.4L144 140.07v7.86l50.62 44.27a.09.09 0 0 1 0 .4H61.38a.09.09 0 0 1 0-.4L112 147.93v-7.86L61.42 184.4A16.07 16.07 0 0 0 56 196.36V232a8 8 0 0 0 8 8h128a8 8 0 0 0 8-8v-35.64a16.07 16.07 0 0 0-5.42-11.96ZM184 232H72v-32h112Z"/>
+  </symbol>
+  <!-- trash -->
+  <symbol id="ph-trash" viewBox="0 0 256 256">
+    <path fill="currentColor" d="M216 48h-40v-8a24 24 0 0 0-24-24h-48a24 24 0 0 0-24 24v8H40a8 8 0 0 0 0 16h8v144a16 16 0 0 0 16 16h128a16 16 0 0 0 16-16V64h8a8 8 0 0 0 0-16ZM96 40a8 8 0 0 1 8-8h48a8 8 0 0 1 8 8v8H96Zm96 168H64V64h128Zm-80-104v64a8 8 0 0 1-16 0v-64a8 8 0 0 1 16 0Zm48 0v64a8 8 0 0 1-16 0v-64a8 8 0 0 1 16 0Z"/>
+  </symbol>
+</svg>
 </head>
 <body>
 
@@ -867,6 +941,7 @@ input[type=file] { display: none; }
     <div class="ct-tab active" onclick="switchTab('spiel')"    id="tab-btn-spiel">Spiel</div>
     <div class="ct-tab"        onclick="switchTab('admin')"    id="tab-btn-admin">Spieladmin</div>
     <div class="ct-tab"        onclick="switchTab('teams')"    id="tab-btn-teams">Teams</div>
+    <div class="ct-tab"        onclick="switchTab('events')"   id="tab-btn-events" style="display:none">Events</div>
     <div class="ct-tab-spacer"></div>
     <div class="ct-tab right"  onclick="switchTab('settings')" id="tab-btn-settings">⚙ Einstellungen</div>
     <div class="ct-tab right"  onclick="switchTab('danger')"   id="tab-btn-danger" style="color:var(--red);opacity:.7">⚠ Danger Zone</div>
@@ -1274,6 +1349,18 @@ input[type=file] { display: none; }
               </div>
             </label>
           </div>
+          <div style="height:1px;background:var(--ct-border);margin:10px 0"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px">Events-Tab & Ereignisse</div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex-shrink:0">
+              <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--ct-muted2)" id="ct-events-tab-label">AUS</div>
+              <div id="ct-events-tab-toggle" onclick="toggleEventsTab()"
+                style="width:44px;height:24px;border-radius:4px;background:var(--ct-muted);cursor:pointer;position:relative;transition:background .2s;border:1px solid rgba(255,255,255,.15)">
+                <div id="ct-events-tab-knob"
+                  style="position:absolute;top:2px;left:2px;width:18px;height:18px;background:#000;transition:left .2s"></div>
+              </div>
+            </label>
+          </div>
         </div>
       </div>
 
@@ -1302,6 +1389,19 @@ input[type=file] { display: none; }
 
     </div>
 
+  </div>
+
+  <!-- ── TAB: EVENTS ── -->
+  <div class="ct-tab-content tab-events" id="tab-events">
+    <div class="ct-events-inner">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-shrink:0">
+        <div style="font-size:11px;font-weight:700;letter-spacing:3px;color:var(--ct-muted2)">SPIELEREIGNISSE</div>
+        <button class="btn btn-danger" style="font-size:11px;padding:4px 10px;width:auto;align-self:flex-end" onclick="clearEvents()"><span class="ph-icon ph-sm"><svg><use href="#ph-trash"/></svg></span> Löschen</button>
+      </div>
+      <div id="ct-events-list" style="display:flex;flex-direction:column;gap:6px;flex:1;overflow-y:auto;min-height:0">
+        <div style="color:var(--ct-muted2);font-size:12px;text-align:center;margin-top:24px">Noch keine Ereignisse</div>
+      </div>
+    </div>
   </div>
 
   <!-- ── TAB: DANGER ZONE ── -->
@@ -1383,6 +1483,8 @@ let S = {
   homeToUsed: false,    awayToUsed: false,
   activeTimeout: null,  // { team, remaining }
   pause: null,          // { remaining, duration } – inter-period break
+  events: [],           // { id, type, side, clock, period, data }
+  showEventsTab: false, // toggle in settings
 };
 
 let clockTimer = null;
@@ -1620,7 +1722,8 @@ function setClock() {
 function adjScore(side, delta) {
   if (side === 'home') S.homeScore = Math.max(0, S.homeScore + delta);
   else                 S.awayScore = Math.max(0, S.awayScore + delta);
-  pushAndRender();
+  if (delta > 0 && S.showEventsTab) openGoalDialog(side);
+  else pushAndRender();
 }
 
 // ── Names / Logos ──
@@ -1845,6 +1948,8 @@ function addPenalty(side) {
     S[side + 'Penalties'].push({ id: Date.now(), number: num, secs, remaining: secs });
   }
   document.getElementById('ct-' + side + '-pen-num').value = '';
+  const penTypeLabel = raw === 'double' ? '2+2 MIN' : (parseInt(raw) <= 120 ? '2 MIN' : '10 MIN');
+  logEvent('penalty', side, { number: num, penType: penTypeLabel });
   pushAndRender();
 }
 
@@ -1901,6 +2006,7 @@ function startTimeout(side) {
   if (S[side + 'ToUsed'] || S.activeTimeout) return;
   S[side + 'ToUsed'] = true;
   S.activeTimeout = { team: side, remaining: 30 };
+  logEvent('timeout', side, { team: side });
   clearInterval(toTimer);
   toTimer = setInterval(() => {
     if (S.activeTimeout) {
@@ -2142,10 +2248,13 @@ function addPenaltyAndClose(side) {
 }
 
 function switchTab(tab) {
-  ['spiel','admin','teams','settings','danger'].forEach(t => {
-    document.getElementById('tab-btn-' + t).classList.toggle('active', t === tab);
-    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+  ['spiel','admin','teams','settings','danger','events'].forEach(t => {
+    const btn = document.getElementById('tab-btn-' + t);
+    const pane = document.getElementById('tab-' + t);
+    if (btn)  btn.classList.toggle('active', t === tab);
+    if (pane) pane.classList.toggle('active', t === tab);
   });
+  if (tab === 'events') renderEvents();
 }
 
 function renderController() {
@@ -2502,6 +2611,7 @@ function renderScoreboard(s) {
       <div class="sb-ticker-value">${periodName} · ${s.period}/${s.maxPeriods}</div></div>
     </div>`);
     ticker.innerHTML = cells.join('');
+    renderTickerEvents(ticker, s);
   }
 
   // Overlays
@@ -2601,8 +2711,176 @@ function toggleTickerVisibility() {
       if (tog)   tog.style.background = 'var(--ct-muted)';
       if (label) label.textContent = 'AUS';
     }
+    if (localStorage.getItem('ct-events-tab-on') === '1') {
+      S.showEventsTab = true;
+      const knob  = document.getElementById('ct-events-tab-knob');
+      const tog   = document.getElementById('ct-events-tab-toggle');
+      const label = document.getElementById('ct-events-tab-label');
+      const btn   = document.getElementById('tab-btn-events');
+      if (knob)  knob.style.left = '22px';
+      if (tog)   tog.style.background = 'var(--lime)';
+      if (label) label.textContent = 'AN';
+      if (btn)   btn.style.display = '';
+    }
   } catch(e) {}
 })();
+
+// ── Events Tab Toggle ──
+function toggleEventsTab() {
+  S.showEventsTab = !S.showEventsTab;
+  const knob  = document.getElementById('ct-events-tab-knob');
+  const tog   = document.getElementById('ct-events-tab-toggle');
+  const label = document.getElementById('ct-events-tab-label');
+  const btn   = document.getElementById('tab-btn-events');
+  const on = S.showEventsTab;
+  if (knob)  knob.style.left = on ? '22px' : '2px';
+  if (tog)   tog.style.background = on ? 'var(--lime)' : 'var(--ct-muted)';
+  if (label) label.textContent = on ? 'AN' : 'AUS';
+  if (btn)   btn.style.display = on ? '' : 'none';
+  try { localStorage.setItem('ct-events-tab-on', on ? '1' : '0'); } catch(e) {}
+}
+
+// ── Events: core ──
+function fmtClock(secs) {
+  const m = Math.floor(Math.abs(secs)/60).toString().padStart(2,'0');
+  const s = (Math.abs(secs)%60).toString().padStart(2,'0');
+  return `${m}:${s}`;
+}
+
+function logEvent(type, side, data) {
+  if (!S.showEventsTab) return;
+  const ev = {
+    id: Date.now(),
+    type,   // 'goal' | 'penalty' | 'timeout'
+    side,   // 'home' | 'away' | 'neutral'
+    clock: S.clock,
+    period: S.period,
+    data,   // { scorer, assist, number, penType, team }
+  };
+  S.events.unshift(ev); // newest first
+  renderEvents();
+}
+
+function clearEvents() {
+  if (!confirm('Alle Ereignisse löschen?')) return;
+  S.events = [];
+  renderEvents();
+}
+
+function deleteEvent(id) {
+  S.events = S.events.filter(e => e.id !== id);
+  renderEvents();
+}
+
+function renderEvents() {
+  const list = document.getElementById('ct-events-list');
+  if (!list) return;
+  if (!S.events.length) {
+    list.innerHTML = '<div style="color:var(--ct-muted2);font-size:12px;text-align:center;margin-top:24px">Noch keine Ereignisse</div>';
+    return;
+  }
+  const periodName = p => {
+    if (S.maxPeriods === 3) return ['1. DRITTEL','2. DRITTEL','3. DRITTEL','VERLÄNGERUNG'][p-1] || `P${p}`;
+    return ['1. HALBZEIT','2. HALBZEIT','VERLÄNGERUNG'][p-1] || `P${p}`;
+  };
+  list.innerHTML = S.events.map(ev => {
+    const sideClass = ev.side === 'home' ? 'ev-home' : ev.side === 'away' ? 'ev-away' : 'ev-neutral';
+    const timeStr   = `${fmtClock(ev.clock)}<br><span style="font-size:9px;font-weight:400">${periodName(ev.period)}</span>`;
+    let icon, main, sub;
+    if (ev.type === 'goal') {
+      const teamName = ev.side === 'home' ? S.homeName : S.awayName;
+      icon = '<span class="ph-icon ph-lg"><svg><use href="#ph-flag-pennant"/></svg></span>';
+      main = `TOR · ${teamName}`;
+      const parts = [];
+      if (ev.data.scorer) parts.push(`#${ev.data.scorer}`);
+      if (ev.data.assist) parts.push(`Vorlage: #${ev.data.assist}`);
+      sub = parts.join(' · ') || '–';
+    } else if (ev.type === 'penalty') {
+      const teamName = ev.side === 'home' ? S.homeName : S.awayName;
+      icon = '<span class="ph-icon ph-lg"><svg><use href="#ph-warning-circle"/></svg></span>';
+      main = `STRAFE · ${teamName}`;
+      sub = `#${ev.data.number} · ${ev.data.penType}`;
+    } else if (ev.type === 'timeout') {
+      const teamName = ev.side === 'home' ? S.homeName : S.awayName;
+      icon = '<span class="ph-icon ph-lg"><svg><use href="#ph-hourglass-medium"/></svg></span>';
+      main = `AUSZEIT · ${teamName}`;
+      sub = '';
+    }
+    return `<div class="ct-event-item ${sideClass}">
+      <div class="ev-time">${timeStr}</div>
+      <div class="ev-icon">${icon}</div>
+      <div style="flex:1"><div class="ev-main">${main}</div>${sub ? `<div class="ev-sub">${sub}</div>` : ''}</div>
+      <div class="ev-del" onclick="deleteEvent(${ev.id})">✕</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Goal Dialog ──
+let _goalDialogSide = null;
+
+function openGoalDialog(side) {
+  _goalDialogSide = side;
+  const title = document.getElementById('ct-goal-dialog-title');
+  const teamName = side === 'home' ? S.homeName : S.awayName;
+  if (title) title.textContent = `TOR · ${teamName}`;
+  document.getElementById('ct-goal-scorer').value = '';
+  document.getElementById('ct-goal-assist').value = '';
+  document.getElementById('ct-goal-dialog').classList.add('open');
+  setTimeout(() => document.getElementById('ct-goal-scorer').focus(), 50);
+}
+
+function closeGoalDialog() {
+  document.getElementById('ct-goal-dialog').classList.remove('open');
+  _goalDialogSide = null;
+}
+
+function confirmGoal() {
+  if (!_goalDialogSide) return;
+  const scorer = document.getElementById('ct-goal-scorer').value.trim();
+  const assist = document.getElementById('ct-goal-assist').value.trim();
+  logEvent('goal', _goalDialogSide, { scorer, assist });
+  pushAndRender();
+  closeGoalDialog();
+}
+
+// ── Ticker: render last events ──
+function renderTickerEvents(ticker, s) {
+  if (!s.showEventsTab || !s.events || !s.events.length) return false;
+  // Show last 3 events (skip if there are active penalties/timeouts shown)
+  const recent = s.events.slice(0, 3);
+  const hc = s.homeAccent || '#c8ff00';
+  const ac = s.awayAccent || '#22c55e';
+  const cells = recent.map(ev => {
+    const color = ev.side === 'home' ? hc : ev.side === 'away' ? ac : 'rgba(255,255,255,.6)';
+    const teamName = ev.side === 'home' ? s.homeName : ev.side === 'away' ? s.awayName : '';
+    if (ev.type === 'goal') {
+      const sub = [ev.data.scorer ? `#${ev.data.scorer}` : '', ev.data.assist ? `▶ #${ev.data.assist}` : ''].filter(Boolean).join(' ');
+      return `<div class="sb-ticker-cell cell-${ev.side}">
+        <div><div class="sb-ticker-label">TOR · ${teamName}</div>
+        <div class="sb-ticker-value">${sub || '–'}</div></div>
+        <div class="sb-ticker-accent" style="color:${color}"><span class="ph-icon ph-md"><svg><use href="#ph-flag-pennant"/></svg></span></div>
+      </div>`;
+    } else if (ev.type === 'penalty') {
+      return `<div class="sb-ticker-cell cell-${ev.side}">
+        <div><div class="sb-ticker-label">STRAFE · ${teamName}</div>
+        <div class="sb-ticker-value">#${ev.data.number} · ${ev.data.penType}</div></div>
+        <div class="sb-ticker-accent" style="color:${color}"><span class="ph-icon ph-md"><svg><use href="#ph-warning-circle"/></svg></span></div>
+      </div>`;
+    } else if (ev.type === 'timeout') {
+      return `<div class="sb-ticker-cell cell-neutral">
+        <div><div class="sb-ticker-label">AUSZEIT</div>
+        <div class="sb-ticker-value">${teamName}</div></div>
+        <div class="sb-ticker-accent" style="color:var(--orange,#ff9500)"><span class="ph-icon ph-md"><svg><use href="#ph-hourglass-medium"/></svg></span></div>
+      </div>`;
+    }
+    return '';
+  }).filter(Boolean);
+  if (cells.length) {
+    ticker.insertAdjacentHTML('beforeend', cells.join(''));
+    return true;
+  }
+  return false;
+}
 
 // ── Control bar resize handle ──
 (function initResizeHandle() {
@@ -2680,5 +2958,20 @@ function toggleTickerVisibility() {
   }
 })();
 </script>
+<!-- GOAL DIALOG -->
+<div id="ct-goal-dialog">
+  <div class="ct-goal-dialog-box">
+    <div class="ct-goal-dialog-title" id="ct-goal-dialog-title">TOR · HEIM</div>
+    <div style="font-size:11px;color:var(--ct-muted2);letter-spacing:1px">SCHÜTZE (NUMMER)</div>
+    <input id="ct-goal-scorer" type="number" min="0" max="99" placeholder="z.B. 17" />
+    <div style="font-size:11px;color:var(--ct-muted2);letter-spacing:1px">VORLAGE (NUMMER, optional)</div>
+    <input id="ct-goal-assist" type="number" min="0" max="99" placeholder="z.B. 9" />
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-danger" style="flex:1" onclick="closeGoalDialog()">Abbrechen</button>
+      <button class="btn btn-lime" style="flex:1" onclick="confirmGoal()">Bestätigen</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
