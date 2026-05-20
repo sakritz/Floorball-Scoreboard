@@ -700,12 +700,13 @@ body {
 .ct-tab-content.tab-teams { display: none; }
 .ct-tab-content.tab-teams.active {
   display: flex; overflow-y: auto; padding: 14px; gap: 14px; align-items: flex-start;
-  flex: 1; min-height: 0;
+  flex: 1; min-height: 0; flex-wrap: wrap;
 }
 .ct-teams-col {
-  flex: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0;
+  flex: 1; display: flex; flex-direction: column; gap: 12px; min-width: 200px;
 }
 .ct-teams-col:first-child { border-right: 1px solid var(--ct-border); padding-right: 14px; }
+.sm-import-wrapper { flex-basis: 100%; flex-shrink: 0; }
 
 .ct-tab-content.tab-admin { display: none; }
 .ct-tab-content.tab-admin.active {
@@ -980,6 +981,22 @@ input[type=file] { display: none; }
   <!-- trash -->
   <symbol id="ph-trash" viewBox="0 0 256 256">
     <path fill="currentColor" d="M216 48h-40v-8a24 24 0 0 0-24-24h-48a24 24 0 0 0-24 24v8H40a8 8 0 0 0 0 16h8v144a16 16 0 0 0 16 16h128a16 16 0 0 0 16-16V64h8a8 8 0 0 0 0-16ZM96 40a8 8 0 0 1 8-8h48a8 8 0 0 1 8 8v8H96Zm96 168H64V64h128Zm-80-104v64a8 8 0 0 1-16 0v-64a8 8 0 0 1 16 0Zm48 0v64a8 8 0 0 1-16 0v-64a8 8 0 0 1 16 0Z"/>
+  </symbol>
+  <!-- house -->
+  <symbol id="ph-house" viewBox="0 0 256 256">
+    <path fill="currentColor" d="M219.31 108.68l-80-80a16 16 0 0 0-22.62 0l-80 80A15.87 15.87 0 0 0 32 120v96a8 8 0 0 0 8 8h64a8 8 0 0 0 8-8v-56h32v56a8 8 0 0 0 8 8h64a8 8 0 0 0 8-8v-96a15.87 15.87 0 0 0-4.69-11.32ZM208 208h-48v-56a8 8 0 0 0-8-8h-48a8 8 0 0 0-8 8v56H48v-88l80-80 80 80Z"/>
+  </symbol>
+  <!-- airplane -->
+  <symbol id="ph-airplane" viewBox="0 0 256 256">
+    <path fill="currentColor" d="M235.58 128.84 160 91.06V48a32 32 0 0 0-64 0v43.06L20.42 128.84A8 8 0 0 0 16 136v32a8 8 0 0 0 9.57 7.84L112 158.91V184l-19.2 14.4A8 8 0 0 0 90 206v24a8 8 0 0 0 10.37 7.63L128 229l27.63 8.66A8 8 0 0 0 166 230v-24a8 8 0 0 0-2.8-6.1L144 185v-26.09l86.43 16.93A8 8 0 0 0 240 168v-32a8 8 0 0 0-4.42-7.16ZM224 158.48l-86.43-16.93A8 8 0 0 0 128 149.6v40a8 8 0 0 0 2.8 6.1L150 210v11.73l-19.63-6.14a8 8 0 0 0-4.74 0L106 215.73V210l19.2-14.4A8 8 0 0 0 128 189.6v-40a8 8 0 0 0-9.57-7.84L32 158.48V138.6l75.58-37.78A8 8 0 0 0 112 93.6V48a16 16 0 0 1 32 0v45.6a8 8 0 0 0 4.42 7.16L224 138.6Z"/>
+  </symbol>
+  <!-- upload -->
+  <symbol id="ph-upload" viewBox="0 0 256 256">
+    <path fill="currentColor" d="M240 136v64a16 16 0 0 1-16 16H32a16 16 0 0 1-16-16v-64a16 16 0 0 1 16-16h40a8 8 0 0 1 0 16H32v64h192v-64h-40a8 8 0 0 1 0-16h40a16 16 0 0 1 16 16Zm-117.66-90.34-32 32a8 8 0 0 0 11.32 11.32L120 70.63V168a8 8 0 0 0 16 0V70.63l18.34 18.35a8 8 0 0 0 11.32-11.32l-32-32a8 8 0 0 0-11.32 0Z"/>
+  </symbol>
+  <!-- import/download arrow -->
+  <symbol id="ph-download-simple" viewBox="0 0 256 256">
+    <path fill="currentColor" d="M224 152v56a16 16 0 0 1-16 16H48a16 16 0 0 1-16-16v-56a8 8 0 0 1 16 0v56h160v-56a8 8 0 0 1 16 0Zm-101.66 13.66a8 8 0 0 0 11.32 0l40-40a8 8 0 0 0-11.32-11.32L136 140.69V40a8 8 0 0 0-16 0v100.69l-26.34-26.35a8 8 0 0 0-11.32 11.32Z"/>
   </symbol>
 </svg>
 </head>
@@ -1395,9 +1412,72 @@ input[type=file] { display: none; }
   <!-- ── TAB: TEAMS ── -->
   <div class="ct-tab-content tab-teams" id="tab-teams">
 
+    <!-- SAISONMANAGER IMPORT (full width) -->
+    <div class="sm-import-wrapper">
+      <div class="ct-card">
+        <div class="ct-card-head neutral" style="cursor:pointer;user-select:none" onclick="toggleSmImport()">
+          <span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-download-simple"/></svg></span>Spiel aus Saisonmanager importieren</span>
+          <span id="sm-toggle-icon" style="margin-left:auto;font-size:14px;transition:transform .2s">▼</span>
+        </div>
+        <div id="sm-import-body" class="ct-card-body" style="display:none;gap:10px">
+
+          <!-- Instructions -->
+          <div style="background:rgba(200,255,0,.06);border:1px solid rgba(200,255,0,.15);padding:10px 12px;font-size:12px;line-height:1.7;color:var(--ct-muted2)">
+            <div style="color:var(--lime);font-weight:700;letter-spacing:2px;font-size:11px;margin-bottom:6px">SO GEHT'S</div>
+            <div>① Öffne den Saisonmanager und navigiere zum Spiel</div>
+            <div style="margin-top:4px">② Kopiere die URL aus der Adressleiste, z.B.:<br>
+              <span style="font-family:monospace;font-size:11px;color:var(--ct-text)">saisonmanager.de/nwfv/1872-verbandsliga/spiel/<b>43778</b></span>
+            </div>
+            <div style="margin-top:4px">③ Füge sie unten ein und klicke „Laden"</div>
+            <div style="margin-top:6px;font-size:11px;opacity:.7">
+              Alternativ reicht auch nur die Spiel-ID (z.B. <span style="font-family:monospace">43778</span>)
+            </div>
+          </div>
+
+          <!-- Input -->
+          <div style="display:flex;gap:8px;align-items:flex-end">
+            <div style="flex:1">
+              <label class="ct-label">Spiel-URL oder ID</label>
+              <input type="text" id="sm-game-input"
+                placeholder="z.B. …/spiel/43778 oder einfach 43778"
+                style="width:100%"
+                onkeydown="if(event.key==='Enter') smLoadGame()">
+            </div>
+            <button class="btn btn-lime btn-sm" onclick="smLoadGame()" style="width:auto;white-space:nowrap;flex-shrink:0">
+              ↓ Laden
+            </button>
+          </div>
+
+          <!-- Status / error -->
+          <div id="sm-error" style="display:none;font-size:12px;letter-spacing:1px;padding:4px 0"></div>
+
+          <!-- Preview after load -->
+          <div id="sm-preview" style="display:none;background:var(--ct-surface);border:1px solid var(--ct-border);padding:10px 12px;gap:10px;flex-direction:column">
+            <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--ct-muted2)">VORSCHAU</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+              <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+                <div id="sm-prev-home-logo" style="width:36px;height:36px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.06);border:1px solid var(--ct-border);overflow:hidden;font-size:14px;font-weight:900"></div>
+                <div id="sm-prev-home-name" style="font-size:13px;font-weight:800;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+              </div>
+              <div style="font-size:11px;color:var(--ct-muted);font-weight:700;flex-shrink:0">VS</div>
+              <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;flex-direction:row-reverse">
+                <div id="sm-prev-away-logo" style="width:36px;height:36px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.06);border:1px solid var(--ct-border);overflow:hidden;font-size:14px;font-weight:900"></div>
+                <div id="sm-prev-away-name" style="font-size:13px;font-weight:800;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right"></div>
+              </div>
+            </div>
+            <div id="sm-prev-meta" style="font-size:11px;color:var(--ct-muted2);letter-spacing:1px"></div>
+            <button class="btn btn-lime" onclick="smApplyPreview()" style="width:100%;font-weight:900;letter-spacing:2px">
+              ✓ Übernehmen
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
     <div class="ct-teams-col">
       <div class="ct-card">
-        <div class="ct-card-head lime">🏠 Heimteam</div>
+        <div class="ct-card-head lime"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-house"/></svg></span>Heimteam</span></div>
         <div class="ct-card-body">
           <div>
             <label class="ct-label">Name</label>
@@ -1407,7 +1487,7 @@ input[type=file] { display: none; }
             <label class="ct-label">Logo</label>
             <div class="logo-row">
               <div class="logo-thumb" id="ct-home-logo-prev">H</div>
-              <label class="file-btn" for="ct-home-logo-file">📁 Hochladen</label>
+              <label class="file-btn" for="ct-home-logo-file"><span class="ph-icon ph-sm"><svg><use href="#ph-upload"/></svg></span> Hochladen</label>
               <input type="file" id="ct-home-logo-file" accept="image/*" onchange="onLogo('home',this)">
               <button class="btn btn-ghost btn-sm" style="width:auto" onclick="removeLogo('home')">✕</button>
             </div>
@@ -1438,7 +1518,7 @@ input[type=file] { display: none; }
 
     <div class="ct-teams-col">
       <div class="ct-card">
-        <div class="ct-card-head cyan">✈️ Gastteam</div>
+        <div class="ct-card-head cyan"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-airplane"/></svg></span>Gastteam</span></div>
         <div class="ct-card-body">
           <div>
             <label class="ct-label">Name</label>
@@ -1448,7 +1528,7 @@ input[type=file] { display: none; }
             <label class="ct-label">Logo</label>
             <div class="logo-row">
               <div class="logo-thumb" id="ct-away-logo-prev">G</div>
-              <label class="file-btn" for="ct-away-logo-file">📁 Hochladen</label>
+              <label class="file-btn" for="ct-away-logo-file"><span class="ph-icon ph-sm"><svg><use href="#ph-upload"/></svg></span> Hochladen</label>
               <input type="file" id="ct-away-logo-file" accept="image/*" onchange="onLogo('away',this)">
               <button class="btn btn-ghost btn-sm" style="width:auto" onclick="removeLogo('away')">✕</button>
             </div>
@@ -3412,7 +3492,130 @@ function renderPenaltyShootoutSb(s) {
   }
 }
 
-// ── Tab area drag handle ──
+// ── SAISONMANAGER IMPORT ────────────────────────────────────────────
+
+let smPendingGame = null; // holds parsed API data until user confirms
+
+function toggleSmImport() {
+  const body = document.getElementById('sm-import-body');
+  const icon = document.getElementById('sm-toggle-icon');
+  const open = body.style.display === 'none';
+  body.style.display = open ? 'flex' : 'none';
+  icon.style.transform = open ? 'rotate(180deg)' : '';
+}
+
+function smSetError(msg, isSuccess) {
+  const el = document.getElementById('sm-error');
+  el.style.display = msg ? 'block' : 'none';
+  el.style.color = isSuccess ? 'var(--lime)' : 'var(--red)';
+  el.textContent = msg;
+}
+
+function smLoadGame() {
+  const raw = (document.getElementById('sm-game-input').value || '').trim();
+  smSetError('');
+  document.getElementById('sm-preview').style.display = 'none';
+  smPendingGame = null;
+
+  if (!raw) { smSetError('⚠ Bitte URL oder Spiel-ID eingeben.'); return; }
+
+  // Extract numeric game ID from URL or raw number
+  const match = raw.match(/\/spiel\/(\d+)|^(\d+)$/);
+  if (!match) { smSetError('⚠ Keine Spiel-ID erkannt. Bitte die vollständige Spiel-URL oder nur die ID eingeben.'); return; }
+  const gameId = match[1] || match[2];
+
+  // Fetch via JSON paste workaround: direct API URL shown to user
+  // Since we can't fetch cross-origin, open the JSON URL and ask user to paste
+  const apiUrl = `https://saisonmanager.de/api/v2/games/${gameId}.json`;
+
+  // Try fetching (works if SM allows CORS, otherwise fall back to paste)
+  smSetError('⏳ Lade Spieldaten…', true);
+
+  fetch(apiUrl)
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(data => {
+      smSetError('');
+      smShowPreview(data);
+    })
+    .catch(() => {
+      // CORS blocked – fall back: show the JSON URL and switch to paste mode
+      smSetError('');
+      smShowFallback(gameId, apiUrl);
+    });
+}
+
+function smShowFallback(gameId, apiUrl) {
+  smSetError(`⚠ Abruf fehlgeschlagen. Prüfe die Spiel-ID und versuche es erneut.`);
+}
+
+function smParseFallback() {}
+
+function smShowPreview(g) {
+  smPendingGame = g;
+
+  const homeName = g.home_team_name || 'HEIM';
+  const awayName = g.guest_team_name || 'GAST';
+  const homeLogo = g.home_team_small_logo || g.home_team_logo || null;
+  const awayLogo = g.guest_team_small_logo || g.guest_team_logo || null;
+  const date     = g.date ? new Date(g.date + 'T' + (g.start_time || '00:00')).toLocaleDateString('de-DE', { weekday:'short', day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+  const arena    = g.arena_short || g.arena_name || '';
+
+  function logoHtml(url, initial) {
+    if (!url) return initial;
+    const abs = url.startsWith('http') ? url : 'https://saisonmanager.de' + url;
+    return `<img src="${abs}" style="width:100%;height:100%;object-fit:contain">`;
+  }
+
+  document.getElementById('sm-prev-home-logo').innerHTML = logoHtml(homeLogo, homeName[0]);
+  document.getElementById('sm-prev-away-logo').innerHTML = logoHtml(awayLogo, awayName[0]);
+  document.getElementById('sm-prev-home-name').textContent = homeName;
+  document.getElementById('sm-prev-away-name').textContent = awayName;
+  document.getElementById('sm-prev-meta').textContent = [date, arena].filter(Boolean).join(' · ');
+
+  document.getElementById('sm-preview').style.display = 'flex';
+}
+
+function smApplyPreview() {
+  const g = smPendingGame;
+  if (!g) return;
+
+  const homeName = (g.home_team_name || 'HEIM').toUpperCase();
+  const awayName = (g.guest_team_name || 'GAST').toUpperCase();
+  const homeLogo = g.home_team_small_logo || g.home_team_logo || null;
+  const awayLogo = g.guest_team_small_logo || g.guest_team_logo || null;
+
+  S.homeName = homeName;
+  S.awayName = awayName;
+  document.getElementById('ct-home-name').value = homeName;
+  document.getElementById('ct-away-name').value = awayName;
+
+  function applyLogo(side, url) {
+    if (!url) return;
+    const abs = url.startsWith('http') ? url : 'https://saisonmanager.de' + url;
+    S[side + 'Logo'] = abs;
+    const prev = document.getElementById('ct-' + side + '-logo-prev');
+    if (prev) prev.innerHTML = `<img src="${abs}" style="width:100%;height:100%;object-fit:contain">`;
+  }
+  applyLogo('home', homeLogo);
+  applyLogo('away', awayLogo);
+
+  // Collapse panel
+  document.getElementById('sm-import-body').style.display = 'none';
+  document.getElementById('sm-toggle-icon').style.transform = '';
+  document.getElementById('sm-preview').style.display = 'none';
+
+  smSetError(`✓ ${homeName} vs ${awayName} übernommen!`, true);
+  setTimeout(() => smSetError(''), 3000);
+
+  smPendingGame = null;
+  pushAndRender();
+}
+
+
+
 (function initTabDragHandle() {
   const MIN_H = 100;
   const MAX_H = 400;
