@@ -8,6 +8,7 @@
 <style>
 /* ─── RESET & BASE ─────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
 
 :root {
   --black:   #080a0e;
@@ -41,8 +42,9 @@ body {
   background: var(--black);
   color: var(--white);
   font-family: 'Barlow Condensed', sans-serif;
-  min-height: 100vh;
+  height: 100vh;
   overflow: hidden;
+  margin: 0;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -291,6 +293,7 @@ body {
   overflow: hidden;
   font-family: 'Barlow Condensed', sans-serif;
   color: var(--ct-text);
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
 }
 
 /* ── TOPBAR ── */
@@ -298,7 +301,9 @@ body {
   background: var(--ct-surface);
   border-bottom: 1px solid var(--ct-border);
   /* lime accent line at very top */
-  box-shadow: 0 -3px 0 0 var(--lime) inset;
+  box-shadow: none;
+  border-bottom: 3px solid transparent;
+  border-image: linear-gradient(to right, var(--ct-home, #c8ff00) 50%, var(--ct-away, #22c55e) 50%) 1;
   padding: 0 24px;
   height: 64px;
   display: flex; align-items: center; justify-content: space-between;
@@ -334,12 +339,11 @@ body {
 /* ── CONTROL BAR ── */
 .ct-control-bar {
   background: var(--ct-surface);
-  border-bottom: 1px solid var(--ct-border);
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;          /* vertically center content */
-  flex-shrink: 0;
-  min-height: 180px; max-height: 180px;
+  flex: 1;
+  min-height: 110px; max-height: none;
   position: relative; overflow: hidden;
   padding: 20px 0;              /* breathing room */
 }
@@ -626,16 +630,7 @@ body {
 .ct-goal-dialog-box input::placeholder { color: var(--ct-muted); font-weight: 400; }
 
 
-.ct-resize-handle {
-  flex-shrink: 0;
-  height: 8px;
-  background: var(--ct-surface);
-  border-bottom: 1px solid var(--ct-border);
-  cursor: ns-resize;
-  display: flex; align-items: center; justify-content: center;
-  transition: background .15s;
-  position: relative; z-index: 10;
-}
+.ct-resize-handle { display: none; }
 .ct-resize-handle:hover,
 .ct-resize-handle.dragging { background: var(--ct-card); }
 .ct-resize-handle:hover .ct-resize-handle-grip,
@@ -649,7 +644,8 @@ body {
 
 .ct-tabbar {
   background: var(--ct-surface);
-  border-bottom: 1px solid var(--ct-border);
+  border-top: 1px solid var(--ct-border);
+  border-bottom: none;
   display: flex; align-items: stretch;
   flex-shrink: 0; height: 44px; padding: 0 4px;
 }
@@ -661,29 +657,43 @@ body {
   font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
   color: var(--ct-muted); cursor: pointer;
   display: flex; align-items: center; gap: 6px;
-  border-bottom: 3px solid transparent; margin-bottom: -1px;
+  border-top: 3px solid transparent; margin-top: -1px;
   transition: color .15s, border-color .15s; white-space: nowrap;
 }
 .ct-tab:hover { color: var(--ct-muted2); }
-.ct-tab.active { color: var(--ct-text); border-bottom-color: var(--lime); }
+.ct-tab.active { color: var(--ct-text); border-top-color: var(--lime); }
 .ct-tab.right { border-left: 1px solid var(--ct-border); }
-.ct-tab.right:first-of-type { border-left: 1px solid var(--ct-border); }
 
 /* ── TAB CONTENT ── */
 .ct-tab-content { flex: 1; overflow: hidden; min-height: 0; display: none; }
 /* spiel tab scrolls as one unit */
 .ct-tab-content.active { display: flex; }
 
-.ct-tab-content.tab-spiel { display: none; }
-.ct-tab-content.tab-spiel.active {
+.ct-tab-content.tab-strafen { display: none; }
+.ct-tab-content.tab-strafen.active {
   display: grid; grid-template-columns: 1fr 1fr;
-  overflow-y: auto;    /* whole tab scrolls together */
-  align-content: start;
+  overflow-y: auto; align-content: start;
   flex: 1; min-height: 0;
+}
+.ct-tab-content.tab-auszeiten { display: none; }
+.ct-tab-content.tab-auszeiten.active {
+  display: grid; grid-template-columns: 1fr 1fr;
+  overflow-y: auto; align-content: start;
+  align-items: start;
+  flex: 1; min-height: 0;
+}
+.ct-tab-content.tab-auszeiten .ct-spiel-col {
+  padding: 14px;
+  gap: 10px;
+}
+.ct-tab-content.tab-auszeiten .ct-card-body {
+  padding: 14px;
+}
+.ct-tab-content.tab-auszeiten .ct-card-body-inner {
+  display: flex; flex-direction: column; gap: 14px;
 }
 .ct-spiel-col {
   display: flex; flex-direction: column; padding: 14px; gap: 10px;
-  /* no overflow-y: auto – parent scrolls */
 }
 .ct-spiel-col:first-child { border-right: 1px solid var(--ct-border); }
 
@@ -704,7 +714,46 @@ body {
 }
 .ct-admin-col { flex: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 
-.ct-tab-content.tab-settings { display: none; }
+
+.ct-main-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--ct-surface);
+}
+.ct-tab-area {
+  flex: 0 0 0;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  transition: flex-basis 0.2s ease;
+}
+.ct-tab-area.tab-open {
+  flex: 0 0 160px;
+}
+.ct-tab-area.dragging {
+  transition: none;
+}
+
+/* drag handle on top of tab-area */
+.ct-tab-drag-handle {
+  flex-shrink: 0;
+  height: 10px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: ns-resize;
+  background: var(--ct-surface);
+  border-top: 1px solid var(--ct-border);
+}
+.ct-tab-drag-handle:hover .ct-tab-drag-grip,
+.ct-tab-drag-handle.dragging .ct-tab-drag-grip { background: var(--lime); }
+.ct-tab-drag-grip {
+  width: 36px; height: 3px; border-radius: 2px;
+  background: var(--ct-border);
+  transition: background .15s;
+  pointer-events: none;
+}
+
 .ct-tab-content.tab-settings.active {
   display: flex; overflow-y: auto; padding: 14px; gap: 14px; align-items: flex-start;
   flex: 1; min-height: 0;
@@ -1067,7 +1116,7 @@ input[type=file] { display: none; }
   <div class="ct-topbar">
     <div class="ct-logo">
       <img src="data:image/png;base64,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" style="height:38px;width:38px;object-fit:contain;flex-shrink:0" alt="Floorball Logo">
-      FLOORBALL SCOREBOARD
+      <span style="font-weight:600;font-style:italic;color:var(--lime)">FLOORBALL</span> <span style="font-weight:600;font-style:italic;color:var(--cyan)">SCOREBOARD</span>
     </div>
     <div class="ct-top-right">
       <div class="ct-period-chip" id="ct-period-chip">1. DRITTEL</div>
@@ -1075,6 +1124,9 @@ input[type=file] { display: none; }
       <button class="open-sb-btn" onclick="openScoreboard()">📺 SCOREBOARD ÖFFNEN</button>
     </div>
   </div>
+
+  <!-- MAIN AREA: fills space above tabs -->
+  <div class="ct-main-area">
 
   <!-- ALWAYS-VISIBLE CONTROL BAR: scores + clock -->
   <div class="ct-control-bar">
@@ -1116,12 +1168,15 @@ input[type=file] { display: none; }
     <div class="ct-resize-handle-grip"></div>
   </div>
 
+  </div><!-- /ct-main-area -->
+
   <!-- TAB BAR -->
   <div class="ct-tabbar">
-    <div class="ct-tab active" onclick="switchTab('spiel')"    id="tab-btn-spiel">Spiel</div>
     <div class="ct-tab"        onclick="switchTab('admin')"    id="tab-btn-admin">Spieladmin</div>
-    <div class="ct-tab"        onclick="switchTab('teams')"    id="tab-btn-teams">Teams</div>
     <div class="ct-tab"        onclick="switchTab('events')"   id="tab-btn-events" style="display:none">Events</div>
+    <div class="ct-tab"        onclick="switchTab('strafen')"  id="tab-btn-strafen">Strafen</div>
+    <div class="ct-tab"        onclick="switchTab('auszeiten')" id="tab-btn-auszeiten">Auszeiten</div>
+    <div class="ct-tab"        onclick="switchTab('teams')"    id="tab-btn-teams">Teams</div>
     <div class="ct-tab-spacer"></div>
     <div class="ct-tab right"  onclick="switchTab('settings')" id="tab-btn-settings">⚙ Einstellungen</div>
     <div class="ct-tab right"  onclick="switchTab('danger')"   id="tab-btn-danger" style="color:var(--red);opacity:.7">⚠ Danger Zone</div>
@@ -1200,25 +1255,20 @@ input[type=file] { display: none; }
     </div>
   </div>
 
-  <!-- ── TAB: SPIEL ── -->
-  <div class="ct-tab-content tab-spiel active" id="tab-spiel">
+  <!-- ── TAB CONTENT AREA ── -->
+  <div class="ct-tab-area" id="ct-tab-area">
+
+  <!-- DRAG HANDLE -->
+  <div class="ct-tab-drag-handle" id="ct-tab-drag-handle">
+    <div class="ct-tab-drag-grip"></div>
+  </div>
+
+  <!-- ── TAB: STRAFEN ── -->
+  <div class="ct-tab-content tab-strafen" id="tab-strafen">
 
     <!-- HOME side -->
     <div class="ct-spiel-col">
-
-      <!-- Timeout -->
-      <div class="ct-card collapsible collapsed" id="card-home-to">
-        <div class="ct-card-head lime" onclick="toggleCard('card-home-to')">Auszeit · Heim</div>
-        <div class="ct-card-body">
-          <div class="ct-card-body-inner">
-            <div class="timeout-badge avail" id="ct-home-to-badge">1× VERFÜGBAR</div>
-            <button class="btn btn-orange" id="ct-home-to-btn" onclick="startTimeout('home')">⏱ Auszeit starten</button>
-            <button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="resetTO('home')">↺ Zurücksetzen</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Active timeout (home) -->
+      <!-- Active timeout display (home, shown here too) -->
       <div class="ct-card" id="ct-to-active-card" style="display:none">
         <div class="ct-card-head neutral">Auszeit läuft</div>
         <div class="ct-card-body">
@@ -1232,22 +1282,18 @@ input[type=file] { display: none; }
       </div>
 
       <!-- Penalties home -->
-      <div class="ct-card collapsible collapsed" id="card-home-pen">
-        <div class="ct-card-head lime" onclick="togglePenCard('home')" style="justify-content:space-between">
+      <div class="ct-card" id="card-home-pen">
+        <div class="ct-card-head lime" style="justify-content:space-between">
           <span>Strafzeit · Heim</span>
-          <div style="display:flex;align-items:center;gap:6px">
-            <span id="ct-home-pen-count-badge" style="display:none;font-size:10px;
-              background:var(--red);color:#fff;padding:1px 6px;font-weight:700;letter-spacing:1px"></span>
-            <button onclick="event.stopPropagation();togglePenAdd('home')" id="ct-home-pen-add-btn"
-              style="display:none;background:var(--red);border:none;color:#fff;width:22px;height:22px;
-              cursor:pointer;font-size:15px;font-weight:900;align-items:center;
-              justify-content:center;flex-shrink:0;transform:skewX(-8deg)">
-              <span style="transform:skewX(8deg)">+</span>
-            </button>
-          </div>
+          <span id="ct-home-pen-count-badge" style="display:none;font-size:10px;
+            background:var(--red);color:#fff;padding:1px 6px;font-weight:700;letter-spacing:1px"></span>
         </div>
         <div class="ct-card-body" style="gap:0">
           <div class="ct-card-body-inner" style="gap:8px">
+            <button onclick="togglePenAdd('home')" id="ct-home-pen-add-btn"
+              class="btn btn-red btn-sm" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px">
+              + Strafe hinzufügen
+            </button>
             <div id="ct-home-pen-list" style="display:flex;flex-direction:column;gap:8px">
               <div class="empty-msg">Keine aktiven Strafen</div>
             </div>
@@ -1271,41 +1317,23 @@ input[type=file] { display: none; }
           </div>
         </div>
       </div>
-
     </div>
 
     <!-- AWAY side -->
     <div class="ct-spiel-col">
-
-      <!-- Timeout away -->
-      <div class="ct-card collapsible collapsed" id="card-away-to">
-        <div class="ct-card-head cyan" onclick="toggleCard('card-away-to')">Auszeit · Gast</div>
-        <div class="ct-card-body">
-          <div class="ct-card-body-inner">
-            <div class="timeout-badge avail" id="ct-away-to-badge">1× VERFÜGBAR</div>
-            <button class="btn btn-orange" id="ct-away-to-btn" onclick="startTimeout('away')">⏱ Auszeit starten</button>
-            <button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="resetTO('away')">↺ Zurücksetzen</button>
-          </div>
-        </div>
-      </div>
-
       <!-- Penalties away -->
-      <div class="ct-card collapsible collapsed" id="card-away-pen">
-        <div class="ct-card-head cyan" onclick="togglePenCard('away')" style="justify-content:space-between">
+      <div class="ct-card" id="card-away-pen">
+        <div class="ct-card-head cyan" style="justify-content:space-between">
           <span>Strafzeit · Gast</span>
-          <div style="display:flex;align-items:center;gap:6px">
-            <span id="ct-away-pen-count-badge" style="display:none;font-size:10px;
-              background:var(--red);color:#fff;padding:1px 6px;font-weight:700;letter-spacing:1px"></span>
-            <button onclick="event.stopPropagation();togglePenAdd('away')" id="ct-away-pen-add-btn"
-              style="display:none;background:var(--red);border:none;color:#fff;width:22px;height:22px;
-              cursor:pointer;font-size:15px;font-weight:900;align-items:center;
-              justify-content:center;flex-shrink:0;transform:skewX(-8deg)">
-              <span style="transform:skewX(8deg)">+</span>
-            </button>
-          </div>
+          <span id="ct-away-pen-count-badge" style="display:none;font-size:10px;
+            background:var(--red);color:#fff;padding:1px 6px;font-weight:700;letter-spacing:1px"></span>
         </div>
         <div class="ct-card-body" style="gap:0">
           <div class="ct-card-body-inner" style="gap:8px">
+            <button onclick="togglePenAdd('away')" id="ct-away-pen-add-btn"
+              class="btn btn-red btn-sm" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px">
+              + Strafe hinzufügen
+            </button>
             <div id="ct-away-pen-list" style="display:flex;flex-direction:column;gap:8px">
               <div class="empty-msg">Keine aktiven Strafen</div>
             </div>
@@ -1329,7 +1357,38 @@ input[type=file] { display: none; }
           </div>
         </div>
       </div>
+    </div>
+  </div>
 
+  <!-- ── TAB: AUSZEITEN ── -->
+  <div class="ct-tab-content tab-auszeiten" id="tab-auszeiten">
+
+    <!-- HOME side -->
+    <div class="ct-spiel-col">
+      <div class="ct-card" id="card-home-to">
+        <div class="ct-card-head lime">Auszeit · Heim</div>
+        <div class="ct-card-body">
+          <div class="ct-card-body-inner">
+            <div class="timeout-badge avail" id="ct-home-to-badge">1× VERFÜGBAR</div>
+            <button class="btn btn-orange" id="ct-home-to-btn" onclick="startTimeout('home')">⏱ Auszeit starten</button>
+            <button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="resetTO('home')">↺ Zurücksetzen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AWAY side -->
+    <div class="ct-spiel-col">
+      <div class="ct-card" id="card-away-to">
+        <div class="ct-card-head cyan">Auszeit · Gast</div>
+        <div class="ct-card-body">
+          <div class="ct-card-body-inner">
+            <div class="timeout-badge avail" id="ct-away-to-badge">1× VERFÜGBAR</div>
+            <button class="btn btn-orange" id="ct-away-to-btn" onclick="startTimeout('away')">⏱ Auszeit starten</button>
+            <button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="resetTO('away')">↺ Zurücksetzen</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1475,18 +1534,18 @@ input[type=file] { display: none; }
       </div>
 
       <div class="ct-card" id="ct-ps-card">
-        <div class="ct-card-head" style="background:rgba(255,180,0,.12);color:#ffb400;border-color:rgba(255,180,0,.3)">Penaltyschießen</div>
+        <div class="ct-card-head neutral">Penaltyschießen</div>
         <div class="ct-card-body">
           <div id="ct-ps-start-wrap">
             <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;line-height:1.6;margin-bottom:8px">
               Startet das Penaltyschießen im Presentation Mode. Je 5 Schüsse, abwechselnd.
             </div>
-            <button class="btn" style="background:rgba(255,180,0,.15);border-color:rgba(255,180,0,.4);color:#ffb400;font-weight:900;letter-spacing:2px" onclick="startPenaltyShootout()">▶ Penaltyschießen starten</button>
+            <button class="btn btn-orange" onclick="startPenaltyShootout()" style="font-weight:900;letter-spacing:2px">▶ Penaltyschießen starten</button>
           </div>
           <div id="ct-ps-active-wrap" style="display:none">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
               <div style="font-size:11px;color:var(--ct-muted2);letter-spacing:1px">Penaltyschießen aktiv</div>
-              <button class="btn btn-ghost btn-sm" style="width:auto;font-size:11px;color:#ffb400;border-color:rgba(255,180,0,.4)" onclick="document.getElementById('ct-ps-overlay').classList.add('open');renderPenaltyShootoutCtrl()">⊞ Öffnen</button>
+              <button class="btn btn-ghost btn-sm" style="width:auto;font-size:11px" onclick="document.getElementById('ct-ps-overlay').classList.add('open');renderPenaltyShootoutCtrl()">⊞ Öffnen</button>
             </div>
             <!-- Mini score display -->
             <div class="ps-score-row">
@@ -1657,13 +1716,9 @@ input[type=file] { display: none; }
       </div>
     </div>
 
-  </div>
+  </div> <!-- /ct-tab-area -->
 
 </div>
-
-<!-- ══════════════════════════════════════════════════════
-     SHARED JS
-══════════════════════════════════════════════════════ -->
 <!-- ══════════════════════════════════════════════════════
      SHARED JS
 ══════════════════════════════════════════════════════ -->
@@ -2454,7 +2509,7 @@ function togglePenAdd(side) {
   const form = document.getElementById('ct-' + side + '-pen-form');
   const btn  = document.getElementById('ct-' + side + '-pen-add-btn');
   const open = form.classList.toggle('open');
-  btn.querySelector('span').textContent = open ? '×' : '+';
+  btn.textContent = open ? '× Schließen' : '+ Strafe hinzufügen';
   if (open) setTimeout(() => document.getElementById('ct-' + side + '-pen-num').focus(), 50);
 }
 
@@ -2463,17 +2518,33 @@ function addPenaltyAndClose(side) {
   const form = document.getElementById('ct-' + side + '-pen-form');
   const btn  = document.getElementById('ct-' + side + '-pen-add-btn');
   form.classList.remove('open');
-  btn.querySelector('span').textContent = '+';
+  btn.textContent = '+ Strafe hinzufügen';
 }
 
 function switchTab(tab) {
-  ['spiel','admin','teams','settings','danger','events'].forEach(t => {
+  const allTabs = ['admin','teams','strafen','auszeiten','settings','danger','events'];
+  const tabArea = document.getElementById('ct-tab-area');
+
+  // Find currently active tab
+  const currentActive = allTabs.find(t => {
     const btn = document.getElementById('tab-btn-' + t);
-    const pane = document.getElementById('tab-' + t);
-    if (btn)  btn.classList.toggle('active', t === tab);
-    if (pane) pane.classList.toggle('active', t === tab);
+    return btn && btn.classList.contains('active');
   });
-  if (tab === 'events') renderEvents();
+
+  // Toggle: clicking active tab closes it; unknown tab names do nothing
+  const isKnownTab = allTabs.includes(tab);
+  const opening = isKnownTab && currentActive !== tab;
+
+  allTabs.forEach(t => {
+    const btn  = document.getElementById('tab-btn-' + t);
+    const pane = document.getElementById('tab-' + t);
+    const isTarget = t === tab && opening;
+    if (btn)  btn.classList.toggle('active', isTarget);
+    if (pane) pane.classList.toggle('active', isTarget);
+  });
+
+  if (tabArea) tabArea.classList.toggle('tab-open', opening);
+  if (opening && tab === 'events') renderEvents();
 }
 
 function renderController() {
@@ -3341,45 +3412,58 @@ function renderPenaltyShootoutSb(s) {
   }
 }
 
-// ── Control bar resize handle ──
-(function initResizeHandle() {
-  const MIN_H = 110;
-  const MAX_H = 320;
-  const STORED_KEY = 'ct-control-bar-height';
+// ── Tab area drag handle ──
+(function initTabDragHandle() {
+  const MIN_H = 100;
+  const MAX_H = 400;
+  const STORED_KEY = 'ct-tab-area-height';
+  const DEFAULT_H = 160;
 
   function applyHeight(h) {
     h = Math.min(MAX_H, Math.max(MIN_H, h));
-    const cb = document.querySelector('.ct-control-bar');
-    if (!cb) return;
-    cb.style.minHeight = h + 'px';
-    cb.style.maxHeight = h + 'px';
-    updateControlBarSizes();
+    const ta = document.getElementById('ct-tab-area');
+    if (!ta) return;
+    ta.style.flexBasis = h + 'px';
     try { localStorage.setItem(STORED_KEY, h); } catch(e) {}
   }
 
   function initHandle() {
-    const handle = document.getElementById('ct-resize-handle');
-    const cb     = document.querySelector('.ct-control-bar');
-    if (!handle || !cb) return;
+    const handle = document.getElementById('ct-tab-drag-handle');
+    const ta     = document.getElementById('ct-tab-area');
+    if (!handle || !ta) return;
 
-    // Restore saved height
+    // Restore saved height (applied when tab opens)
+    let savedH = DEFAULT_H;
     try {
-      const saved = parseInt(localStorage.getItem(STORED_KEY));
-      if (saved >= MIN_H && saved <= MAX_H) applyHeight(saved);
+      const s = parseInt(localStorage.getItem(STORED_KEY));
+      if (s >= MIN_H && s <= MAX_H) savedH = s;
     } catch(e) {}
+
+    // Patch switchTab to apply saved height when opening
+    const origSwitchTab = window.switchTab;
+    window.switchTab = function(tab) {
+      origSwitchTab(tab);
+      const isOpen = ta.classList.contains('tab-open');
+      if (isOpen) ta.style.flexBasis = savedH + 'px';
+      else ta.style.flexBasis = '';
+    };
 
     let startY = 0, startH = 0, dragging = false;
 
     function onMove(e) {
       if (!dragging) return;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      applyHeight(startH + (clientY - startY));
+      // dragging up = increasing height (handle is at top of tab-area)
+      const newH = startH - (clientY - startY);
+      savedH = Math.min(MAX_H, Math.max(MIN_H, newH));
+      applyHeight(savedH);
     }
 
     function onUp() {
       if (!dragging) return;
       dragging = false;
-      handle.classList.remove('dragging');
+      ta.classList.remove('dragging');
+      handle.querySelector('.ct-tab-drag-grip').style.background = '';
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
       window.removeEventListener('mousemove', onMove);
@@ -3389,11 +3473,13 @@ function renderPenaltyShootoutSb(s) {
     }
 
     handle.addEventListener('mousedown', e => {
+      if (!ta.classList.contains('tab-open')) return;
       e.preventDefault();
       dragging = true;
       startY = e.clientY;
-      startH = cb.getBoundingClientRect().height;
-      handle.classList.add('dragging');
+      startH = ta.getBoundingClientRect().height;
+      ta.classList.add('dragging');
+      handle.querySelector('.ct-tab-drag-grip').style.background = 'var(--lime)';
       document.body.style.cursor    = 'ns-resize';
       document.body.style.userSelect = 'none';
       window.addEventListener('mousemove', onMove);
@@ -3401,10 +3487,11 @@ function renderPenaltyShootoutSb(s) {
     });
 
     handle.addEventListener('touchstart', e => {
+      if (!ta.classList.contains('tab-open')) return;
       dragging = true;
       startY = e.touches[0].clientY;
-      startH = cb.getBoundingClientRect().height;
-      handle.classList.add('dragging');
+      startH = ta.getBoundingClientRect().height;
+      ta.classList.add('dragging');
       window.addEventListener('touchmove', onMove, { passive: true });
       window.addEventListener('touchend',  onUp);
     }, { passive: true });
