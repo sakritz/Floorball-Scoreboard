@@ -629,6 +629,36 @@ body {
 }
 .ct-goal-dialog-box input::placeholder { color: var(--ct-muted); font-weight: 400; }
 
+/* ── CONFIRM MODAL ── */
+#ct-confirm-modal {
+  display: none; position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,.75); align-items: center; justify-content: center;
+  animation: ctFadeIn .15s ease;
+}
+#ct-confirm-modal.open { display: flex; }
+@keyframes ctFadeIn { from { opacity: 0; } to { opacity: 1; } }
+.ct-confirm-box {
+  background: var(--ct-surface); border: 1px solid var(--ct-border);
+  padding: 24px 20px; width: 320px;
+  display: flex; flex-direction: column; gap: 16px;
+  animation: ctSlideUp .15s ease;
+}
+@keyframes ctSlideUp { from { transform: translateY(6px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.ct-confirm-icon {
+  font-size: 22px; text-align: center; line-height: 1;
+}
+.ct-confirm-title {
+  font-size: 13px; font-weight: 900; letter-spacing: 3px;
+  text-transform: uppercase; text-align: center; color: var(--ct-text);
+}
+.ct-confirm-body {
+  font-size: 12px; color: var(--ct-muted2); letter-spacing: .5px;
+  line-height: 1.6; text-align: center;
+}
+.ct-confirm-btns {
+  display: flex; gap: 8px;
+}
+
 
 .ct-resize-handle { display: none; }
 .ct-resize-handle:hover,
@@ -963,6 +993,156 @@ input[type=file] { display: none; }
 
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .divider { height: 1px; background: var(--ct-border); margin: 4px 0; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   SETUP DIALOG
+══════════════════════════════════════════════════════════════════════ */
+#setup-overlay {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(8,10,14,0.97);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Barlow Condensed', sans-serif;
+}
+#setup-overlay.hidden { display: none; }
+
+.setup-box {
+  width: 100%; max-width: 680px; max-height: 92vh;
+  background: var(--panel,#141820);
+  border: 1px solid rgba(255,255,255,.1);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.setup-header {
+  padding: 20px 28px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  display: flex; align-items: center; gap: 14px; flex-shrink: 0;
+}
+.setup-header-logo { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
+.setup-header-title {
+  font-size: 22px; font-weight: 900; letter-spacing: 4px; text-transform: uppercase; color: #f2f5ff;
+}
+.setup-header-sub {
+  font-size: 11px; letter-spacing: 3px; color: rgba(255,255,255,.35); text-transform: uppercase; margin-top: 2px;
+}
+.setup-body {
+  flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 20px;
+}
+.setup-section-title {
+  font-size: 10px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase;
+  color: rgba(255,255,255,.3); margin-bottom: 10px;
+}
+.setup-card {
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.08);
+  padding: 16px 18px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.setup-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.setup-field { display: flex; flex-direction: column; gap: 5px; }
+.setup-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+  color: rgba(255,255,255,.35);
+}
+.setup-field input[type=text],
+.setup-field input[type=datetime-local],
+.setup-field select {
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+  color: #f2f5ff; font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px; padding: 9px 12px; outline: none;
+  transition: border-color .2s; width: 100%; border-radius: 0;
+}
+.setup-field input:focus, .setup-field select:focus { border-color: var(--lime,#c8ff00); }
+.setup-field select option { background: #141820; }
+.setup-field input[type=color] {
+  width: 44px; height: 36px; border: 1px solid rgba(255,255,255,.15);
+  background: rgba(255,255,255,.05); cursor: pointer; padding: 2px;
+}
+
+/* SM import row inside setup */
+.setup-sm-row { display: flex; gap: 8px; align-items: flex-end; }
+.setup-sm-row .setup-field { flex: 1; }
+.setup-sm-status { font-size: 12px; letter-spacing: 1px; padding: 4px 0; min-height: 20px; }
+.setup-sm-preview {
+  display: none; background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.1);
+  padding: 12px 14px; gap: 10px; flex-direction: column;
+}
+.setup-sm-teams { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.setup-sm-team { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.setup-sm-team.away { flex-direction: row-reverse; }
+.setup-sm-logo {
+  width: 36px; height: 36px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+  overflow: hidden; font-size: 14px; font-weight: 900;
+}
+.setup-sm-name { font-size: 13px; font-weight: 800; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.setup-sm-meta { font-size: 11px; color: rgba(255,255,255,.4); letter-spacing: 1px; }
+
+/* Logo upload in setup */
+.setup-logo-row { display: flex; align-items: center; gap: 10px; }
+.setup-logo-thumb {
+  width: 44px; height: 44px; flex-shrink: 0;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 900; overflow: hidden;
+}
+.setup-logo-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.setup-file-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; font-size: 12px; font-weight: 700; letter-spacing: 2px;
+  text-transform: uppercase; font-family: 'Barlow Condensed', sans-serif;
+  cursor: pointer; border: 1px solid rgba(255,255,255,.15); color: rgba(255,255,255,.6);
+  background: transparent; transition: border-color .15s; white-space: nowrap;
+}
+.setup-file-btn:hover { border-color: rgba(255,255,255,.4); color: #f2f5ff; }
+
+.setup-footer {
+  padding: 16px 28px 20px;
+  border-top: 1px solid rgba(255,255,255,.07);
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+}
+.setup-edit-btn {
+  font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  background: transparent; border: 1px solid rgba(255,255,255,.15);
+  color: rgba(255,255,255,.4); padding: 8px 16px; cursor: pointer;
+  font-family: 'Barlow Condensed', sans-serif; white-space: nowrap;
+  transition: border-color .15s;
+}
+.setup-edit-btn:hover { border-color: rgba(255,255,255,.4); color: #f2f5ff; }
+
+/* ── SCOREBOARD COUNTDOWN VIEW ─────────────────────────────────── */
+#sb-countdown {
+  display: none; position: absolute; inset: 0; z-index: 100;
+  background: #080a0e;
+  flex-direction: column; align-items: center; justify-content: center;
+}
+#sb-countdown.active { display: flex; }
+.sbc-league {
+  font-size: 13px; font-weight: 700; letter-spacing: 6px; text-transform: uppercase;
+  color: rgba(255,255,255,.3); margin-bottom: 32px;
+}
+.sbc-teams { display: flex; align-items: center; gap: 48px; margin-bottom: 48px; }
+.sbc-team { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.sbc-logo {
+  width: 96px; height: 96px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(255,255,255,.1);
+  font-size: 36px; font-weight: 900; overflow: hidden;
+}
+.sbc-logo img { width: 100%; height: 100%; object-fit: contain; }
+.sbc-name { font-size: 28px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; }
+.sbc-vs { font-size: 20px; font-weight: 700; letter-spacing: 4px; color: rgba(255,255,255,.2); }
+.sbc-label {
+  font-size: 12px; font-weight: 700; letter-spacing: 5px; text-transform: uppercase;
+  color: rgba(255,255,255,.3); margin-bottom: 8px;
+}
+.sbc-time {
+  font-size: 96px; font-weight: 900; letter-spacing: 6px;
+  font-family: 'Bebas Neue','Barlow Condensed',sans-serif;
+  color: #f2f5ff; font-variant-numeric: tabular-nums;
+}
+.sbc-time.soon { color: var(--lime,#c8ff00); }
 </style>
 <!-- Inline SVG icon sprite – no CDN needed -->
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
@@ -1093,6 +1273,24 @@ input[type=file] { display: none; }
     </div>
   </div>
 
+  <!-- COUNTDOWN VIEW (shown before kickoff if kickoff time is set) -->
+  <div id="sb-countdown">
+    <div class="sbc-league" id="sbc-league"></div>
+    <div class="sbc-teams">
+      <div class="sbc-team">
+        <div class="sbc-logo" id="sbc-home-logo">H</div>
+        <div class="sbc-name" id="sbc-home-name" style="color:var(--sb-home,#c8ff00)">HEIMTEAM</div>
+      </div>
+      <div class="sbc-vs">VS</div>
+      <div class="sbc-team">
+        <div class="sbc-logo" id="sbc-away-logo">G</div>
+        <div class="sbc-name" id="sbc-away-name" style="color:var(--sb-away,#22c55e)">GASTTEAM</div>
+      </div>
+    </div>
+    <div class="sbc-label">ANPFIFF IN</div>
+    <div class="sbc-time" id="sbc-time">--:--</div>
+  </div>
+
   <!-- PENALTY SHOOTOUT OVERLAY -->
   <div id="sb-penalty-overlay">
     <div class="sb-ps-header">
@@ -1162,6 +1360,13 @@ input[type=file] { display: none; }
 
     <!-- CLOCK: big clock on top, button below -->
     <div class="ct-clock-bar">
+      <div id="ct-countdown-bar" style="display:none;flex-direction:column;align-items:center;gap:3px;margin-bottom:4px">
+        <div style="font-size:9px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,.3);text-transform:uppercase">Anpfiff in</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div id="ct-countdown-display" style="font-size:18px;font-weight:900;letter-spacing:2px;color:var(--lime);font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-variant-numeric:tabular-nums">--:--</div>
+          <button onclick="stopCountdown()" style="font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 8px;background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.4);cursor:pointer;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase" title="Countdown beenden">✕</button>
+        </div>
+      </div>
       <div class="ct-bar-clock stopped" id="ct-bar-clock">20:00</div>
       <button class="ct-bar-toggle start" id="ct-toggle-btn" onclick="toggleClock()">▶ STARTEN</button>
     </div>
@@ -1563,19 +1768,14 @@ input[type=file] { display: none; }
 
     <div class="ct-admin-col">
       <div class="ct-card">
-        <div class="ct-card-head neutral">Spielformat</div>
+        <div class="ct-card-head neutral">Spiel einrichten</div>
         <div class="ct-card-body">
-          <div>
-            <label class="ct-label">Format</label>
-            <select id="ct-format" onchange="onFormatChange()">
-              <option value="3">Großfeld (3 × 20 Min)</option>
-              <option value="3s">Großfeld Spieltag (3 × 15 Min)</option>
-              <option value="2">Kleinfeld (2 × 20 Min)</option>
-            </select>
+          <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;line-height:1.5">
+            Teams, Logos, Farben, Spielformat und Anpfiffzeit festlegen.
           </div>
-          <div style="font-size:11px;color:var(--ct-muted);letter-spacing:1px;line-height:1.5;margin-top:2px">
-            ⚠ Änderung setzt die Spielzeit zurück.
-          </div>
+          <button class="btn btn-ghost" onclick="setupOpen()" style="border-color:rgba(200,255,0,.3);color:var(--lime)">
+            ⚙ Setup öffnen
+          </button>
         </div>
       </div>
 
@@ -1796,6 +1996,19 @@ input[type=file] { display: none; }
       </div>
     </div>
 
+    <!-- Spiel beenden -->
+    <div class="ct-danger-inner">
+      <div class="ct-card danger-zone">
+        <div class="ct-card-head danger">⚠ Spiel beenden / abbrechen</div>
+        <div class="ct-card-body">
+          <div style="font-size:12px;color:var(--muted2);letter-spacing:1px;line-height:1.5">
+            Beendet das aktuelle Spiel und löscht den gespeicherten Stand. Danach öffnet sich der Setup-Dialog für ein neues Spiel.
+          </div>
+          <button class="btn btn-danger-ghost" onclick="endGame()">⏹ Spiel beenden</button>
+        </div>
+      </div>
+    </div>
+
   </div> <!-- /ct-tab-area -->
 
 </div>
@@ -1839,6 +2052,8 @@ let S = {
   events: [],           // { id, type, side, clock, period, data }
   showEventsTab: false, // toggle in settings
   penaltyShootout: null, // { active, shots: [{home,away}], round }
+  leagueName: null,     // from setup
+  kickoffTime: null,    // ms timestamp, from setup
 };
 
 let clockTimer = null;
@@ -1848,6 +2063,65 @@ let clockTimer = null;
 let clockMs = null;          // null = not yet initialised from S.clock
 let clockStartedAt = null;   // Date.now() when clock last started
 let prevHomeScore = 0, prevAwayScore = 0;
+
+/* ─── PERSISTENCE ─────────────────────────────────────────────────── */
+const LS_KEY = 'floorball_state_v2';
+
+function saveState() {
+  if (isScoreboard) return;
+  try {
+    const snapshot = JSON.parse(JSON.stringify(S));
+    snapshot._savedAt = Date.now();
+    snapshot._clockMs = clockMs;
+    localStorage.setItem(LS_KEY, JSON.stringify(snapshot));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return false;
+    const saved = JSON.parse(raw);
+
+    // Compensate for time elapsed while tab was closed
+    if (saved.running && saved._savedAt && saved._clockMs != null) {
+      const elapsed = Date.now() - saved._savedAt;
+      saved._clockMs = Math.max(0, saved._clockMs - elapsed);
+      saved.clock    = Math.ceil(saved._clockMs / 1000);
+      // If clock ran out while away, stop it
+      if (saved._clockMs <= 0) saved.running = false;
+    }
+
+    const restoredClockMs = saved._clockMs;
+    delete saved._savedAt;
+    delete saved._clockMs;
+
+    Object.assign(S, saved);
+    clockMs = restoredClockMs != null ? restoredClockMs : S.clock * 1000;
+    prevHomeScore = S.homeScore;
+    prevAwayScore = S.awayScore;
+    return true;
+  } catch(e) { return false; }
+}
+
+// ── Beforeunload warning (only controller, only once game has started) ──
+if (!isScoreboard) {
+  window.addEventListener('beforeunload', e => {
+    if (S.gameStarted) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+  // Block F5 / Ctrl+R / Cmd+R in controller window
+  document.addEventListener('keydown', e => {
+    if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key === 'r')) {
+      if (S.gameStarted) {
+        e.preventDefault();
+      }
+    }
+  }, true);
+}
 
 /* ─── BUZZER ──────────────────────────────────────────────────────── */
 function toggleDir(which) {
@@ -1932,14 +2206,30 @@ function playBuzzer() {
 
 /* ─── CONTROLLER LOGIC ────────────────────────────────────────────── */
 if (!isScoreboard) {
-  initController();
+  document.addEventListener('DOMContentLoaded', () => {
+    initController();
+  });
+} else {
+  // Scoreboard side
 }
 
-function initController() {
+function initController(skipLoad = false) {
+  if (!skipLoad) loadState();
   buildPeriodPills();
   applyControllerColors();
   switchTab('spiel');
   renderController();
+
+  // Restore countdown bar if kickoff is still in the future
+  if (S.kickoffTime && S.kickoffTime > Date.now() && !S.gameStarted) {
+    startCountdownDisplay();
+  }
+
+  // If clock was running when we left, restart it
+  if (S.running) {
+    S.running = false; // startClock checks this
+    startClock();
+  }
 
   // Respond to scoreboard asking for a state push
   BC.onmessage = e => {
@@ -2213,14 +2503,21 @@ function updateLogoThumbs() {
 function onFormatChange() {
   const val = document.getElementById('ct-format').value;
   if (S.gameStarted) {
-    const ok = confirm('Das Spiel hat bereits begonnen.\nFormat ändern setzt Spielzeit und Abschnitt zurück. Fortfahren?');
-    if (!ok) {
-      // revert select to current format
-      const cur = S.maxPeriods === 2 ? '2' : S.periodSecs === 900 ? '3s' : '3';
-      document.getElementById('ct-format').value = cur;
-      return;
-    }
+    const cur = S.maxPeriods === 2 ? '2' : S.periodSecs === 900 ? '3s' : '3';
+    ctConfirm({
+      icon: '⚠',
+      title: 'Format ändern?',
+      body: 'Das Spiel hat bereits begonnen. Format ändern setzt Spielzeit und Abschnitt zurück.',
+      okLabel: 'Fortfahren',
+      onOk: () => applyFormat(val),
+      onCancel: () => { document.getElementById('ct-format').value = cur; },
+    });
+    return;
   }
+  applyFormat(val);
+}
+
+function applyFormat(val) {
   if (val === '3s') {
     S.maxPeriods = 3;
     S.periodSecs = 900;
@@ -2260,14 +2557,19 @@ function buildPeriodPills() {
 }
 
 function setPeriod(p, skipConfirm) {
-  // Ask for confirmation if clock still has time left
   if (!skipConfirm && S.clock > 0 && S.gameStarted) {
     const pn3 = ['1. Drittel','2. Drittel','3. Drittel','Verlängerung'];
     const pn2 = ['1. Halbzeit','2. Halbzeit','Verlängerung'];
     const pn  = S.maxPeriods === 3 ? pn3 : pn2;
     const target = pn[p-1] || 'Verlängerung';
-    const ok = confirm(`Wechsel zu ${target}?\nDie Spieluhr wird zurückgesetzt. Fortfahren?`);
-    if (!ok) return;
+    ctConfirm({
+      icon: '⏭',
+      title: `Wechsel zu ${target}?`,
+      body: 'Die Spieluhr wird zurückgesetzt.',
+      okLabel: 'Fortfahren',
+      onOk: () => setPeriod(p, true),
+    });
+    return;
   }
   stopClock();
   S.period = p;
@@ -2421,22 +2723,47 @@ function tickTimeout() {}
 
 // ── Reset ──
 function resetGame() {
-  if (!confirm('Spiel wirklich zurücksetzen?')) return;
-  stopClock();
-  S.homeScore = 0; S.awayScore = 0;
-  S.clock = S.periodSecs;
-  S.period = 1;
-  S.homePenalties = []; S.awayPenalties = [];
-  S.homeToUsed = false; S.awayToUsed = false;
-  S.activeTimeout = null;
-  S.gameStarted = false;
-  clearInterval(toTimer); toTimer = null;
-  S.pause = null;
-  clearInterval(pauseTimer); pauseTimer = null;
-  document.getElementById('ct-set-min').value = 20;
-  document.getElementById('ct-set-sec').value = 0;
-  buildPeriodPills();
-  pushAndRender();
+  ctConfirm({
+    icon: '🔄',
+    title: 'Spiel zurücksetzen?',
+    body: 'Tore, Spielzeit, Strafen und Auszeiten werden auf Null zurückgesetzt. Teamnamen und Farben bleiben erhalten.',
+    okLabel: 'Zurücksetzen',
+    onOk: () => {
+      stopClock();
+      S.homeScore = 0; S.awayScore = 0;
+      S.clock = S.periodSecs;
+      S.period = 1;
+      S.homePenalties = []; S.awayPenalties = [];
+      S.homeToUsed = false; S.awayToUsed = false;
+      S.activeTimeout = null;
+      S.gameStarted = false;
+      clearInterval(toTimer); toTimer = null;
+      S.pause = null;
+      clearInterval(pauseTimer); pauseTimer = null;
+      document.getElementById('ct-set-min').value = 20;
+      document.getElementById('ct-set-sec').value = 0;
+      buildPeriodPills();
+      pushAndRender();
+    },
+  });
+}
+
+function clearSavedState() {
+  try { localStorage.removeItem(LS_KEY); } catch(e) {}
+}
+
+function endGame() {
+  ctConfirm({
+    icon: '⏹',
+    title: 'Spiel beenden?',
+    body: 'Der gespeicherte Spielstand wird gelöscht und der Setup-Dialog für ein neues Spiel geöffnet.',
+    okLabel: 'Spiel beenden',
+    onOk: () => {
+      if (ctCountdownTimer) { clearInterval(ctCountdownTimer); ctCountdownTimer = null; }
+      try { localStorage.removeItem(LS_KEY); } catch(e) {}
+      location.reload();
+    },
+  });
 }
 
 // ── PiP Preview ──
@@ -2808,8 +3135,71 @@ function renderPenList(side, pens, fmt) {
 
 function pushAndRender() {
   push();
+  saveState();
   renderController();
   renderPip(S);
+}
+
+// ── Styled confirm modal ──
+function ctConfirm({ icon = '⚠', title, body = '', okLabel = 'Bestätigen', okClass = 'btn-danger', onOk, onCancel } = {}) {
+  const modal   = document.getElementById('ct-confirm-modal');
+  const iconEl  = document.getElementById('ct-confirm-icon');
+  const titleEl = document.getElementById('ct-confirm-title');
+  const bodyEl  = document.getElementById('ct-confirm-body');
+  const okBtn   = document.getElementById('ct-confirm-ok');
+  const cancelBtn = document.getElementById('ct-confirm-cancel');
+
+  iconEl.textContent  = icon;
+  titleEl.textContent = title;
+  bodyEl.textContent  = body;
+  okBtn.textContent   = okLabel;
+  okBtn.className     = `btn ${okClass}`;
+  okBtn.style.flex    = '1';
+
+  modal.classList.add('open');
+
+  const close = () => {
+    modal.classList.remove('open');
+    okBtn.removeEventListener('click', handleOk);
+    cancelBtn.removeEventListener('click', handleCancel);
+    modal.removeEventListener('click', handleBackdrop);
+  };
+  const handleOk      = () => { close(); onOk?.(); };
+  const handleCancel  = () => { close(); onCancel?.(); };
+  const handleBackdrop = e => { if (e.target === modal) handleCancel(); };
+
+  okBtn.addEventListener('click', handleOk);
+  cancelBtn.addEventListener('click', handleCancel);
+  modal.addEventListener('click', handleBackdrop);
+}
+
+function ctAlert({ icon = '✓', title, body = '' } = {}) {
+  const modal   = document.getElementById('ct-confirm-modal');
+  const iconEl  = document.getElementById('ct-confirm-icon');
+  const titleEl = document.getElementById('ct-confirm-title');
+  const bodyEl  = document.getElementById('ct-confirm-body');
+  const okBtn   = document.getElementById('ct-confirm-ok');
+  const cancelBtn = document.getElementById('ct-confirm-cancel');
+
+  iconEl.textContent  = icon;
+  titleEl.textContent = title;
+  bodyEl.textContent  = body;
+  okBtn.textContent   = 'OK';
+  okBtn.className     = 'btn btn-lime';
+  okBtn.style.flex    = '1';
+  cancelBtn.style.display = 'none';
+
+  modal.classList.add('open');
+
+  const close = () => {
+    modal.classList.remove('open');
+    cancelBtn.style.display = '';
+    okBtn.removeEventListener('click', close);
+    modal.removeEventListener('click', handleBackdrop);
+  };
+  const handleBackdrop = e => { if (e.target === modal) close(); };
+  okBtn.addEventListener('click', close);
+  modal.addEventListener('click', handleBackdrop);
 }
 
 /* ─── SCOREBOARD RENDER ────────────────────────────────────────────── */
@@ -2818,7 +3208,7 @@ if (isScoreboard) {
 }
 
 function initScoreboard() {
-  // Ask controller for current state
+  // Try to get state from controller via BroadcastChannel
   BC.postMessage({ type: 'REQ_STATE' });
 
   BC.onmessage = e => {
@@ -2826,6 +3216,19 @@ function initScoreboard() {
       renderScoreboard(e.data.payload);
     }
   };
+
+  // Fallback: if controller hasn't responded after 300ms (e.g. setup dialog still open),
+  // load state from localStorage directly so countdown is shown immediately
+  setTimeout(() => {
+    try {
+      const raw = localStorage.getItem('floorball_state_v2');
+      if (raw) {
+        const saved = JSON.parse(raw);
+        delete saved._savedAt; delete saved._clockMs;
+        renderScoreboard(saved);
+      }
+    } catch(e) {}
+  }, 300);
 }
 
 let sbPrevHome = null, sbPrevAway = null;  // null = not yet initialised
@@ -2834,6 +3237,9 @@ let s_colors = { home: '#c8ff00', away: '#22c55e' };
 
 function renderScoreboard(s) {
   if (!s) return;
+
+  // Update countdown (shows before kickoff, hides once game started)
+  updateCountdown(s);
 
   // Colors
   applyScoreboardColors(s);
@@ -3140,9 +3546,13 @@ function logEvent(type, side, data) {
 }
 
 function clearEvents() {
-  if (!confirm('Alle Ereignisse löschen?')) return;
-  S.events = [];
-  renderEvents();
+  ctConfirm({
+    icon: '🗑',
+    title: 'Ereignisse löschen?',
+    body: 'Alle Spielereignisse werden unwiderruflich gelöscht.',
+    okLabel: 'Löschen',
+    onOk: () => { S.events = []; renderEvents(); },
+  });
 }
 
 function deleteEvent(id) {
@@ -3277,23 +3687,38 @@ function startPenaltyShootout() {
 }
 
 function resetPenaltyShootout() {
-  if (!confirm('Penaltyschießen zurücksetzen?')) return;
-  S.penaltyShootout = {
-    active: true,
-    shots: Array.from({length: PS_SHOTS}, () => ({ home: null, away: null, homeNum: '', awayNum: '' })),
-    round: 1,
-  };
-  renderPenaltyShootoutCtrl();
-  pushAndRender();
+  ctConfirm({
+    icon: '↺',
+    title: 'Penaltyschießen neu?',
+    body: 'Alle eingetragenen Schüsse werden zurückgesetzt.',
+    okLabel: 'Neu starten',
+    okClass: 'btn-orange',
+    onOk: () => {
+      S.penaltyShootout = {
+        active: true,
+        shots: Array.from({length: PS_SHOTS}, () => ({ home: null, away: null, homeNum: '', awayNum: '' })),
+        round: 1,
+      };
+      renderPenaltyShootoutCtrl();
+      pushAndRender();
+    },
+  });
 }
 
 function endPenaltyShootout() {
-  if (!confirm('Penaltyschießen beenden?')) return;
-  S.penaltyShootout = null;
-  document.getElementById('ct-ps-overlay').classList.remove('open');
-  document.getElementById('ct-ps-start-wrap').style.display = '';
-  document.getElementById('ct-ps-active-wrap').style.display = 'none';
-  pushAndRender();
+  ctConfirm({
+    icon: '✕',
+    title: 'Penaltyschießen beenden?',
+    body: 'Das Penaltyschießen wird beendet und aus der Anzeige entfernt.',
+    okLabel: 'Beenden',
+    onOk: () => {
+      S.penaltyShootout = null;
+      document.getElementById('ct-ps-overlay').classList.remove('open');
+      document.getElementById('ct-ps-start-wrap').style.display = '';
+      document.getElementById('ct-ps-active-wrap').style.display = 'none';
+      pushAndRender();
+    },
+  });
 }
 
 function setPsShot(idx, side, val) {
@@ -3519,36 +3944,47 @@ function smLoadGame() {
 
   if (!raw) { smSetError('⚠ Bitte URL oder Spiel-ID eingeben.'); return; }
 
-  // Extract numeric game ID from URL or raw number
+  // Check if user pasted raw JSON directly
+  if (raw.startsWith('{')) {
+    try {
+      const data = JSON.parse(raw);
+      smSetError('');
+      smShowPreview(data);
+      return;
+    } catch(e) {
+      smSetError('⚠ JSON ungültig. Bitte erneut kopieren.');
+      return;
+    }
+  }
+
   const match = raw.match(/\/spiel\/(\d+)|^(\d+)$/);
   if (!match) { smSetError('⚠ Keine Spiel-ID erkannt. Bitte die vollständige Spiel-URL oder nur die ID eingeben.'); return; }
   const gameId = match[1] || match[2];
-
-  // Fetch via JSON paste workaround: direct API URL shown to user
-  // Since we can't fetch cross-origin, open the JSON URL and ask user to paste
   const apiUrl = `https://saisonmanager.de/api/v2/games/${gameId}.json`;
-
-  // Try fetching (works if SM allows CORS, otherwise fall back to paste)
   smSetError('⏳ Lade Spieldaten…', true);
-
   fetch(apiUrl)
-    .then(r => {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    })
-    .then(data => {
-      smSetError('');
-      smShowPreview(data);
-    })
-    .catch(() => {
-      // CORS blocked – fall back: show the JSON URL and switch to paste mode
-      smSetError('');
-      smShowFallback(gameId, apiUrl);
-    });
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(data => { smSetError(''); smShowPreview(data); })
+    .catch(() => smShowFallback(gameId, apiUrl));
 }
 
 function smShowFallback(gameId, apiUrl) {
-  smSetError(`⚠ Abruf fehlgeschlagen. Prüfe die Spiel-ID und versuche es erneut.`);
+  const el = document.getElementById('sm-error');
+  el.style.display = 'block';
+  el.style.color = 'rgba(255,255,255,.5)';
+  el.innerHTML = `
+    <div style="line-height:1.7">
+      <div style="color:var(--lime);font-weight:700;letter-spacing:2px;margin-bottom:6px">DIREKTABRUF NICHT MÖGLICH</div>
+      <div>① Öffne diesen Link im Browser:</div>
+      <div style="margin:4px 0 8px">
+        <a href="${apiUrl}" target="_blank"
+           style="color:var(--lime);font-family:monospace;font-size:11px;word-break:break-all">
+          ${apiUrl}
+        </a>
+      </div>
+      <div>② Kopiere den gesamten Seiteninhalt (Strg+A, Strg+C)</div>
+      <div style="margin-top:4px">③ Füge ihn oben ins Eingabefeld ein und klicke „Laden"</div>
+    </div>`;
 }
 
 function smParseFallback() {}
@@ -3615,6 +4051,383 @@ function smApplyPreview() {
 }
 
 
+
+/* ─── COUNTDOWN CONTROLLER ───────────────────────────────────────── */
+let ctCountdownTimer = null;
+
+function startCountdownDisplay() {
+  // Already has kickoffTime in S, just start the controller ticker
+  updateCtCountdownBar();
+  if (!ctCountdownTimer) {
+    ctCountdownTimer = setInterval(updateCtCountdownBar, 1000);
+  }
+  pushAndRender();
+}
+
+function updateCtCountdownBar() {
+  const bar = document.getElementById('ct-countdown-bar');
+  const display = document.getElementById('ct-countdown-display');
+  if (!bar || !display) return;
+
+  if (!S.kickoffTime || S.gameStarted) {
+    bar.style.display = 'none';
+    if (ctCountdownTimer) { clearInterval(ctCountdownTimer); ctCountdownTimer = null; }
+    return;
+  }
+
+  const diff = Math.max(0, S.kickoffTime - Date.now());
+  const totalSec = Math.floor(diff / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  const pad = n => String(n).padStart(2,'0');
+
+  display.textContent = h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+  display.style.color = totalSec <= 300 ? 'var(--lime)' : 'rgba(255,255,255,.6)';
+  bar.style.display = 'flex';
+
+  // Auto-stop when countdown reaches 0
+  if (diff <= 0) {
+    stopCountdown();
+  }
+}
+
+function stopCountdown() {
+  S.kickoffTime = null;
+  const bar = document.getElementById('ct-countdown-bar');
+  if (bar) bar.style.display = 'none';
+  if (ctCountdownTimer) { clearInterval(ctCountdownTimer); ctCountdownTimer = null; }
+  pushAndRender();
+  saveState();
+}
+
+function setupClose() {
+  document.getElementById('setup-overlay').classList.add('hidden');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const overlay = document.getElementById('setup-overlay');
+    if (overlay && !overlay.classList.contains('hidden')) setupClose();
+  }
+});
+
+/* ─── SETUP DIALOG ────────────────────────────────────────────────── */
+let setupPendingGame = null;
+let setupHomeLogo = null;
+let setupAwayLogo = null;
+
+function setupSmLoad() {
+  const raw = (document.getElementById('setup-sm-input').value || '').trim();
+  setupSmSetStatus('');
+  document.getElementById('setup-sm-preview').style.display = 'none';
+  setupPendingGame = null;
+  if (!raw) { setupSmSetStatus('⚠ Bitte URL oder Spiel-ID eingeben.'); return; }
+
+  // Check if user pasted raw JSON directly
+  if (raw.startsWith('{')) {
+    try {
+      const data = JSON.parse(raw);
+      setupSmShowPreview(data);
+      return;
+    } catch(e) {
+      setupSmSetStatus('⚠ JSON ungültig. Bitte erneut kopieren.');
+      return;
+    }
+  }
+
+  const match = raw.match(/\/spiel\/(\d+)|^(\d+)$/);
+  if (!match) { setupSmSetStatus('⚠ Keine Spiel-ID erkannt.'); return; }
+  const gameId = match[1] || match[2];
+  const apiUrl = `https://saisonmanager.de/api/v2/games/${gameId}.json`;
+  setupSmSetStatus('⏳ Lade Spieldaten…', true);
+  fetch(apiUrl)
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(data => { setupSmSetStatus(''); setupSmShowPreview(data); })
+    .catch(() => setupSmShowJsonFallback(gameId, apiUrl));
+}
+
+function setupSmShowJsonFallback(gameId, apiUrl) {
+  const statusEl = document.getElementById('setup-sm-status');
+  statusEl.style.display = 'block';
+  statusEl.style.color = 'rgba(255,255,255,.5)';
+  statusEl.innerHTML = `
+    <div style="line-height:1.7;font-size:12px">
+      <div style="color:var(--lime,#c8ff00);font-weight:700;letter-spacing:2px;margin-bottom:6px">DIREKTABRUF NICHT MÖGLICH</div>
+      <div>① Öffne diesen Link im Browser:</div>
+      <div style="margin:4px 0 8px">
+        <a href="${apiUrl}" target="_blank"
+           style="color:var(--lime,#c8ff00);font-family:monospace;font-size:11px;word-break:break-all">
+          ${apiUrl}
+        </a>
+      </div>
+      <div>② Kopiere den gesamten Seiteninhalt (Strg+A, Strg+C)</div>
+      <div style="margin-top:4px">③ Füge ihn oben ins Eingabefeld ein und klicke „Laden"</div>
+    </div>`;
+}
+
+function setupSmSetStatus(msg, isOk) {
+  const el = document.getElementById('setup-sm-status');
+  el.style.display = msg ? 'block' : 'none';
+  el.style.color = isOk ? 'var(--lime)' : 'var(--red,#ff3b3b)';
+  el.textContent = msg;
+}
+
+function setupSmShowPreview(g) {
+  setupPendingGame = g;
+  const homeName = g.home_team_name || 'HEIM';
+  const awayName = g.guest_team_name || 'GAST';
+  const homeLogo = g.home_team_small_logo || g.home_team_logo || null;
+  const awayLogo = g.guest_team_small_logo || g.guest_team_logo || null;
+  const date = g.date ? new Date(g.date + 'T' + (g.start_time || '00:00'))
+    .toLocaleDateString('de-DE', { weekday:'short', day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+  const arena = g.arena_short || g.arena_name || '';
+
+  function logoHtml(url, initial) {
+    if (!url) return initial;
+    const abs = url.startsWith('http') ? url : 'https://saisonmanager.de' + url;
+    return `<img src="${abs}" style="width:100%;height:100%;object-fit:contain">`;
+  }
+  document.getElementById('setup-sm-home-logo').innerHTML = logoHtml(homeLogo, homeName[0]);
+  document.getElementById('setup-sm-away-logo').innerHTML = logoHtml(awayLogo, awayName[0]);
+  document.getElementById('setup-sm-home-name').textContent = homeName;
+  document.getElementById('setup-sm-away-name').textContent = awayName;
+  document.getElementById('setup-sm-meta').textContent = [date, arena].filter(Boolean).join(' · ');
+  document.getElementById('setup-sm-preview').style.display = 'flex';
+}
+
+function setupSmApply() {
+  const g = setupPendingGame;
+  if (!g) return;
+
+  const homeName = (g.home_team_name || 'HEIM').toUpperCase();
+  const awayName = (g.guest_team_name || 'GAST').toUpperCase();
+  document.getElementById('setup-home-name').value = homeName;
+  document.getElementById('setup-away-name').value = awayName;
+
+  function applySetupLogo(side, url) {
+    if (!url) return;
+    const abs = url.startsWith('http') ? url : 'https://saisonmanager.de' + url;
+    if (side === 'home') setupHomeLogo = abs;
+    else setupAwayLogo = abs;
+    const prev = document.getElementById('setup-' + side + '-logo-prev');
+    if (prev) prev.innerHTML = `<img src="${abs}" style="width:100%;height:100%;object-fit:contain">`;
+  }
+  applySetupLogo('home', g.home_team_small_logo || g.home_team_logo);
+  applySetupLogo('away', g.guest_team_small_logo || g.guest_team_logo);
+
+  // Fill league name
+  if (g.league_name || g.competition_name) {
+    document.getElementById('setup-league').value = g.league_name || g.competition_name || '';
+  }
+
+  // Fill kickoff datetime
+  if (g.date && g.start_time) {
+    try {
+      const dt = new Date(g.date + 'T' + g.start_time);
+      const pad = n => String(n).padStart(2,'0');
+      const local = `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+      document.getElementById('setup-kickoff').value = local;
+    } catch(e) {}
+  }
+
+  document.getElementById('setup-sm-preview').style.display = 'none';
+  setupSmSetStatus(`✓ ${homeName} vs ${awayName} übernommen!`, true);
+  setTimeout(() => setupSmSetStatus(''), 3000);
+  setupPendingGame = null;
+}
+
+function setupOnLogo(side, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const url = e.target.result;
+    if (side === 'home') setupHomeLogo = url;
+    else setupAwayLogo = url;
+    const prev = document.getElementById('setup-' + side + '-logo-prev');
+    prev.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:contain">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function setupRemoveLogo(side) {
+  if (side === 'home') setupHomeLogo = null;
+  else setupAwayLogo = null;
+  const name = side === 'home'
+    ? (document.getElementById('setup-home-name').value || 'H')[0].toUpperCase()
+    : (document.getElementById('setup-away-name').value || 'G')[0].toUpperCase();
+  document.getElementById('setup-' + side + '-logo-prev').innerHTML = name;
+}
+
+function setupStart() {
+  // Collect values from the dialog
+  const homeName = (document.getElementById('setup-home-name').value || 'HEIMTEAM').toUpperCase();
+  const awayName = (document.getElementById('setup-away-name').value || 'GASTTEAM').toUpperCase();
+  const format   = document.getElementById('setup-format').value;
+  const league   = document.getElementById('setup-league').value.trim();
+  const kickoff  = document.getElementById('setup-kickoff').value;
+
+  // Apply format first (sets periodSecs, maxPeriods etc. via existing logic)
+  document.getElementById('ct-format').value = format;
+  onFormatChange();
+
+  // Apply team names + logos + colors into main state
+  S.homeName = homeName;
+  S.awayName = awayName;
+  document.getElementById('ct-home-name').value = homeName;
+  document.getElementById('ct-away-name').value = awayName;
+
+  if (setupHomeLogo) {
+    S.homeLogo = setupHomeLogo;
+    const prev = document.getElementById('ct-home-logo-prev');
+    if (prev) prev.innerHTML = `<img src="${setupHomeLogo}" style="width:100%;height:100%;object-fit:contain">`;
+  }
+  if (setupAwayLogo) {
+    S.awayLogo = setupAwayLogo;
+    const prev = document.getElementById('ct-away-logo-prev');
+    if (prev) prev.innerHTML = `<img src="${setupAwayLogo}" style="width:100%;height:100%;object-fit:contain">`;
+  }
+
+  const homeAccent = document.getElementById('setup-home-accent').value;
+  const awayAccent = document.getElementById('setup-away-accent').value;
+  const homeJersey = document.getElementById('setup-home-jersey').value;
+  const awayJersey = document.getElementById('setup-away-jersey').value;
+
+  S.homeAccent = homeAccent; S.awayAccent = awayAccent;
+  S.homeJersey = homeJersey; S.awayJersey = awayJersey;
+  document.getElementById('ct-home-accent').value = homeAccent;
+  document.getElementById('ct-away-accent').value = awayAccent;
+  document.getElementById('ct-home-jersey').value = homeJersey;
+  document.getElementById('ct-away-jersey').value = awayJersey;
+  document.getElementById('ct-home-accent-hex').textContent = homeAccent;
+  document.getElementById('ct-away-accent-hex').textContent = awayAccent;
+  document.getElementById('ct-home-jersey-hex').textContent = homeJersey;
+  document.getElementById('ct-away-jersey-hex').textContent = awayJersey;
+
+  // Store league and kickoff in state
+  S.leagueName = league || null;
+  S.kickoffTime = kickoff ? new Date(kickoff).getTime() : null;
+
+  // Hide setup overlay, save state, push to scoreboard
+  document.getElementById('setup-overlay').classList.add('hidden');
+  applyControllerColors();
+  pushAndRender();
+  saveState();
+
+  // Ask about countdown only if kickoff time was set
+  if (S.kickoffTime && S.kickoffTime > Date.now()) {
+    const dt = new Date(S.kickoffTime);
+    const pad = n => String(n).padStart(2,'0');
+    const timeStr = `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+    ctConfirm({
+      icon: '⏱',
+      title: 'Countdown anzeigen?',
+      body: `Soll auf dem Scoreboard ein Countdown bis ${timeStr} Uhr angezeigt werden?`,
+      okLabel: 'Ja, Countdown starten',
+      okClass: 'btn-lime',
+      onOk: () => startCountdownDisplay(),
+      onCancel: () => {
+        S.kickoffTime = null;
+        pushAndRender();
+        saveState();
+      }
+    });
+  }
+
+  // Push state to scoreboard and render
+  applyControllerColors();
+  pushAndRender();
+  saveState();
+}
+
+function setupOpen() {
+  // Pre-fill from current state when re-opening
+  document.getElementById('setup-home-name').value = S.homeName;
+  document.getElementById('setup-away-name').value = S.awayName;
+  document.getElementById('setup-home-accent').value = S.homeAccent;
+  document.getElementById('setup-away-accent').value = S.awayAccent;
+  document.getElementById('setup-home-jersey').value = S.homeJersey;
+  document.getElementById('setup-away-jersey').value = S.awayJersey;
+  document.getElementById('setup-home-accent-hex').textContent = S.homeAccent;
+  document.getElementById('setup-away-accent-hex').textContent = S.awayAccent;
+  document.getElementById('setup-home-jersey-hex').textContent = S.homeJersey;
+  document.getElementById('setup-away-jersey-hex').textContent = S.awayJersey;
+  document.getElementById('setup-league').value = S.leagueName || '';
+  if (S.kickoffTime) {
+    const dt = new Date(S.kickoffTime);
+    const pad = n => String(n).padStart(2,'0');
+    document.getElementById('setup-kickoff').value =
+      `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+  } else {
+    document.getElementById('setup-kickoff').value = '';
+  }
+  if (S.homeLogo) {
+    setupHomeLogo = S.homeLogo;
+    document.getElementById('setup-home-logo-prev').innerHTML = `<img src="${S.homeLogo}" style="width:100%;height:100%;object-fit:contain">`;
+  }
+  if (S.awayLogo) {
+    setupAwayLogo = S.awayLogo;
+    document.getElementById('setup-away-logo-prev').innerHTML = `<img src="${S.awayLogo}" style="width:100%;height:100%;object-fit:contain">`;
+  }
+  document.getElementById('setup-overlay').classList.remove('hidden');
+}
+
+/* ─── COUNTDOWN (Scoreboard side) ───────────────────────────────── */
+let countdownTimer = null;
+
+function updateCountdown(state) {
+  const cd = document.getElementById('sb-countdown');
+  if (!cd) return;
+
+  if (!state.kickoffTime || state.gameStarted) {
+    cd.classList.remove('active');
+    if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+    return;
+  }
+
+  function renderCd() {
+    const now = Date.now();
+    const diff = Math.max(0, state.kickoffTime - now);
+    const totalSec = Math.floor(diff / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    const pad = n => String(n).padStart(2,'0');
+    const timeEl = document.getElementById('sbc-time');
+    if (!timeEl) return;
+
+    let display;
+    if (h > 0) display = `${h}:${pad(m)}:${pad(s)}`;
+    else display = `${pad(m)}:${pad(s)}`;
+
+    timeEl.textContent = display;
+    timeEl.classList.toggle('soon', totalSec <= 300 && totalSec > 0);
+
+    if (diff <= 0) {
+      timeEl.textContent = 'JETZT';
+      timeEl.classList.add('soon');
+    }
+  }
+
+  // Fill team info
+  function logoHtml(url, initial) {
+    if (!url) return initial;
+    return `<img src="${url}" style="width:100%;height:100%;object-fit:contain">`;
+  }
+  const el = (id, html) => { const e = document.getElementById(id); if (e) e.innerHTML = html; };
+  el('sbc-home-logo', state.homeLogo ? logoHtml(state.homeLogo, state.homeName[0]) : state.homeName[0]);
+  el('sbc-away-logo', state.awayLogo ? logoHtml(state.awayLogo, state.awayName[0]) : state.awayName[0]);
+  document.getElementById('sbc-home-name').textContent = state.homeName;
+  document.getElementById('sbc-away-name').textContent = state.awayName;
+  document.getElementById('sbc-home-name').style.color = state.homeAccent || '#c8ff00';
+  document.getElementById('sbc-away-name').style.color = state.awayAccent || '#22c55e';
+  document.getElementById('sbc-league').textContent = state.leagueName || '';
+
+  cd.classList.add('active');
+  renderCd();
+  if (!countdownTimer) countdownTimer = setInterval(renderCd, 1000);
+}
 
 (function initTabDragHandle() {
   const MIN_H = 100;
@@ -3736,6 +4549,19 @@ function smApplyPreview() {
   </div>
 </div>
 
+<!-- CONFIRM MODAL -->
+<div id="ct-confirm-modal">
+  <div class="ct-confirm-box">
+    <div class="ct-confirm-icon" id="ct-confirm-icon"></div>
+    <div class="ct-confirm-title" id="ct-confirm-title"></div>
+    <div class="ct-confirm-body" id="ct-confirm-body"></div>
+    <div class="ct-confirm-btns">
+      <button class="btn btn-ghost" style="flex:1" id="ct-confirm-cancel">Abbrechen</button>
+      <button class="btn btn-danger" style="flex:1" id="ct-confirm-ok">Bestätigen</button>
+    </div>
+  </div>
+</div>
+
 <!-- GOAL DIALOG -->
 <div id="ct-goal-dialog">
   <div class="ct-goal-dialog-box">
@@ -3750,6 +4576,172 @@ function smApplyPreview() {
     </div>
   </div>
 </div>
+
+<!-- SETUP DIALOG -->
+<div id="setup-overlay" class="hidden" onclick="if(event.target===this)setupClose()">
+  <div class="setup-box">
+    <div class="setup-header" style="justify-content:space-between">
+      <img src="data:image/png;base64,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" style="width:36px;height:36px;object-fit:contain;flex-shrink:0" alt="">
+      <div style="flex:1">
+        <div class="setup-header-title">Spiel einrichten</div>
+        <div class="setup-header-sub">Floorball Scoreboard</div>
+      </div>
+      <button onclick="setupClose()" style="background:transparent;border:none;color:rgba(255,255,255,.4);font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;flex-shrink:0" title="Schließen">✕</button>
+    </div>
+
+    <div class="setup-body">
+
+      <!-- SAISONMANAGER -->
+      <div>
+        <div class="setup-section-title">Saisonmanager Import (optional)</div>
+        <div class="setup-card">
+          <div style="font-size:12px;color:rgba(255,255,255,.4);letter-spacing:1px;line-height:1.6">
+            Spiel-URL einfügen – Teamnamen, Logos, Liga und Anpfiffzeit werden automatisch übernommen.
+          </div>
+          <div class="setup-sm-row">
+            <div class="setup-field">
+              <label class="setup-label">Spiel-URL oder ID</label>
+              <input type="text" id="setup-sm-input" placeholder="z.B. …/spiel/43778 oder einfach 43778"
+                onkeydown="if(event.key==='Enter') setupSmLoad()">
+            </div>
+            <button class="btn btn-lime btn-sm" onclick="setupSmLoad()" style="flex-shrink:0;white-space:nowrap;margin-bottom:0;height:38px">↓ Laden</button>
+          </div>
+          <div id="setup-sm-status" class="setup-sm-status"></div>
+          <div id="setup-sm-preview" class="setup-sm-preview">
+            <div style="font-size:10px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,.3)">VORSCHAU</div>
+            <div class="setup-sm-teams">
+              <div class="setup-sm-team">
+                <div class="setup-sm-logo" id="setup-sm-home-logo"></div>
+                <div class="setup-sm-name" id="setup-sm-home-name"></div>
+              </div>
+              <div style="font-size:11px;color:rgba(255,255,255,.25);font-weight:700;flex-shrink:0">VS</div>
+              <div class="setup-sm-team away">
+                <div class="setup-sm-logo" id="setup-sm-away-logo"></div>
+                <div class="setup-sm-name" id="setup-sm-away-name"></div>
+              </div>
+            </div>
+            <div id="setup-sm-meta" class="setup-sm-meta"></div>
+            <button class="btn btn-lime btn-sm" onclick="setupSmApply()" style="width:100%;font-weight:900;letter-spacing:2px">✓ Übernehmen</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SPIELFORMAT & LIGA -->
+      <div>
+        <div class="setup-section-title">Spielformat</div>
+        <div class="setup-card">
+          <div class="setup-row">
+            <div class="setup-field">
+              <label class="setup-label">Format</label>
+              <select id="setup-format">
+                <option value="3">Großfeld (3 × 20 Min)</option>
+                <option value="3s">Großfeld Spieltag (3 × 15 Min)</option>
+                <option value="2">Kleinfeld (2 × 20 Min)</option>
+              </select>
+            </div>
+            <div class="setup-field">
+              <label class="setup-label">Liga / Turnier <span style="opacity:.5">(optional)</span></label>
+              <input type="text" id="setup-league" placeholder="z.B. Verbandsliga NWFV">
+            </div>
+          </div>
+          <div class="setup-field">
+            <label class="setup-label">Anpfiff <span style="opacity:.5">(optional – für Countdown)</span></label>
+            <input type="datetime-local" id="setup-kickoff">
+          </div>
+        </div>
+      </div>
+
+      <!-- HEIMTEAM -->
+      <div>
+        <div class="setup-section-title">Heimteam</div>
+        <div class="setup-card">
+          <div class="setup-row">
+            <div class="setup-field">
+              <label class="setup-label">Name</label>
+              <input type="text" id="setup-home-name" value="HEIMTEAM">
+            </div>
+            <div class="setup-field">
+              <label class="setup-label">Logo</label>
+              <div class="setup-logo-row">
+                <div class="setup-logo-thumb" id="setup-home-logo-prev">H</div>
+                <label class="setup-file-btn" for="setup-home-logo-file">↑ Hochladen</label>
+                <input type="file" id="setup-home-logo-file" accept="image/*" style="display:none" onchange="setupOnLogo('home',this)">
+                <button class="setup-file-btn" onclick="setupRemoveLogo('home')" style="border:none;padding:7px 10px">✕</button>
+              </div>
+            </div>
+          </div>
+          <div class="setup-row">
+            <div class="setup-field">
+              <label class="setup-label">Akzentfarbe</label>
+              <div style="display:flex;align-items:center;gap:10px">
+                <input type="color" id="setup-home-accent" value="#c8ff00" oninput="document.getElementById('setup-home-accent-hex').textContent=this.value">
+                <span id="setup-home-accent-hex" style="font-size:13px;color:rgba(255,255,255,.4);letter-spacing:2px;font-family:monospace">#c8ff00</span>
+              </div>
+            </div>
+            <div class="setup-field">
+              <label class="setup-label">Trikotfarbe</label>
+              <div style="display:flex;align-items:center;gap:10px">
+                <input type="color" id="setup-home-jersey" value="#0d2e0d" oninput="document.getElementById('setup-home-jersey-hex').textContent=this.value">
+                <span id="setup-home-jersey-hex" style="font-size:13px;color:rgba(255,255,255,.4);letter-spacing:2px;font-family:monospace">#0d2e0d</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GASTTEAM -->
+      <div>
+        <div class="setup-section-title">Gastteam</div>
+        <div class="setup-card">
+          <div class="setup-row">
+            <div class="setup-field">
+              <label class="setup-label">Name</label>
+              <input type="text" id="setup-away-name" value="GASTTEAM">
+            </div>
+            <div class="setup-field">
+              <label class="setup-label">Logo</label>
+              <div class="setup-logo-row">
+                <div class="setup-logo-thumb" id="setup-away-logo-prev">G</div>
+                <label class="setup-file-btn" for="setup-away-logo-file">↑ Hochladen</label>
+                <input type="file" id="setup-away-logo-file" accept="image/*" style="display:none" onchange="setupOnLogo('away',this)">
+                <button class="setup-file-btn" onclick="setupRemoveLogo('away')" style="border:none;padding:7px 10px">✕</button>
+              </div>
+            </div>
+          </div>
+          <div class="setup-row">
+            <div class="setup-field">
+              <label class="setup-label">Akzentfarbe</label>
+              <div style="display:flex;align-items:center;gap:10px">
+                <input type="color" id="setup-away-accent" value="#22c55e" oninput="document.getElementById('setup-away-accent-hex').textContent=this.value">
+                <span id="setup-away-accent-hex" style="font-size:13px;color:rgba(255,255,255,.4);letter-spacing:2px;font-family:monospace">#22c55e</span>
+              </div>
+            </div>
+            <div class="setup-field">
+              <label class="setup-label">Trikotfarbe</label>
+              <div style="display:flex;align-items:center;gap:10px">
+                <input type="color" id="setup-away-jersey" value="#0a1a0a" oninput="document.getElementById('setup-away-jersey-hex').textContent=this.value">
+                <span id="setup-away-jersey-hex" style="font-size:13px;color:rgba(255,255,255,.4);letter-spacing:2px;font-family:monospace">#0a1a0a</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /setup-body -->
+
+    <div class="setup-footer">
+      <button class="btn btn-lime" onclick="setupStart()" style="flex:1;font-size:16px;font-weight:900;letter-spacing:3px">
+        ▶ SPIEL STARTEN
+      </button>
+    </div>
+  </div>
+</div>
+<!-- hidden format select, needed by onFormatChange() -->
+<select id="ct-format" style="display:none" onchange="onFormatChange()">
+  <option value="3">Großfeld (3 × 20 Min)</option>
+  <option value="3s">Großfeld Spieltag (3 × 15 Min)</option>
+  <option value="2">Kleinfeld (2 × 20 Min)</option>
+</select>
 
 </body>
 </html>
