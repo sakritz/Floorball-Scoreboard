@@ -3,7 +3,7 @@
 
 # Floorball Scoreboard App
 
-Ein lokales, browserbasieres Scoreboard für Floorball-Spiele – gebaut als einzelne HTML-Datei, ohne Server, ohne Installation.
+Eine Scoreboard-App für Floorball – verfügbar als HTML-Datei (z.B. via GitHub Pages) und als installierbare Desktop-App (Electron).
 
 ![Design: TV-Broadcast Style mit Lime und Forest Green](https://img.shields.io/badge/Design-TV--Broadcast-c8ff00?style=flat-square&labelColor=0a0c12)
 ![Technologie: Vanilla HTML/CSS/JS](https://img.shields.io/badge/Tech-HTML%20%2F%20CSS%20%2F%20JS-22c55e?style=flat-square&labelColor=0a0c12)
