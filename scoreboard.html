@@ -248,7 +248,10 @@ body {
 #sb-goal-overlay { background: transparent; }
 .sb-goal-text {
   font-size: clamp(100px, 18vw, 220px); font-weight: 900; letter-spacing: 8px;
-  animation: goalBurst 2.4s ease forwards; text-shadow: 0 0 120px currentColor;
+  text-shadow: 0 0 120px currentColor; opacity: 0;
+}
+.sb-goal-text.animating {
+  animation: goalBurst 2.4s ease forwards;
 }
 @keyframes goalBurst {
   0%   { transform: scale(.4) rotate(-6deg); opacity: 0; }
@@ -587,7 +590,38 @@ body {
 .sb-ps-winner-text.visible { display: block; }
 @keyframes pulse { 0%,100%{opacity:.7} 50%{opacity:.2} }
 
-/* ── EVENTS TAB ── */
+/* ── GOAL SCORER SLIDE ── */
+.sb-goal-scorer-slide {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  opacity: 0;
+}
+.sb-goal-scorer-slide.animating {
+  animation: scorerSlide 3.2s ease forwards;
+}
+@keyframes scorerSlide {
+  0%   { opacity: 0; transform: translateY(16px); }
+  10%  { opacity: 1; transform: translateY(0); }
+  80%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+.sb-goal-scorer-label {
+  font-size: 13px; font-weight: 700; letter-spacing: 5px; text-transform: uppercase;
+  color: rgba(255,255,255,.4);
+}
+.sb-goal-scorer-num {
+  font-size: clamp(64px, 10vw, 130px); font-weight: 900; letter-spacing: 4px;
+  font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
+  line-height: 1; text-shadow: 0 0 60px currentColor;
+}
+.sb-goal-assist-row {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 18px; font-weight: 700; letter-spacing: 3px; color: rgba(255,255,255,.5);
+}
+.sb-goal-assist-icon { font-size: 14px; opacity: .5; }
+
+/* pending goal: score shown dimmed until clock starts */
+.sb-score.pending { opacity: 0.35; }
+
 .ct-tab-content.tab-events { display: none; }
 .ct-tab-content.tab-events.active {
   display: flex; overflow-y: auto; padding: 14px; gap: 14px; align-items: flex-start;
@@ -609,7 +643,23 @@ body {
 .ct-event-item.ev-away { border-left: 3px solid var(--ct-away, #22c55e); }
 .ct-event-item.ev-neutral { border-left: 3px solid rgba(255,255,255,.2); }
 
-/* Goal dialog */
+/* Goal type toggle buttons */
+.ct-goal-type-btns {
+  display: flex; gap: 6px;
+}
+.ct-goal-type-btn {
+  flex: 1; padding: 7px 6px;
+  background: var(--ct-card); border: 1px solid var(--ct-border);
+  color: var(--ct-muted2); font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  cursor: pointer; transition: all .15s;
+}
+.ct-goal-type-btn:hover { border-color: var(--ct-muted2); color: var(--ct-text); }
+.ct-goal-type-btn.active {
+  background: rgba(200,255,0,.1); border-color: var(--lime);
+  color: var(--lime);
+}
+
 #ct-goal-dialog {
   display: none; position: fixed; inset: 0; z-index: 9999;
   background: rgba(0,0,0,.7); align-items: center; justify-content: center;
@@ -1253,6 +1303,14 @@ input[type=file] { display: none; }
   <!-- GOAL OVERLAY -->
   <div class="sb-overlay" id="sb-goal-overlay">
     <div class="sb-goal-text" id="sb-goal-text">TOR!</div>
+    <div class="sb-goal-scorer-slide" id="sb-goal-scorer-slide">
+      <div class="sb-goal-scorer-label" id="sb-goal-scorer-label">TORSCHÜTZE</div>
+      <div class="sb-goal-scorer-num" id="sb-goal-scorer-num">#7</div>
+      <div class="sb-goal-assist-row" id="sb-goal-assist-row">
+        <span class="sb-goal-assist-icon">▶</span>
+        <span id="sb-goal-assist-num">#11</span>
+      </div>
+    </div>
   </div>
 
   <!-- TIMEOUT OVERLAY -->
@@ -1918,6 +1976,18 @@ input[type=file] { display: none; }
               </div>
             </label>
           </div>
+          <div style="height:1px;background:var(--ct-border);margin:10px 0"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px">Tor-Animation</div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex-shrink:0">
+              <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--ct-muted2)" id="ct-goal-anim-label">AN</div>
+              <div id="ct-goal-anim-toggle" onclick="toggleGoalAnim()"
+                style="width:44px;height:24px;border-radius:4px;background:var(--lime);cursor:pointer;position:relative;transition:background .2s;border:1px solid rgba(255,255,255,.15)">
+                <div id="ct-goal-anim-knob"
+                  style="position:absolute;top:2px;left:22px;width:18px;height:18px;background:#000;transition:left .2s"></div>
+              </div>
+            </label>
+          </div>
         </div>
       </div>
 
@@ -2051,6 +2121,8 @@ let S = {
   pause: null,          // { remaining, duration } – inter-period break
   events: [],           // { id, type, side, clock, period, data }
   showEventsTab: false, // toggle in settings
+  goalAnimEnabled: true, // toggle in settings
+  pendingGoal: null,     // { side, scorer, assist } – confirmed but waiting for clock start
   penaltyShootout: null, // { active, shots: [{home,away}], round }
   leagueName: null,     // from setup
   kickoffTime: null,    // ms timestamp, from setup
@@ -2300,6 +2372,9 @@ function startClock() {
   S.running = true;
   S.gameStarted = true;
 
+  // Pending goal confirmed by Bully → clear it now (scoreboard will reveal score)
+  if (S.pendingGoal) S.pendingGoal = null;
+
   // Initialise precise ms tracker from display value if not yet set
   if (clockMs === null) clockMs = S.clock * 1000;
   clockStartedAt = Date.now();
@@ -2364,10 +2439,24 @@ function setClock() {
 
 // ── Score ──
 function adjScore(side, delta) {
-  if (side === 'home') S.homeScore = Math.max(0, S.homeScore + delta);
-  else                 S.awayScore = Math.max(0, S.awayScore + delta);
-  if (delta > 0 && S.showEventsTab) openGoalDialog(side);
-  else pushAndRender();
+  if (delta > 0) {
+    // Store pending goal – score increase applied when clock starts (or immediately if events off)
+    if (S.showEventsTab) {
+      // open dialog first; score + pending set in confirmGoal
+      _pendingGoalSide = side;
+      openGoalDialog(side);
+    } else {
+      // No events: apply score immediately, trigger anim via pendingGoal flag
+      if (side === 'home') S.homeScore = Math.max(0, S.homeScore + 1);
+      else                 S.awayScore = Math.max(0, S.awayScore + 1);
+      S.pendingGoal = { side, scorer: null, assist: null };
+      pushAndRender();
+    }
+  } else {
+    if (side === 'home') S.homeScore = Math.max(0, S.homeScore + delta);
+    else                 S.awayScore = Math.max(0, S.awayScore + delta);
+    pushAndRender();
+  }
 }
 
 // ── Names / Logos ──
@@ -3232,7 +3321,10 @@ function initScoreboard() {
 }
 
 let sbPrevHome = null, sbPrevAway = null;  // null = not yet initialised
+let sbInitialized = false; // true after first render – don't fire anim on init
+let sbLastPending = null;  // tracks pendingGoal.side across renders
 let goalTimer = null;
+let scorerTimer = null;
 let s_colors = { home: '#c8ff00', away: '#22c55e' };
 
 function renderScoreboard(s) {
@@ -3289,15 +3381,49 @@ function renderScoreboard(s) {
   // Scores + goal flash
   const homeEl = document.getElementById('sb-home-score');
   const awayEl = document.getElementById('sb-away-score');
-  if (sbPrevHome === null) {
-    sbPrevHome = s.homeScore; sbPrevAway = s.awayScore;
-  } else {
-    if (s.homeScore > sbPrevHome) triggerGoal('home', homeEl, s.homeName);
-    if (s.awayScore > sbPrevAway) triggerGoal('away', awayEl, s.awayName);
-    sbPrevHome = s.homeScore; sbPrevAway = s.awayScore;
+
+  // Determine what scores to actually display (hide pending goal until clock runs)
+  let displayHome = s.homeScore;
+  let displayAway = s.awayScore;
+  if (s.pendingGoal) {
+    if (s.pendingGoal.side === 'home') displayHome = Math.max(0, s.homeScore - 1);
+    else                               displayAway = Math.max(0, s.awayScore - 1);
   }
-  homeEl.textContent = s.homeScore;
-  awayEl.textContent = s.awayScore;
+
+  if (!sbInitialized) {
+    // First render: record baseline (use real scores, not display)
+    sbPrevHome = s.homeScore;
+    sbPrevAway = s.awayScore;
+    sbInitialized = true;
+  } else {
+    // Trigger animation when real score rises (pending goal → anim immediately)
+    // Trigger score reveal animation when pendingGoal clears (clock starts)
+    const prevPending = sbLastPending;
+    sbLastPending = s.pendingGoal ? (s.pendingGoal.side) : null;
+
+    if (s.homeScore > sbPrevHome) {
+      // New goal for home
+      triggerGoal('home', homeEl, s.homeName, s);
+    } else if (s.awayScore > sbPrevAway) {
+      // New goal for away
+      triggerGoal('away', awayEl, s.awayName, s);
+    } else if (prevPending && !s.pendingGoal) {
+      // pendingGoal just cleared → score reveal (no TOR! anim, just score-pop)
+      const revealSide = prevPending;
+      const revealEl = revealSide === 'home' ? homeEl : awayEl;
+      revealEl.classList.remove('score-pop');
+      void revealEl.offsetWidth;
+      revealEl.classList.add('score-pop');
+    }
+    sbPrevHome = s.homeScore;
+    sbPrevAway = s.awayScore;
+  }
+
+  homeEl.textContent = displayHome;
+  awayEl.textContent = displayAway;
+  // Dim pending score
+  homeEl.classList.toggle('pending', !!(s.pendingGoal && s.pendingGoal.side === 'home'));
+  awayEl.classList.toggle('pending', !!(s.pendingGoal && s.pendingGoal.side === 'away'));
 
   // Clock
   const clockEl = document.getElementById('sb-clock');
@@ -3453,18 +3579,82 @@ function renderSbPenalties(side, pens, fmt) {
   });
 }
 
-function triggerGoal(side, el, teamName) {
+function triggerGoal(side, el, teamName, s) {
   el.classList.remove('score-pop');
   void el.offsetWidth;
   el.classList.add('score-pop');
 
-  const ov  = document.getElementById('sb-goal-overlay');
-  const txt = document.getElementById('sb-goal-text');
+  if (!s || s.goalAnimEnabled === false) return;
+
+  const ov   = document.getElementById('sb-goal-overlay');
+  const txt  = document.getElementById('sb-goal-text');
+  const slide = document.getElementById('sb-goal-scorer-slide');
+  const color = side === 'home' ? (s_colors.home||'#c8ff00') : (s_colors.away||'#22c55e');
+
+  // Reset both
+  txt.classList.remove('animating');
+  slide.classList.remove('animating');
+  void txt.offsetWidth;
+
   txt.textContent = 'TOR!';
-  txt.style.color = side==='home' ? (s_colors.home||'#c8ff00') : (s_colors.away||'#22c55e');
+  txt.style.color = color;
+  txt.classList.add('animating');
+  slide.style.display = 'none';
+
   ov.classList.add('visible');
   clearTimeout(goalTimer);
-  goalTimer = setTimeout(() => ov.classList.remove('visible'), 2600);
+  clearTimeout(scorerTimer);
+
+  // After TOR! fades out, show scorer slide (if events on and data available)
+  goalTimer = setTimeout(() => {
+    txt.classList.remove('animating');
+
+    const pg       = s.pendingGoal || {};
+    const goalData = pg.goalType !== undefined ? pg
+                   : (s.events && s.events[0] && s.events[0].type === 'goal' ? s.events[0].data : null);
+
+    const isOwn     = goalData && goalData.goalType === 'own';
+    const isPenalty = goalData && goalData.goalType === 'penalty';
+    const hasSlide  = s.showEventsTab && goalData && (isOwn || isPenalty || goalData.scorer || goalData.assist);
+
+    if (hasSlide) {
+      const scorerNum = document.getElementById('sb-goal-scorer-num');
+      const assistRow = document.getElementById('sb-goal-assist-row');
+      const assistNum = document.getElementById('sb-goal-assist-num');
+      const scorerLbl = document.getElementById('sb-goal-scorer-label');
+
+      if (isOwn) {
+        scorerLbl.textContent = `EIGENTOR · ${teamName}`;
+        scorerLbl.style.color = color;
+        scorerNum.textContent = 'ET';
+        scorerNum.style.color = color;
+        assistRow.style.display = 'none';
+      } else {
+        scorerLbl.textContent = isPenalty ? `STRAFSTOSS · ${teamName}` : `TOR · ${teamName}`;
+        scorerLbl.style.color = color;
+        scorerNum.textContent = goalData.scorer ? `#${goalData.scorer}` : '–';
+        scorerNum.style.color = color;
+        if (!isPenalty && goalData.assist) {
+          assistRow.style.display = 'flex';
+          assistNum.textContent   = `#${goalData.assist}`;
+        } else {
+          assistRow.style.display = 'none';
+        }
+      }
+
+      void slide.offsetWidth;
+      slide.style.display = 'flex';
+      slide.classList.add('animating');
+
+      scorerTimer = setTimeout(() => {
+        slide.classList.remove('animating');
+        slide.style.display = 'none';
+        ov.classList.remove('visible');
+      }, 3400);
+    } else {
+      ov.classList.remove('visible');
+    }
+  }, 2700);
 }
 
 // ── Fußleiste (Ticker) ein/ausblenden ──
@@ -3506,6 +3696,15 @@ function toggleTickerVisibility() {
       if (label) label.textContent = 'AN';
       if (btn)   btn.style.display = '';
     }
+    if (localStorage.getItem('ct-goal-anim-on') === '0') {
+      S.goalAnimEnabled = false;
+      const knob  = document.getElementById('ct-goal-anim-knob');
+      const tog   = document.getElementById('ct-goal-anim-toggle');
+      const label = document.getElementById('ct-goal-anim-label');
+      if (knob)  knob.style.left = '2px';
+      if (tog)   tog.style.background = 'var(--ct-muted)';
+      if (label) label.textContent = 'AUS';
+    }
   } catch(e) {}
 })();
 
@@ -3524,7 +3723,19 @@ function toggleEventsTab() {
   try { localStorage.setItem('ct-events-tab-on', on ? '1' : '0'); } catch(e) {}
 }
 
-// ── Events: core ──
+// ── Goal Animation Toggle ──
+function toggleGoalAnim() {
+  S.goalAnimEnabled = !S.goalAnimEnabled;
+  const knob  = document.getElementById('ct-goal-anim-knob');
+  const tog   = document.getElementById('ct-goal-anim-toggle');
+  const label = document.getElementById('ct-goal-anim-label');
+  const on = S.goalAnimEnabled;
+  if (knob)  knob.style.left = on ? '22px' : '2px';
+  if (tog)   tog.style.background = on ? 'var(--lime)' : 'var(--ct-muted)';
+  if (label) label.textContent = on ? 'AN' : 'AUS';
+  try { localStorage.setItem('ct-goal-anim-on', on ? '1' : '0'); } catch(e) {}
+  pushAndRender();
+}
 function fmtClock(secs) {
   const m = Math.floor(Math.abs(secs)/60).toString().padStart(2,'0');
   const s = (Math.abs(secs)%60).toString().padStart(2,'0');
@@ -3578,11 +3789,17 @@ function renderEvents() {
     if (ev.type === 'goal') {
       const teamName = ev.side === 'home' ? S.homeName : S.awayName;
       icon = '<span class="ph-icon ph-lg"><svg><use href="#ph-flag-pennant"/></svg></span>';
-      main = `TOR · ${teamName}`;
-      const parts = [];
-      if (ev.data.scorer) parts.push(`#${ev.data.scorer}`);
-      if (ev.data.assist) parts.push(`Vorlage: #${ev.data.assist}`);
-      sub = parts.join(' · ') || '–';
+      if (ev.data.goalType === 'own') {
+        main = `EIGENTOR · ${teamName}`;
+        sub  = 'ET';
+      } else {
+        main = `TOR · ${teamName}`;
+        if (ev.data.goalType === 'penalty') main += ' <span style="font-size:10px;opacity:.5;letter-spacing:1px">· STRAFSTOSS</span>';
+        const parts = [];
+        if (ev.data.scorer) parts.push(`#${ev.data.scorer}`);
+        if (ev.data.assist) parts.push(`Vorlage: #${ev.data.assist}`);
+        sub = parts.join(' · ') || '–';
+      }
     } else if (ev.type === 'penalty') {
       const teamName = ev.side === 'home' ? S.homeName : S.awayName;
       icon = '<span class="ph-icon ph-lg"><svg><use href="#ph-warning-circle"/></svg></span>';
@@ -3605,14 +3822,43 @@ function renderEvents() {
 
 // ── Goal Dialog ──
 let _goalDialogSide = null;
+let _pendingGoalSide = null;
+let _goalType = null; // null | 'penalty' | 'own'
+
+function setGoalType(type) {
+  _goalType = _goalType === type ? null : type; // toggle off if same clicked again
+  const btnP = document.getElementById('ct-goal-btn-penalty');
+  const btnO = document.getElementById('ct-goal-btn-own');
+  const scorerWrap = document.getElementById('ct-goal-scorer-wrap');
+  const assistWrap = document.getElementById('ct-goal-assist-wrap');
+
+  btnP.classList.toggle('active', _goalType === 'penalty');
+  btnO.classList.toggle('active', _goalType === 'own');
+
+  if (_goalType === 'own') {
+    scorerWrap.style.display = 'none';
+    assistWrap.style.display = 'none';
+  } else if (_goalType === 'penalty') {
+    scorerWrap.style.display = '';
+    assistWrap.style.display = 'none';
+  } else {
+    scorerWrap.style.display = '';
+    assistWrap.style.display = '';
+  }
+}
 
 function openGoalDialog(side) {
   _goalDialogSide = side;
+  _goalType = null;
   const title = document.getElementById('ct-goal-dialog-title');
   const teamName = side === 'home' ? S.homeName : S.awayName;
   if (title) title.textContent = `TOR · ${teamName}`;
   document.getElementById('ct-goal-scorer').value = '';
   document.getElementById('ct-goal-assist').value = '';
+  document.getElementById('ct-goal-btn-penalty').classList.remove('active');
+  document.getElementById('ct-goal-btn-own').classList.remove('active');
+  document.getElementById('ct-goal-scorer-wrap').style.display = '';
+  document.getElementById('ct-goal-assist-wrap').style.display = '';
   document.getElementById('ct-goal-dialog').classList.add('open');
   setTimeout(() => document.getElementById('ct-goal-scorer').focus(), 50);
 }
@@ -3620,15 +3866,35 @@ function openGoalDialog(side) {
 function closeGoalDialog() {
   document.getElementById('ct-goal-dialog').classList.remove('open');
   _goalDialogSide = null;
+  _pendingGoalSide = null;
+  _goalType = null;
 }
 
 function confirmGoal() {
   if (!_goalDialogSide) return;
-  const scorer = document.getElementById('ct-goal-scorer').value.trim();
-  const assist = document.getElementById('ct-goal-assist').value.trim();
-  logEvent('goal', _goalDialogSide, { scorer, assist });
+  const side = _goalDialogSide;
+
+  let scorer, assist, goalTypeLabel;
+  if (_goalType === 'own') {
+    scorer = null; assist = null; goalTypeLabel = 'ET';
+  } else if (_goalType === 'penalty') {
+    scorer = document.getElementById('ct-goal-scorer').value.trim();
+    assist = null; goalTypeLabel = 'Strafstoß';
+  } else {
+    scorer = document.getElementById('ct-goal-scorer').value.trim();
+    assist = document.getElementById('ct-goal-assist').value.trim();
+    goalTypeLabel = null;
+  }
+
+  // Apply score, store as pending
+  if (side === 'home') S.homeScore = Math.max(0, S.homeScore + 1);
+  else                 S.awayScore = Math.max(0, S.awayScore + 1);
+  S.pendingGoal = { side, scorer, assist, goalType: _goalType };
+
+  logEvent('goal', side, { scorer, assist, goalType: _goalType, goalTypeLabel });
   pushAndRender();
   closeGoalDialog();
+  _pendingGoalSide = null;
 }
 
 // ── Ticker: render last events ──
@@ -3642,9 +3908,13 @@ function renderTickerEvents(ticker, s) {
     const color = ev.side === 'home' ? hc : ev.side === 'away' ? ac : 'rgba(255,255,255,.6)';
     const teamName = ev.side === 'home' ? s.homeName : ev.side === 'away' ? s.awayName : '';
     if (ev.type === 'goal') {
-      const sub = [ev.data.scorer ? `#${ev.data.scorer}` : '', ev.data.assist ? `▶ #${ev.data.assist}` : ''].filter(Boolean).join(' ');
+      const isOwn     = ev.data.goalType === 'own';
+      const isPenalty = ev.data.goalType === 'penalty';
+      const label     = isOwn ? `EIGENTOR · ${teamName}` : isPenalty ? `STRAFSTOSS · ${teamName}` : `TOR · ${teamName}`;
+      const sub       = isOwn ? 'ET'
+                      : [ev.data.scorer ? `#${ev.data.scorer}` : '', !isPenalty && ev.data.assist ? `▶ #${ev.data.assist}` : ''].filter(Boolean).join(' ');
       return `<div class="sb-ticker-cell cell-${ev.side}">
-        <div><div class="sb-ticker-label">TOR · ${teamName}</div>
+        <div><div class="sb-ticker-label">${label}</div>
         <div class="sb-ticker-value">${sub || '–'}</div></div>
         <div class="sb-ticker-accent" style="color:${color}"><span class="ph-icon ph-md"><svg><use href="#ph-flag-pennant"/></svg></span></div>
       </div>`;
@@ -4566,10 +4836,18 @@ function updateCountdown(state) {
 <div id="ct-goal-dialog">
   <div class="ct-goal-dialog-box">
     <div class="ct-goal-dialog-title" id="ct-goal-dialog-title">TOR · HEIM</div>
-    <div style="font-size:11px;color:var(--ct-muted2);letter-spacing:1px">SCHÜTZE (NUMMER)</div>
-    <input id="ct-goal-scorer" type="number" min="0" max="99" placeholder="z.B. 17" />
-    <div style="font-size:11px;color:var(--ct-muted2);letter-spacing:1px">VORLAGE (NUMMER, optional)</div>
-    <input id="ct-goal-assist" type="number" min="0" max="99" placeholder="z.B. 9" />
+    <div class="ct-goal-type-btns">
+      <button class="ct-goal-type-btn" id="ct-goal-btn-penalty" onclick="setGoalType('penalty')">Strafstoß</button>
+      <button class="ct-goal-type-btn" id="ct-goal-btn-own"     onclick="setGoalType('own')">Eigentor</button>
+    </div>
+    <div id="ct-goal-scorer-wrap">
+      <div style="font-size:11px;color:var(--ct-muted2);letter-spacing:1px">SCHÜTZE (NUMMER)</div>
+      <input id="ct-goal-scorer" type="number" min="0" max="99" placeholder="z.B. 17" />
+    </div>
+    <div id="ct-goal-assist-wrap">
+      <div style="font-size:11px;color:var(--ct-muted2);letter-spacing:1px">VORLAGE (NUMMER, optional)</div>
+      <input id="ct-goal-assist" type="number" min="0" max="99" placeholder="z.B. 9" />
+    </div>
     <div style="display:flex;gap:8px;margin-top:4px">
       <button class="btn btn-danger" style="flex:1" onclick="closeGoalDialog()">Abbrechen</button>
       <button class="btn btn-lime" style="flex:1" onclick="confirmGoal()">Bestätigen</button>
