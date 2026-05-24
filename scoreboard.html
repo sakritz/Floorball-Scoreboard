@@ -1532,28 +1532,31 @@ input[type=file] { display: none; }
     z-index:200;
     background:var(--black);
     cursor:default;
+    min-width:280px; min-height:180px;
   ">
-    <!-- Title bar -->
-    <div style="position:absolute;top:0;left:0;right:0;z-index:10;
+    <!-- Title bar (drag handle) -->
+    <div id="ct-pip-titlebar" style="position:absolute;top:0;left:0;right:0;z-index:10;
       display:flex;align-items:center;justify-content:space-between;
       padding:4px 10px;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);
-      border-bottom:1px solid rgba(255,255,255,.06)">
+      border-bottom:1px solid rgba(255,255,255,.06);
+      cursor:grab;user-select:none;">
       <span style="font-size:9px;font-weight:700;letter-spacing:3px;color:var(--muted2)">📺 SCOREBOARD VORSCHAU</span>
       <button onclick="togglePip()" style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:13px;padding:0;line-height:1">✕</button>
     </div>
-    <!-- Scaled iframe – always 1:1 with the real scoreboard -->
-    <div style="position:absolute;top:22px;left:0;right:0;bottom:0;overflow:hidden">
+    <!-- Scaled iframe -->
+    <div id="ct-pip-frame-wrap" style="position:absolute;top:22px;left:0;right:0;bottom:0;overflow:hidden">
       <iframe id="ct-pip-iframe"
         src=""
-        style="
-          width:1280px; height:720px;
-          border:none;
-          transform-origin:top left;
-          transform:scale(0.3625);
-          pointer-events:none;
-        "
+        style="width:1280px;height:720px;border:none;transform-origin:top left;pointer-events:none;"
       ></iframe>
     </div>
+    <!-- Resize handle (bottom-right corner) -->
+    <div id="ct-pip-resize" style="
+      position:absolute;bottom:0;right:0;
+      width:18px;height:18px;cursor:se-resize;z-index:20;
+      background:linear-gradient(135deg,transparent 50%,rgba(255,255,255,.15) 50%);
+      border-radius:0 0 10px 0;
+    "></div>
   </div>
 
   <!-- ── TAB CONTENT AREA ── -->
@@ -2880,29 +2883,105 @@ function endGame() {
 // ── PiP Preview ──
 let pipOpen = false;
 
+function pipScaleIframe() {
+  const pip     = document.getElementById('ct-pip');
+  const wrap    = document.getElementById('ct-pip-frame-wrap');
+  const iframe  = document.getElementById('ct-pip-iframe');
+  if (!pip || !wrap || !iframe) return;
+  const w = pip.offsetWidth;
+  const h = pip.offsetHeight - 22; // subtract titlebar
+  const scale = Math.min(w / 1280, h / 720);
+  iframe.style.transform = `scale(${scale})`;
+}
+
 function togglePip() {
   pipOpen = !pipOpen;
   const pip = document.getElementById('ct-pip');
   const btn = document.getElementById('ct-pip-btn');
-  pip.style.display        = pipOpen ? 'block' : 'none';
-  btn.style.background     = pipOpen ? 'rgba(200,255,0,.12)' : 'rgba(255,255,255,.04)';
-  btn.style.borderColor    = pipOpen ? 'rgba(200,255,0,.4)'  : 'rgba(255,255,255,.15)';
-  btn.style.color          = pipOpen ? 'var(--lime)' : 'var(--muted2)';
+  pip.style.display     = pipOpen ? 'block' : 'none';
+  btn.style.background  = pipOpen ? 'rgba(200,255,0,.12)' : 'rgba(255,255,255,.04)';
+  btn.style.borderColor = pipOpen ? 'rgba(200,255,0,.4)'  : 'rgba(255,255,255,.15)';
+  btn.style.color       = pipOpen ? 'var(--lime)' : 'var(--muted2)';
 
   if (pipOpen) {
     const iframe = document.getElementById('ct-pip-iframe');
-    // Load the scoreboard URL into the iframe if not already loaded
-    if (!iframe.src || iframe.src === window.location.href) {
-      const url = location.pathname + '?view=scoreboard';
-      iframe.src = url;
-      // Give it a moment to load then push state
-      iframe.onload = () => { push(); iframe.onload = null; };
+    pipScaleIframe();
+    if (!iframe.getAttribute('data-loaded')) {
+      iframe.src = location.pathname + '?view=scoreboard';
+      iframe.onload = () => { push(); iframe.setAttribute('data-loaded','1'); iframe.onload = null; };
     } else {
-      // Already loaded – just push current state
       push();
     }
   }
 }
+
+// Drag (titlebar) + Resize (corner handle)
+(function() {
+  function initPipInteraction() {
+    const pip      = document.getElementById('ct-pip');
+    const titlebar = document.getElementById('ct-pip-titlebar');
+    const resizeHd = document.getElementById('ct-pip-resize');
+    if (!pip || !titlebar || !resizeHd) return;
+
+    // Convert bottom/right to top/left so we can move freely
+    function anchorToTopLeft() {
+      const r = pip.getBoundingClientRect();
+      pip.style.right  = 'auto';
+      pip.style.bottom = 'auto';
+      pip.style.left   = r.left + 'px';
+      pip.style.top    = r.top  + 'px';
+    }
+
+    // ── DRAG ──
+    titlebar.addEventListener('mousedown', e => {
+      if (e.target.tagName === 'BUTTON') return;
+      anchorToTopLeft();
+      const startX = e.clientX - pip.offsetLeft;
+      const startY = e.clientY - pip.offsetTop;
+      titlebar.style.cursor = 'grabbing';
+      function onMove(e) {
+        pip.style.left = (e.clientX - startX) + 'px';
+        pip.style.top  = (e.clientY - startY) + 'px';
+      }
+      function onUp() {
+        titlebar.style.cursor = 'grab';
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+      }
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+      e.preventDefault();
+    });
+
+    // ── RESIZE ──
+    resizeHd.addEventListener('mousedown', e => {
+      anchorToTopLeft();
+      const startX = e.clientX, startY = e.clientY;
+      const startW = pip.offsetWidth, startH = pip.offsetHeight;
+      function onMove(e) {
+        const newW = Math.max(280, startW + e.clientX - startX);
+        const newH = Math.max(180, startH + e.clientY - startY);
+        pip.style.width  = newW + 'px';
+        pip.style.height = newH + 'px';
+        pipScaleIframe();
+      }
+      function onUp() {
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+      }
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+      e.preventDefault();
+    });
+  }
+
+  // Init after DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPipInteraction);
+  } else {
+    initPipInteraction();
+  }
+})();
 
 // renderPip is now a no-op – the iframe handles itself via BroadcastChannel
 function renderPip(s) {}
