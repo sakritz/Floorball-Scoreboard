@@ -118,21 +118,21 @@ body {
 .sb-period-header {
   flex-shrink: 0;
   display: flex; flex-direction: column; align-items: center;
-  padding: clamp(10px, 2vh, 28px) 0 clamp(6px, 1.2vh, 16px);
-  gap: 8px;
+  padding: clamp(6px, 1.2vh, 28px) 0 clamp(4px, 0.8vh, 16px);
+  gap: 6px;
 }
 .sb-period-name {
-  font-size: clamp(18px, 2.4vw, 36px);
+  font-size: clamp(13px, 2.4vw, 36px);
   font-weight: 900; letter-spacing: 8px; text-transform: uppercase;
   color: rgba(255,255,255,.9);
 }
 .sb-period-dots {
-  display: flex; gap: 10px; align-items: center;
+  display: flex; gap: 8px; align-items: center;
 }
 
 /* ── MAIN STAGE ── */
 .sb-main {
-  flex: 1; min-height: 0;
+  flex: 1; min-height: 0; overflow: hidden;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
@@ -146,31 +146,40 @@ body {
 .sb-team.home { align-items: flex-start; }
 .sb-team.away { align-items: flex-end; }
 
-/* jersey bar – shown only when jerseyVisible is on */
-.sb-jersey-bar {
-  height: 4px; width: clamp(56px, 10vw, 150px);
-  margin-bottom: clamp(6px, 1vh, 12px);
-  flex-shrink: 0; opacity: 0.55;
-  display: none;
-}
-.sb-jersey-bar.visible { display: block; }
+/* ── ACCENT / JERSEY BAR ── */
+.sb-jersey-bar { display: none; } /* legacy, kept for JS compat */
 
-.sb-accent-line {
-  height: 4px; width: clamp(56px, 10vw, 150px);
+.sb-color-bar {
+  display: flex;
+  width: clamp(56px, 10vw, 150px);
+  height: 5px;
   margin-bottom: clamp(8px, 1.2vh, 18px);
   flex-shrink: 0;
+  gap: 4px;
 }
-.sb-team.home .sb-accent-line { background: var(--sb-home, #c8ff00); }
-.sb-team.away .sb-accent-line { background: var(--sb-away, #22c55e); }
+.sb-color-bar-accent {
+  flex: 1; height: 100%;
+  transform: skewX(-18deg);
+  transform-origin: left center;
+}
+.sb-color-bar-jersey {
+  flex: 0 0 38%;
+  height: 100%;
+  transform: skewX(-18deg);
+  transform-origin: left center;
+  opacity: 0.7;
+}
+.sb-team.home .sb-color-bar-accent { background: var(--sb-home, #c8ff00); }
+.sb-team.away .sb-color-bar-accent { background: var(--sb-away, #22c55e); }
 
 /* logo */
 .sb-logo {
-  width: clamp(80px, 11vw, 180px);
-  height: clamp(80px, 11vw, 180px);
+  width: clamp(56px, 11vw, 180px);
+  height: clamp(56px, 11vw, 180px);
   display: flex; align-items: center; justify-content: center;
-  font-size: clamp(30px, 5vw, 70px); font-weight: 900; overflow: hidden; flex-shrink: 0;
+  font-size: clamp(22px, 5vw, 70px); font-weight: 900; overflow: hidden; flex-shrink: 0;
   border: 2px solid rgba(255,255,255,.12);
-  margin-bottom: clamp(10px, 2vh, 28px);
+  margin-bottom: clamp(6px, 1.5vh, 28px);
 }
 .sb-team.home .sb-logo {
   border-color: rgba(var(--tv-home-rgb,200,255,0),.3);
@@ -188,7 +197,7 @@ body {
 .sb-logo.show { display: flex; }
 
 .sb-team-name {
-  font-size: clamp(28px, 5.2vw, 88px);
+  font-size: clamp(18px, 5.2vw, 88px);
   font-weight: 900; letter-spacing: 2px; text-transform: uppercase; line-height: 1.0;
   word-break: break-word; overflow-wrap: break-word;
 }
@@ -203,7 +212,7 @@ body {
 .sb-team.away .sb-team-sub { text-align: right; }
 
 .sb-score {
-  font-size: clamp(140px, 24vw, 360px);
+  font-size: clamp(80px, min(24vw, 28vh), 360px);
   font-weight: 900; line-height: .85; letter-spacing: -4px;
   font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
   font-variant-numeric: tabular-nums;
@@ -248,7 +257,7 @@ body {
   flex-shrink: 0;
 }
 .sb-clock {
-  font-size: clamp(80px, 14vw, 210px);
+  font-size: clamp(48px, min(14vw, 20vh), 210px);
   font-weight: 900; letter-spacing: 4px; text-align: center;
   font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
   font-variant-numeric: tabular-nums; transition: color .3s;
@@ -265,7 +274,7 @@ body {
 .sb-ticker.ticker-hidden { display: none !important; }
 .sb-ticker {
   flex-shrink: 0;
-  height: clamp(62px, 9vh, 100px);
+  height: clamp(48px, 9vh, 100px);
   background: rgba(8,10,14,.9);
   border-top: 1px solid rgba(255,255,255,.08);
   display: grid;
@@ -1397,8 +1406,9 @@ kbd {
     <!-- HOME -->
     <div class="sb-team home">
       <div class="sb-logo" id="sb-home-logo">H</div>
-      <div class="sb-accent-line"></div>
-      <div class="sb-jersey-bar" id="sb-home-jersey-bar"></div>
+      <div class="sb-color-bar" id="sb-home-color-bar">
+        <div class="sb-color-bar-accent"></div>
+      </div>
       <div class="sb-team-name" id="sb-home-name">HEIMTEAM</div>
       <div class="sb-team-sub">HEIM</div>
       <div class="sb-score" id="sb-home-score">0</div>
@@ -1414,8 +1424,9 @@ kbd {
     <!-- AWAY -->
     <div class="sb-team away">
       <div class="sb-logo" id="sb-away-logo">G</div>
-      <div class="sb-accent-line"></div>
-      <div class="sb-jersey-bar" id="sb-away-jersey-bar"></div>
+      <div class="sb-color-bar" id="sb-away-color-bar">
+        <div class="sb-color-bar-accent"></div>
+      </div>
       <div class="sb-team-name" id="sb-away-name">GASTTEAM</div>
       <div class="sb-team-sub">GAST</div>
       <div class="sb-score" id="sb-away-score">0</div>
@@ -3983,10 +3994,23 @@ function renderScoreboard(s) {
   });
 
   // Jersey bars visibility + color
-  const hBar = document.getElementById('sb-home-jersey-bar');
-  const aBar = document.getElementById('sb-away-jersey-bar');
-  if (hBar) { hBar.classList.toggle('visible', !!s.jerseyVisible); hBar.style.background = s.homeJersey || '#0d2e0d'; }
-  if (aBar) { aBar.classList.toggle('visible', !!s.jerseyVisible); aBar.style.background = s.awayJersey || '#0a1a0a'; }
+  ['home','away'].forEach(side => {
+    const bar = document.getElementById('sb-' + side + '-color-bar');
+    if (!bar) return;
+    const accentEl  = bar.querySelector('.sb-color-bar-accent');
+    let jerseyEl    = bar.querySelector('.sb-color-bar-jersey');
+    const jerseyColor = side === 'home' ? (s.homeJersey || '#0d2e0d') : (s.awayJersey || '#0a1a0a');
+    if (s.jerseyVisible) {
+      if (!jerseyEl) {
+        jerseyEl = document.createElement('div');
+        jerseyEl.className = 'sb-color-bar-jersey';
+        bar.appendChild(jerseyEl);
+      }
+      jerseyEl.style.background = jerseyColor;
+    } else {
+      if (jerseyEl) jerseyEl.remove();
+    }
+  });
 
   // Scores + goal flash
   const homeEl = document.getElementById('sb-home-score');
@@ -4053,13 +4077,17 @@ function renderScoreboard(s) {
   const dotsEl = document.getElementById('sb-dots');
   if (dotsEl) {
     dotsEl.innerHTML = '';
-    for (let i=1; i<=s.maxPeriods; i++) {
+    for (let i = 1; i <= s.maxPeriods; i++) {
       const d = document.createElement('div');
-      const hc = s.homeAccent || '#c8ff00';
-      d.style.cssText = `width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:all .4s;`;
-      if (i===s.period) { d.style.background=hc; d.style.boxShadow=`0 0 8px ${hc}`; }
-      else if (i<s.period) { d.style.background='rgba(255,255,255,.3)'; }
-      else { d.style.background='rgba(255,255,255,.1)'; d.style.border='1px solid rgba(255,255,255,.2)'; }
+      d.style.cssText = `height:5px;width:clamp(40px,7vw,110px);flex-shrink:0;transition:all .4s;border-radius:2px;`;
+      if (i === s.period) {
+        d.style.background = '#ff8c00';
+        d.style.boxShadow  = '0 0 12px rgba(255,140,0,.7), 0 0 4px rgba(255,140,0,.5)';
+      } else if (i < s.period) {
+        d.style.background = 'rgba(255,255,255,.25)';
+      } else {
+        d.style.background = 'rgba(255,255,255,.1)';
+      }
       dotsEl.appendChild(d);
     }
   }
