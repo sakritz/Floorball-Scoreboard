@@ -1635,9 +1635,11 @@ input[type=file] { display: none; }
                 <div>
                   <label class="ct-label">Strafart</label>
                   <select id="ct-home-pen-type">
-                    <option value="120">2 Min</option>
+                    <option value="120">2 Min (einfach)</option>
                     <option value="double">2+2 Min (doppelt)</option>
-                    <option value="600">10 Min (pers.)</option>
+                    <option value="personal10">10 Min (pers.) + 2 Min</option>
+                    <option value="techMatch">Techn. Matchstrafe + 2+2 Min</option>
+                    <option value="match">Matchstrafe + 2+2 Min</option>
                   </select>
                 </div>
               </div>
@@ -1675,9 +1677,11 @@ input[type=file] { display: none; }
                 <div>
                   <label class="ct-label">Strafart</label>
                   <select id="ct-away-pen-type">
-                    <option value="120">2 Min</option>
+                    <option value="120">2 Min (einfach)</option>
                     <option value="double">2+2 Min (doppelt)</option>
-                    <option value="600">10 Min (pers.)</option>
+                    <option value="personal10">10 Min (pers.) + 2 Min</option>
+                    <option value="techMatch">Techn. Matchstrafe + 2+2 Min</option>
+                    <option value="match">Matchstrafe + 2+2 Min</option>
                   </select>
                 </div>
               </div>
@@ -2412,6 +2416,7 @@ function startClock() {
     if (clockMs <= 0) {
       stopClock();
       playBuzzer();
+      onPeriodEnd();
       return;
     }
     pushAndRender();
@@ -2451,16 +2456,14 @@ function setClock() {
 // ── Score ──
 function adjScore(side, delta) {
   if (delta > 0) {
-    // Store pending goal – score increase applied when clock starts (or immediately if events off)
     if (S.showEventsTab) {
-      // open dialog first; score + pending set in confirmGoal
       _pendingGoalSide = side;
       openGoalDialog(side);
     } else {
-      // No events: apply score immediately, trigger anim via pendingGoal flag
       if (side === 'home') S.homeScore = Math.max(0, S.homeScore + 1);
       else                 S.awayScore = Math.max(0, S.awayScore + 1);
       S.pendingGoal = { side, scorer: null, assist: null };
+      checkPowerPlayPenalty(side, null); // null = no goalType known (not penalty/own)
       pushAndRender();
     }
   } else {
@@ -2468,6 +2471,49 @@ function adjScore(side, delta) {
     else                 S.awayScore = Math.max(0, S.awayScore + delta);
     pushAndRender();
   }
+}
+
+/**
+ * After a goal: check if scoring team was in power play and offer to remove
+ * the shortest active penalty from the opposing team.
+ * Rules:
+ *  - Only when goalType is normal (not 'penalty' / 'own')
+ *  - Only when opposing team has strictly more active penalties (true PP)
+ *  - Only the shortest non-waiting penalty is offered for removal
+ */
+function checkPowerPlayPenalty(scoringSide, goalType) {
+  if (goalType === 'penalty' || goalType === 'own') return;
+
+  const oppSide = scoringSide === 'home' ? 'away' : 'home';
+  const myPens  = teamStrengthPens(scoringSide).length;
+  const oppPens = teamStrengthPens(oppSide).length;
+
+  // True power play: opposing team has strictly more penalties
+  if (oppPens <= myPens) return;
+
+  // Find the shortest active (non-waiting, non-personal) penalty on opposing team
+  const active = (S[oppSide + 'Penalties'] || [])
+    .filter(p => !p.waiting && !p.personal)
+    .sort((a, b) => a.remaining - b.remaining);
+  if (!active.length) return;
+
+  const pen = active[0];
+  const teamName = oppSide === 'home' ? S.homeName : S.awayName;
+  const fmt = s => `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+  const typeLabel = pen.redCardLabel ? pen.redCardLabel + ' 2+2' :
+                    pen.doubleFirst ? '2+2 MIN (1)' :
+                    pen.personal    ? '10 MIN PERS.' :
+                    pen.secs <= 120 ? '2 MIN' : '10 MIN';
+
+  ctConfirm({
+    icon: '🏒',
+    title: 'Strafe aufheben?',
+    body: `${teamName} hat ein Tor in Unterzahl kassiert. Strafe #${pen.number} (${typeLabel}, noch ${fmt(pen.remaining)}) aufheben?`,
+    okLabel: 'Strafe aufheben',
+    okClass: 'btn-lime',
+    onOk: () => removePenalty(oppSide, pen.id),
+    onCancel: () => {},
+  });
 }
 
 // ── Names / Logos ──
@@ -2989,28 +3035,154 @@ function setPeriod(p, skipConfirm) {
   pushAndRender();
 }
 
+/* ─── SPIELFLUSS-AUTOMATIK ─────────────────────────────────────────── */
+
+function periodName(p) {
+  if (p > S.maxPeriods) return 'Verlängerung';
+  if (S.maxPeriods === 2) return p === 1 ? '1. Halbzeit' : '2. Halbzeit';
+  return p === 1 ? '1. Drittel' : p === 2 ? '2. Drittel' : '3. Drittel';
+}
+
+function nextPeriodName() {
+  const next = S.period + 1;
+  if (next > S.maxPeriods) return 'Verlängerung';
+  if (S.maxPeriods === 2) return next === 1 ? '1. Halbzeit' : '2. Halbzeit';
+  return next === 1 ? '1. Drittel' : next === 2 ? '2. Drittel' : '3. Drittel';
+}
+
+function onPeriodEnd() {
+  const isOT    = S.period > S.maxPeriods;
+  const isLast  = S.period === S.maxPeriods || isOT;
+  const pauseMin = Math.round((S.pauseSecs || 600) / 60);
+
+  if (isLast) {
+    // Letzter Abschnitt oder Verlängerung abgelaufen
+    ctConfirm({
+      icon: '🏁',
+      title: 'Spiel beendet?',
+      body: `${periodName(S.period)} ist abgelaufen. Spiel als beendet markieren oder Verlängerung starten?`,
+      okLabel: 'Spiel beendet',
+      okClass: 'btn-lime',
+      onOk: () => { /* nothing — clock stays at 0, game just stops */ pushAndRender(); },
+      onCancel: () => { /* user wants OT — set up OT */ setPeriod(S.maxPeriods + 1, true); },
+    });
+    // Patch cancel button label
+    setTimeout(() => {
+      const cancel = document.getElementById('ct-confirm-cancel');
+      if (cancel) cancel.textContent = 'Verlängerung';
+    }, 0);
+  } else {
+    // Zwischendrittel / Halbzeit
+    const next = nextPeriodName();
+    ctConfirm({
+      icon: '⏸',
+      title: `${periodName(S.period)} beendet`,
+      body: `Pause starten? (${pauseMin} Min) Danach geht es mit ${next} weiter.`,
+      okLabel: `⏱ Pause starten`,
+      okClass: 'btn-lime',
+      onOk: () => {
+        startPause();
+        // when pause ends, prompt for next period
+        _flowPauseCallback = true;
+      },
+      onCancel: () => {
+        // Skip pause, go straight to next period
+        setPeriod(S.period + 1, true);
+      },
+    });
+    setTimeout(() => {
+      const cancel = document.getElementById('ct-confirm-cancel');
+      if (cancel) cancel.textContent = `→ Direkt zu ${next}`;
+    }, 0);
+  }
+}
+
+// Flag: after pause ends, show "start next period?" prompt
+let _flowPauseCallback = false;
+
+function onPauseEnd() {
+  if (!_flowPauseCallback) return;
+  _flowPauseCallback = false;
+  const next = nextPeriodName();
+  ctConfirm({
+    icon: '▶',
+    title: `Weiter mit ${next}?`,
+    body: `Die Pause ist abgelaufen. Jetzt ${next} starten?`,
+    okLabel: `▶ ${next} starten`,
+    okClass: 'btn-lime',
+    onOk: () => setPeriod(S.period + 1, true),
+    onCancel: () => { /* manual control */ },
+  });
+  setTimeout(() => {
+    const cancel = document.getElementById('ct-confirm-cancel');
+    if (cancel) cancel.textContent = 'Manuell steuern';
+  }, 0);
+}
+
 function nextPeriod() { if (S.period <= S.maxPeriods) setPeriod(S.period + 1); }
 function prevPeriod() { if (S.period > 1) setPeriod(S.period - 1); }
 
 // ── Penalties ──
-function addPenalty(side) {
-  const num  = document.getElementById('ct-' + side + '-pen-num').value || '?';
-  const raw  = document.getElementById('ct-' + side + '-pen-type').value;
 
-  if (raw === 'double') {
-    // Doppelte Zeitstrafe = 2 × 2 Min nacheinander (Regel 6.6)
-    // Second penalty starts only after first expires – we track both,
-    // but only the first (lowest id) ticks while the other waits
-    const id1 = Date.now();
-    const id2 = id1 + 1;
-    S[side + 'Penalties'].push({ id: id1, number: num, secs: 120, remaining: 120, doubleFirst: true,  doubleId: id2 });
-    S[side + 'Penalties'].push({ id: id2, number: num, secs: 120, remaining: 120, doubleSecond: true, doubleId: id1, waiting: true });
+// Returns only penalties that affect team strength (not personal 10-min)
+function teamStrengthPens(side) {
+  return (S[side + 'Penalties'] || []).filter(p => !p.personal && !p.waiting);
+}
+function teamStrengthPensS(pens) {
+  // scoreboard version — filters from array
+  return (pens || []).filter(p => !p.personal && !p.waiting);
+}
+
+function addPenalty(side) {
+  const num = document.getElementById('ct-' + side + '-pen-num').value || '?';
+  const raw = document.getElementById('ct-' + side + '-pen-type').value;
+  const now = Date.now();
+  let penTypeLabel = '';
+
+  if (raw === 'double' || raw === 'techMatch' || raw === 'match') {
+    // Doppelte Zeitstrafe: 2 × 2 Min nacheinander
+    // Für techMatch/match: Spieler rausgeflogenen, aber jemand sitzt die 2+2
+    const id1 = now;
+    const id2 = now + 1;
+    const isRed = raw === 'techMatch' || raw === 'match';
+    const redLabel = raw === 'techMatch' ? 'TECHN.MATCH' : 'MATCH';
+    S[side + 'Penalties'].push({
+      id: id1, number: num, secs: 120, remaining: 120,
+      doubleFirst: true, doubleId: id2,
+      redCard: isRed, redCardLabel: isRed ? redLabel : undefined,
+    });
+    S[side + 'Penalties'].push({
+      id: id2, number: num, secs: 120, remaining: 120,
+      doubleSecond: true, doubleId: id1, waiting: true,
+      redCard: isRed, redCardLabel: isRed ? redLabel : undefined,
+    });
+    penTypeLabel = isRed ? `2+2 MIN (${redLabel})` : '2+2 MIN';
+
+  } else if (raw === 'personal10') {
+    // Persönliche 10-Min-Strafe (§6.9):
+    // Begleitet von einer einfachen 2-Min-Zeitstrafe.
+    // Die 2-Min → Unterzahl (normal, erlischt bei Überzahltor).
+    // Die 10-Min → persönlich, KEIN Unterzahl (personal=true).
+    const id2min  = now;
+    const id10min = now + 1;
+    S[side + 'Penalties'].push({
+      id: id2min, number: num, secs: 120, remaining: 120,
+      // normal 2-min companion — counts for team strength
+    });
+    S[side + 'Penalties'].push({
+      id: id10min, number: num, secs: 600, remaining: 600,
+      personal: true,  // personal = does NOT count for power play
+    });
+    penTypeLabel = '10 MIN (PERS.)';
+
   } else {
+    // Einfache Zeitstrafe (2 Min)
     const secs = parseInt(raw);
-    S[side + 'Penalties'].push({ id: Date.now(), number: num, secs, remaining: secs });
+    S[side + 'Penalties'].push({ id: now, number: num, secs, remaining: secs });
+    penTypeLabel = '2 MIN';
   }
+
   document.getElementById('ct-' + side + '-pen-num').value = '';
-  const penTypeLabel = raw === 'double' ? '2+2 MIN' : (parseInt(raw) <= 120 ? '2 MIN' : '10 MIN');
   logEvent('penalty', side, { number: num, penType: penTypeLabel });
   pushAndRender();
 }
@@ -3104,6 +3276,9 @@ function startPause() {
       if (S.pause.remaining <= 0) {
         S.pause = null;
         clearInterval(pauseTimer); pauseTimer = null;
+        pushAndRender();
+        onPauseEnd();
+        return;
       }
     } else {
       clearInterval(pauseTimer); pauseTimer = null;
@@ -3486,7 +3661,7 @@ function renderController() {
 
 function renderPenList(side, pens, fmt) {
   const c = document.getElementById('ct-' + side + '-pen-list');
-  const typeLabel = (secs, p) => { if (p && p.doubleFirst) return '2+2 MIN (1)'; if (p && p.doubleSecond) return '2+2 MIN (2)'; if (p && p.waiting) return '2+2 MIN (2)'; return secs<=120?'2 MIN':'10 MIN'; };
+  const typeLabel = (secs, p) => { if (p&&p.redCardLabel) return p.redCardLabel+' 2+2'; if (p&&p.doubleFirst) return '2+2 MIN (1)'; if (p&&p.doubleSecond) return '2+2 MIN (2)'; if (p&&p.waiting) return '2+2 MIN (2)'; if (p&&p.personal) return '10 MIN PERS.'; return secs<=120?'2 MIN':'10 MIN'; };
 
   if (!pens.length) {
     c.innerHTML = '<div class="empty-msg">Keine aktiven Strafen</div>';
@@ -3520,7 +3695,7 @@ function renderPenList(side, pens, fmt) {
       d.innerHTML = `
         <div class="pen-num">#${p.number}</div>
         <div class="pen-time">${fmt(p.remaining)}</div>
-        <div class="pen-badge">${typeLabel(p.secs)}</div>
+        <div class="pen-badge">${typeLabel(p.secs, p)}</div>
         <div class="pen-del" onclick="removePenalty('${side}',${p.id})">\u2715</div>
       `;
       c.appendChild(d);
@@ -3772,7 +3947,7 @@ function renderScoreboard(s) {
   }
 
   // Penalty chips under scores
-  const typeLabel = (secs, p) => { if (p && p.doubleFirst) return '2+2 MIN (1)'; if (p && p.doubleSecond) return '2+2 MIN (2)'; if (p && p.waiting) return '2+2 MIN (2)'; return secs<=120?'2 MIN':'10 MIN'; };
+  const typeLabel = (secs, p) => { if (p&&p.redCardLabel) return p.redCardLabel+' 2+2'; if (p&&p.doubleFirst) return '2+2 MIN (1)'; if (p&&p.doubleSecond) return '2+2 MIN (2)'; if (p&&p.waiting) return '2+2 MIN (2)'; if (p&&p.personal) return '10 MIN PERS.'; return secs<=120?'2 MIN':'10 MIN'; };
   ['home','away'].forEach(side => {
     const c = document.getElementById('sb-' + side + '-pen-chips');
     if (!c) return;
@@ -3808,11 +3983,17 @@ function renderScoreboard(s) {
 
     const hc = s.homeAccent || '#c8ff00';
     const ac = s.awayAccent || '#22c55e';
-    const typeLabel = (secs, p) => { if (p&&p.doubleFirst) return '2+2'; if (p&&p.doubleSecond) return '2+2'; return secs<=120?'2 MIN':'10 MIN'; };
+    const typeLabel = (secs, p) => {
+      if (p && p.redCardLabel) return p.redCardLabel;
+      if (p && p.doubleFirst)  return '2+2';
+      if (p && p.doubleSecond) return '2+2';
+      if (p && p.personal)     return '10 MIN PERS.';
+      return secs <= 120 ? '2 MIN' : '10 MIN';
+    };
 
-    // LEFT: home penalty (shortest active)
-    const homePen = (s.homePenalties||[]).filter(p=>!p.waiting).sort((a,b)=>a.remaining-b.remaining)[0]
-                 || (s.homePenalties||[]).sort((a,b)=>a.remaining-b.remaining)[0];
+    // LEFT: home penalty (shortest active team-strength first, then personal)
+    const homePen = (s.homePenalties||[]).filter(p=>!p.waiting&&!p.personal).sort((a,b)=>a.remaining-b.remaining)[0]
+                 || (s.homePenalties||[]).filter(p=>!p.waiting).sort((a,b)=>a.remaining-b.remaining)[0];
     let leftHtml = '';
     if (homePen) {
       leftHtml = `
@@ -3823,9 +4004,9 @@ function renderScoreboard(s) {
         <div class="sb-ticker-time" style="color:${hc};margin-left:auto">${homePen.waiting?'– –':fmt(homePen.remaining)}</div>`;
     }
 
-    // RIGHT: away penalty (shortest active)
-    const awayPen = (s.awayPenalties||[]).filter(p=>!p.waiting).sort((a,b)=>a.remaining-b.remaining)[0]
-                 || (s.awayPenalties||[]).sort((a,b)=>a.remaining-b.remaining)[0];
+    // RIGHT: away penalty (shortest active team-strength first, then personal)
+    const awayPen = (s.awayPenalties||[]).filter(p=>!p.waiting&&!p.personal).sort((a,b)=>a.remaining-b.remaining)[0]
+                 || (s.awayPenalties||[]).filter(p=>!p.waiting).sort((a,b)=>a.remaining-b.remaining)[0];
     let rightHtml = '';
     if (awayPen) {
       rightHtml = `
@@ -3843,8 +4024,8 @@ function renderScoreboard(s) {
     }
 
     // CENTER: Power Play, Timeout, or empty
-    const homePens = (s.homePenalties||[]).length;
-    const awayPens = (s.awayPenalties||[]).length;
+    const homePens = teamStrengthPensS(s.homePenalties).length;
+    const awayPens = teamStrengthPensS(s.awayPenalties).length;
     const hasPenAction = homePen || awayPen || homePens !== awayPens || s.activeTimeout;
 
     let midHtml = '';
@@ -3961,7 +4142,7 @@ function renderScoreboard(s) {
 
 function renderSbPenalties(side, pens, fmt) {
   const c = document.getElementById('sb-' + side + '-penalties');
-  const typeLabel = (secs, p) => { if (p && p.doubleFirst) return '2+2 MIN (1)'; if (p && p.doubleSecond) return '2+2 MIN (2)'; if (p && p.waiting) return '2+2 MIN (2)'; return secs<=120?'2 MIN':'10 MIN'; };
+  const typeLabel = (secs, p) => { if (p&&p.redCardLabel) return p.redCardLabel+' 2+2'; if (p&&p.doubleFirst) return '2+2 MIN (1)'; if (p&&p.doubleSecond) return '2+2 MIN (2)'; if (p&&p.waiting) return '2+2 MIN (2)'; if (p&&p.personal) return '10 MIN PERS.'; return secs<=120?'2 MIN':'10 MIN'; };
 
   if (!pens || !pens.length) { c.innerHTML = ''; return; }
 
@@ -3985,7 +4166,7 @@ function renderSbPenalties(side, pens, fmt) {
       el.innerHTML = `
         <div class="sb-pen-num">#${p.number}</div>
         <div class="sb-pen-time">${fmt(p.remaining)}</div>
-        <div class="sb-pen-type">${typeLabel(p.secs)}</div>
+        <div class="sb-pen-type">${typeLabel(p.secs, p)}</div>
       `;
       c.appendChild(el);
     }
@@ -4327,8 +4508,12 @@ function confirmGoal() {
 
   logEvent('goal', side, { scorer, assist, goalType: _goalType, goalTypeLabel });
   pushAndRender();
+  const capturedGoalType = _goalType; // save before closeGoalDialog clears it
   closeGoalDialog();
   _pendingGoalSide = null;
+
+  // Check power play penalty removal (after dialog closes so modals don't stack)
+  setTimeout(() => checkPowerPlayPenalty(side, capturedGoalType), 50);
 }
 
 // ── Ticker: render last events ──
