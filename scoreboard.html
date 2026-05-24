@@ -807,13 +807,13 @@ body {
 
 .ct-tab {
   padding: 0 18px;
-  font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
-  color: var(--ct-muted); cursor: pointer;
+  font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--ct-muted2); cursor: pointer;
   display: flex; align-items: center; gap: 6px;
   border-top: 3px solid transparent; margin-top: -1px;
   transition: color .15s, border-color .15s; white-space: nowrap;
 }
-.ct-tab:hover { color: var(--ct-muted2); }
+.ct-tab:hover { color: var(--ct-text); }
 .ct-tab.active { color: var(--ct-text); border-top-color: var(--lime); }
 .ct-tab.right { border-left: 1px solid var(--ct-border); }
 
@@ -863,7 +863,10 @@ body {
 
 .ct-tab-content.tab-admin { display: none; }
 .ct-tab-content.tab-admin.active {
-  display: flex; overflow-y: auto; padding: 14px; gap: 14px; align-items: flex-start;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  overflow-y: auto; padding: 14px; gap: 14px; align-content: start;
   flex: 1; min-height: 0;
 }
 .ct-admin-col { flex: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
@@ -1008,6 +1011,7 @@ select option { background: var(--ct-card); }
 .btn-red    { background: var(--red);    color: #fff; }
 .btn-orange { background: var(--orange); color: #0a0a0a; }
 .btn-green  { background: var(--green);  color: #062815; }
+.btn-purple { background: var(--purple); color: #fff; }
 
 /* ghost / outline */
 .btn-ghost {
@@ -1549,6 +1553,14 @@ kbd {
           <button onclick="stopCountdown()" style="font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 8px;background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.4);cursor:pointer;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase" title="Countdown beenden">✕</button>
         </div>
       </div>
+      <!-- Mini secondary clock: shown during pause or timeout -->
+      <div id="ct-secondary-clock" style="display:none;flex-direction:column;align-items:center;gap:2px;margin-bottom:2px">
+        <div id="ct-secondary-label" style="font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--orange)">AUSZEIT</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div id="ct-secondary-time" style="font-size:28px;font-weight:900;letter-spacing:2px;font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-variant-numeric:tabular-nums;color:var(--orange)">0:30</div>
+          <button id="ct-secondary-end-btn" onclick="endSecondaryTimer()" style="font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 8px;background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.4);cursor:pointer;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase">✕</button>
+        </div>
+      </div>
       <div class="ct-bar-clock stopped" id="ct-bar-clock">20:00</div>
       <button class="ct-bar-toggle start" id="ct-toggle-btn" onclick="toggleClock()">▶ STARTEN</button>
     </div>
@@ -1576,7 +1588,7 @@ kbd {
 
   <!-- TAB BAR -->
   <div class="ct-tabbar">
-    <div class="ct-tab"        onclick="switchTab('admin')"    id="tab-btn-admin">Spieladmin</div>
+    <div class="ct-tab"        onclick="switchTab('admin')"    id="tab-btn-admin">Spiel</div>
     <div class="ct-tab"        onclick="switchTab('events')"   id="tab-btn-events" style="display:none">Events</div>
     <div class="ct-tab"        onclick="switchTab('strafen')"  id="tab-btn-strafen">Strafen</div>
     <div class="ct-tab"        onclick="switchTab('auszeiten')" id="tab-btn-auszeiten">Auszeiten</div>
@@ -1866,91 +1878,86 @@ kbd {
   <!-- ── TAB: SPIELADMINISTRATION ── -->
   <div class="ct-tab-content tab-admin" id="tab-admin">
 
-    <div class="ct-admin-col">
-      <div class="ct-card">
-        <div class="ct-card-head neutral">Spiel einrichten</div>
+      <div class="ct-card collapsible collapsed" id="ct-admin-setup-card">
+        <div class="ct-card-head neutral" onclick="toggleCard('ct-admin-setup-card')">Spiel einrichten</div>
         <div class="ct-card-body">
-          <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;line-height:1.5">
-            Teams, Logos, Farben, Spielformat und Anpfiffzeit festlegen.
-          </div>
-          <button class="btn btn-ghost" onclick="setupOpen()" style="border-color:rgba(200,255,0,.3);color:var(--lime)">
-            ⚙ Setup öffnen
-          </button>
-        </div>
-      </div>
-
-      <div class="ct-card">
-        <div class="ct-card-head neutral">Abschnitt</div>
-        <div class="ct-card-body">
-          <label class="ct-label">Aktueller Abschnitt</label>
-          <div class="period-pills" id="ct-period-pills"></div>
-          <div class="grid2">
-            <button class="btn btn-ghost btn-sm" onclick="prevPeriod()">← Zurück</button>
-            <button class="btn btn-cyan btn-sm"  onclick="nextPeriod()">Weiter →</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="ct-admin-col">
-      <div class="ct-card">
-        <div class="ct-card-head neutral">Pause</div>
-        <div class="ct-card-body">
-          <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;line-height:1.5">
-            Großfeld: 10 Min · Spieltag: 7 Min · Kleinfeld: 5 Min
-          </div>
-          <button class="btn btn-ghost" id="ct-pause-btn" onclick="startPause()"
-            style="border-color:rgba(180,79,255,.4);color:#b44fff">
-            ⏱ Pause starten
-          </button>
-          <div id="ct-pause-active" style="display:none">
-            <div class="active-timeout-box" style="background:rgba(180,79,255,.08);border-color:rgba(180,79,255,.3)">
-              <div class="active-timeout-label" style="color:#b44fff">Pause läuft</div>
-              <div class="active-timeout-count" id="ct-pause-count">10:00</div>
-              <button class="btn btn-ghost btn-sm" style="width:auto;margin:0 auto" onclick="endPause()">✕ Beenden</button>
+          <div class="ct-card-body-inner">
+            <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;line-height:1.5">
+              Teams, Logos, Farben, Spielformat und Anpfiffzeit festlegen.
             </div>
+            <button class="btn btn-lime" onclick="setupOpen()">
+              ⚙ Setup öffnen
+            </button>
           </div>
         </div>
       </div>
 
-      <div class="ct-card" id="ct-ps-card">
-        <div class="ct-card-head neutral">Penaltyschießen</div>
+      <div class="ct-card collapsible" id="ct-admin-period-card">
+        <div class="ct-card-head neutral" onclick="toggleCard('ct-admin-period-card')">Abschnitt</div>
         <div class="ct-card-body">
-          <div id="ct-ps-start-wrap">
-            <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;line-height:1.6;margin-bottom:8px">
-              Startet das Penaltyschießen im Presentation Mode. Je 5 Schüsse, abwechselnd.
-            </div>
-            <button class="btn btn-orange" onclick="startPenaltyShootout()" style="font-weight:900;letter-spacing:2px">▶ Penaltyschießen starten</button>
+          <div class="ct-card-body-inner">
+            <label class="ct-label">Aktueller Abschnitt</label>
+            <div class="period-pills" id="ct-period-pills"></div>
           </div>
-          <div id="ct-ps-active-wrap" style="display:none">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
-              <div style="font-size:11px;color:var(--ct-muted2);letter-spacing:1px">Penaltyschießen aktiv</div>
-              <button class="btn btn-ghost btn-sm" style="width:auto;font-size:11px" onclick="document.getElementById('ct-ps-overlay').classList.add('open');renderPenaltyShootoutCtrl()">⊞ Öffnen</button>
+        </div>
+      </div>
+
+      <div class="ct-card collapsible collapsed" id="ct-admin-pause-card">
+        <div class="ct-card-head neutral" onclick="toggleCard('ct-admin-pause-card')">Pause</div>
+        <div class="ct-card-body">
+          <div class="ct-card-body-inner">
+            <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;line-height:1.5" id="ct-pause-duration-label">
+              Pausendauer: 10 Min
             </div>
-            <!-- Mini score display -->
-            <div class="ps-score-row">
-              <div>
-                <div class="ps-score-label" id="ct-ps-home-label">HEIM</div>
-                <div class="ps-score-num" id="ct-ps-home-score" style="color:var(--ct-home,#c8ff00)">0</div>
-              </div>
-              <div style="font-size:20px;color:var(--ct-muted);font-weight:300">:</div>
-              <div style="text-align:right">
-                <div class="ps-score-label" id="ct-ps-away-label">GAST</div>
-                <div class="ps-score-num" id="ct-ps-away-score" style="color:var(--ct-away,#22c55e)">0</div>
+            <button class="btn btn-purple" id="ct-pause-btn" onclick="startPause()">
+              ⏱ Pause starten
+            </button>
+            <div id="ct-pause-active" style="display:none">
+              <div class="active-timeout-box" style="background:rgba(180,79,255,.08);border-color:rgba(180,79,255,.3)">
+                <div class="active-timeout-label" style="color:#b44fff">Pause läuft</div>
+                <div class="active-timeout-count" id="ct-pause-count">10:00</div>
+                <button class="btn btn-ghost btn-sm" style="width:auto;margin:0 auto" onclick="endPause()">✕ Beenden</button>
               </div>
             </div>
-            <!-- Winner -->
-            <div class="ps-winner-badge" id="ct-ps-winner"></div>
-            <!-- Controls -->
-            <div style="display:flex;gap:8px;margin-top:10px">
-              <button class="btn btn-ghost btn-sm" style="flex:1" onclick="resetPenaltyShootout()">↺ Neu</button>
-              <button class="btn btn-danger btn-sm" style="flex:1;width:auto" onclick="endPenaltyShootout()">✕ Beenden</button>
-            </div>
           </div>
         </div>
       </div>
 
-    </div>
+      <div class="ct-card collapsible collapsed" id="ct-ps-card">
+        <div class="ct-card-head neutral" onclick="toggleCard('ct-ps-card')">Penaltyschießen</div>
+        <div class="ct-card-body">
+          <div class="ct-card-body-inner">
+            <div id="ct-ps-start-wrap">
+              <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;line-height:1.6;margin-bottom:8px">
+                Startet das Penaltyschießen im Presentation Mode. Je 5 Schüsse, abwechselnd.
+              </div>
+              <button class="btn btn-orange" onclick="startPenaltyShootout()" style="font-weight:900;letter-spacing:2px">▶ Penaltyschießen starten</button>
+            </div>
+            <div id="ct-ps-active-wrap" style="display:none">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+                <div style="font-size:11px;color:var(--ct-muted2);letter-spacing:1px">Penaltyschießen aktiv</div>
+                <button class="btn btn-ghost btn-sm" style="width:auto;font-size:11px" onclick="document.getElementById('ct-ps-overlay').classList.add('open');renderPenaltyShootoutCtrl()">⊞ Öffnen</button>
+              </div>
+              <div class="ps-score-row">
+                <div>
+                  <div class="ps-score-label" id="ct-ps-home-label">HEIM</div>
+                  <div class="ps-score-num" id="ct-ps-home-score" style="color:var(--ct-home,#c8ff00)">0</div>
+                </div>
+                <div style="font-size:20px;color:var(--ct-muted);font-weight:300">:</div>
+                <div style="text-align:right">
+                  <div class="ps-score-label" id="ct-ps-away-label">GAST</div>
+                  <div class="ps-score-num" id="ct-ps-away-score" style="color:var(--ct-away,#22c55e)">0</div>
+                </div>
+              </div>
+              <div class="ps-winner-badge" id="ct-ps-winner"></div>
+              <div style="display:flex;gap:8px;margin-top:10px">
+                <button class="btn btn-ghost btn-sm" style="flex:1" onclick="resetPenaltyShootout()">↺ Neu</button>
+                <button class="btn btn-danger btn-sm" style="flex:1;width:auto" onclick="endPenaltyShootout()">✕ Beenden</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
   </div>
 
@@ -2140,6 +2147,21 @@ kbd {
      SHARED JS
 ══════════════════════════════════════════════════════ -->
 <script>
+function toggleCard(cardId) {
+  const card = document.getElementById(cardId);
+  if (card) card.classList.toggle('collapsed');
+}
+
+function setCardCollapsed(cardId, collapsed) {
+  const card = document.getElementById(cardId);
+  if (card) card.classList.toggle('collapsed', collapsed);
+}
+
+function endSecondaryTimer() {
+  if (S.activeTimeout) endTimeout();
+  else if (S.pause) endPause();
+}
+
 /* ─── HELP MODAL ──────────────────────────────────────────────────── */
 function openHelp() {
   const m = document.getElementById('ct-help-modal');
@@ -3665,15 +3687,31 @@ function renderController() {
     btn.style.opacity = (used || !!s.activeTimeout) ? '.4' : '1';
   });
 
-  // Active timeout box
+  // Active timeout box (tab card - hide, now shown in control bar)
   const toCard = document.getElementById('ct-to-active-card');
-  if (s.activeTimeout) {
-    toCard.style.display = 'block';
-    document.getElementById('ct-to-count').textContent = fmt(s.activeTimeout.remaining);
-    document.getElementById('ct-to-team-label').textContent =
-      s.activeTimeout.team === 'home' ? s.homeName : s.awayName;
-  } else {
-    toCard.style.display = 'none';
+  if (toCard) toCard.style.display = 'none';
+
+  // Secondary clock in control bar (pause or timeout)
+  const secClock = document.getElementById('ct-secondary-clock');
+  const secLabel = document.getElementById('ct-secondary-label');
+  const secTime  = document.getElementById('ct-secondary-time');
+  if (secClock && secLabel && secTime) {
+    if (s.activeTimeout) {
+      secClock.style.display = 'flex';
+      const toTeamName = s.activeTimeout.team === 'home' ? s.homeName : s.awayName;
+      secLabel.textContent = `AUSZEIT · ${toTeamName}`;
+      secLabel.style.color = 'var(--orange)';
+      secTime.style.color  = 'var(--orange)';
+      secTime.textContent  = fmt(s.activeTimeout.remaining);
+    } else if (s.pause) {
+      secClock.style.display = 'flex';
+      secLabel.textContent = 'PAUSE';
+      secLabel.style.color = 'var(--purple, #b44fff)';
+      secTime.style.color  = 'var(--purple, #b44fff)';
+      secTime.textContent  = fmt(s.pause.remaining);
+    } else {
+      secClock.style.display = 'none';
+    }
   }
 
   // Dir toggle sync
@@ -3705,22 +3743,38 @@ function renderController() {
   });
 
   // Pause
-  const pauseActive = document.getElementById('ct-pause-active');
   const pauseBtn    = document.getElementById('ct-pause-btn');
-  if (s.pause) {
-    pauseActive.style.display = 'block';
-    pauseBtn.style.display    = 'none';
-    document.getElementById('ct-pause-count').textContent = fmt(s.pause.remaining);
-  } else {
-    pauseActive.style.display = 'none';
-    pauseBtn.style.display    = 'block';
+  const pauseDurLabel = document.getElementById('ct-pause-duration-label');
+  if (pauseDurLabel) {
+    const pauseMin = Math.round((s.pauseSecs || 600) / 60);
+    pauseDurLabel.textContent = `Pausendauer: ${pauseMin} Min`;
   }
+  // Hide in-tab pause active box (now shown in control bar)
+  const pauseActiveBox = document.getElementById('ct-pause-active');
+  if (pauseActiveBox) pauseActiveBox.style.display = 'none';
+  if (pauseBtn) pauseBtn.style.display = s.pause ? 'none' : 'block';
 
   // Penalty shootout controller state
   const psActive = s.penaltyShootout && s.penaltyShootout.active;
   document.getElementById('ct-ps-start-wrap').style.display  = psActive ? 'none' : '';
   document.getElementById('ct-ps-active-wrap').style.display = psActive ? '' : 'none';
   if (psActive) renderPenaltyShootoutCtrl();
+
+  // Smart auto-collapse in Spiel tab (only on first render, not on every tick)
+  // Setup: auto-expand before game starts, auto-collapse once running
+  // Penalty: auto-expand in last period or if scores are tied late; stays open if active
+  if (!renderController._collapseInitDone) {
+    renderController._collapseInitDone = true;
+    setCardCollapsed('ct-admin-setup-card', s.gameStarted);
+    const lateGame = s.period >= s.maxPeriods || (s.gameStarted && s.homeScore === s.awayScore);
+    setCardCollapsed('ct-ps-card', !lateGame && !psActive);
+    setCardCollapsed('ct-admin-pause-card', s.clock > 0);
+  }
+
+  // Auto-expand pause card when clock hits 0
+  if (s.clock <= 0 && !s.pause) {
+    setCardCollapsed('ct-admin-pause-card', false);
+  }
 }
 
 function renderPenList(side, pens, fmt) {
