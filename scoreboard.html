@@ -420,6 +420,66 @@ body {
 }
 .open-sb-btn.preview:hover { border-color: var(--ct-muted2); color: var(--ct-text); }
 
+/* ── SHORTCUTS OVERLAY ── */
+#ct-shortcuts-overlay {
+  display: none;
+  position: fixed; z-index: 15000;
+  top: 72px; right: 24px;
+  background: var(--ct-surface, #13161e);
+  border: 1px solid var(--ct-border, rgba(255,255,255,.1));
+  width: 280px;
+  font-family: 'Barlow Condensed', sans-serif;
+  box-shadow: 0 8px 32px rgba(0,0,0,.6);
+  animation: ctSlideUp .15s ease;
+}
+#ct-shortcuts-overlay.visible { display: block; }
+.ct-sc-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--ct-border, rgba(255,255,255,.1));
+}
+.ct-sc-title {
+  font-size: 11px; font-weight: 900; letter-spacing: 4px;
+  text-transform: uppercase; color: var(--ct-muted2, #6a7190);
+}
+.ct-sc-close {
+  background: none; border: none; color: var(--ct-muted2, #6a7190);
+  font-size: 16px; cursor: pointer; padding: 0 2px; line-height: 1;
+  font-family: 'Barlow Condensed', sans-serif;
+}
+.ct-sc-close:hover { color: var(--white, #f2f5ff); }
+.ct-sc-section {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--ct-border, rgba(255,255,255,.07));
+}
+.ct-sc-section:last-child { border-bottom: none; }
+.ct-sc-group-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--ct-muted, #4a5170);
+  margin-bottom: 6px;
+}
+.ct-sc-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 3px 0; gap: 12px;
+}
+.ct-sc-desc {
+  font-size: 12px; font-weight: 600; color: var(--ct-muted2, #6a7190);
+  flex: 1;
+}
+.ct-sc-keys {
+  display: flex; gap: 4px; flex-shrink: 0;
+}
+.ct-sc-key {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 24px; height: 22px; padding: 0 6px;
+  background: var(--ct-card, #1a1f2e);
+  border: 1px solid var(--ct-border2, rgba(255,255,255,.12));
+  border-bottom: 2px solid var(--ct-border2, rgba(255,255,255,.12));
+  color: var(--lime, #c8ff00);
+  font-size: 11px; font-weight: 900; letter-spacing: 1px;
+  font-family: 'Barlow Condensed', sans-serif;
+}
+
 /* ── CONTROL BAR ── */
 .ct-control-bar {
   background: var(--ct-surface);
@@ -2310,6 +2370,11 @@ function loadState() {
     delete saved._clockMs;
 
     Object.assign(S, saved);
+
+    // Migration: ensure countdown direction (false = down) is the default
+    // Only override if the key was never explicitly saved (undefined in old saves)
+    if (saved.ctrlCountUp === undefined) S.ctrlCountUp = false;
+    if (saved.sbCountUp   === undefined) S.sbCountUp   = false;
     clockMs = restoredClockMs != null ? restoredClockMs : S.clock * 1000;
     prevHomeScore = S.homeScore;
     prevAwayScore = S.awayScore;
@@ -2618,6 +2683,60 @@ function initController(skipLoad = false) {
     e.preventDefault();
     toggleClock();
   });
+
+  // ── Keyboard shortcuts ──────────────────────────────────────────────
+  // H/G = Tor-Dialog Heim/Gast · Shift+H/G = Tor rückgängig
+  // 1–5 = Tabs (Spiel, Teams, Strafen, Auszeiten, Einstellungen)
+  document.addEventListener('keydown', e => {
+    // Ignore if a text/number input is focused
+    const tag  = document.activeElement?.tagName?.toLowerCase();
+    const type = document.activeElement?.type?.toLowerCase();
+    const isText = tag === 'textarea' ||
+      (tag === 'input' && (type === 'text' || type === 'number' || type === 'search'));
+    if (isText) return;
+    // Ignore if any modal/dialog is open
+    const goalOpen    = document.getElementById('ct-goal-dialog')?.classList.contains('open');
+    const confirmOpen = document.getElementById('ct-confirm-modal')?.classList.contains('open');
+    const setupOpen   = !document.getElementById('setup-overlay')?.classList.contains('hidden');
+    if (goalOpen || confirmOpen || setupOpen) return;
+
+    const key = e.key;
+
+    // Shortcuts-Overlay togglen
+    if (key === '?') { toggleShortcutsOverlay(); e.preventDefault(); return; }
+
+    // Tore
+    if (key === 'h' || key === 'H') {
+      if (e.shiftKey) { adjScore('home', -1); }
+      else            { adjScore('home', +1); }
+      e.preventDefault(); return;
+    }
+    if (key === 'g' || key === 'G') {
+      if (e.shiftKey) { adjScore('away', -1); }
+      else            { adjScore('away', +1); }
+      e.preventDefault(); return;
+    }
+
+    // Tabs von links nach rechts — dynamisch, damit Events-Tab und Danger Zone
+    // korrekt mitgezählt werden wenn sie sichtbar sind
+    if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+      const idx = parseInt(key);
+      if (idx >= 1 && idx <= 9) {
+        const allTabIds = ['admin','events','strafen','auszeiten','teams','settings','danger'];
+        const visibleTabs = allTabIds.filter(id => {
+          const btn = document.getElementById('tab-btn-' + id);
+          return btn && btn.offsetParent !== null && getComputedStyle(btn).display !== 'none';
+        });
+        const target = visibleTabs[idx - 1];
+        if (target) { switchTab(target); e.preventDefault(); return; }
+      }
+    }
+  });
+}
+
+function toggleShortcutsOverlay() {
+  const el = document.getElementById('ct-shortcuts-overlay');
+  if (el) el.classList.toggle('visible');
 }
 
 function push() {
@@ -5199,7 +5318,13 @@ function setupClose() {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     const overlay = document.getElementById('setup-overlay');
-    if (overlay && !overlay.classList.contains('hidden')) setupClose();
+    if (overlay && !overlay.classList.contains('hidden')) { setupClose(); return; }
+    const scOverlay = document.getElementById('ct-shortcuts-overlay');
+    if (scOverlay && scOverlay.classList.contains('visible')) { scOverlay.classList.remove('visible'); return; }
+    const goalDialog = document.getElementById('ct-goal-dialog');
+    if (goalDialog && goalDialog.classList.contains('open')) { closeGoalDialog(); return; }
+    const confirmModal = document.getElementById('ct-confirm-modal');
+    if (confirmModal && confirmModal.classList.contains('open')) { confirmModal.classList.remove('open'); return; }
   }
 });
 
@@ -6096,6 +6221,11 @@ function updateCountdown(state) {
             <div class="help-row"><span class="help-tag">Scoreboard öffnen</span><span>Öffnet das Scoreboard in einem neuen Fenster/Tab — ideal für einen zweiten Bildschirm oder Beamer.</span></div>
             <div class="help-row"><span class="help-tag">Danger Zone</span><span>Uhr überschreiben · Spiel zurücksetzen (behält Teamnamen) · Spiel beenden (neues Spiel starten).</span></div>
             <div class="help-row"><span class="help-tag" style="background:rgba(200,255,0,.15);color:#c8ff00;border-color:rgba(200,255,0,.3)">Leertaste</span><span>Spieluhr starten / stoppen (solange kein Eingabefeld aktiv ist).</span></div>
+            <div class="help-row"><span class="help-tag" style="background:rgba(200,255,0,.15);color:#c8ff00;border-color:rgba(200,255,0,.3)">H</span><span>Tor-Dialog Heim öffnen.</span></div>
+            <div class="help-row"><span class="help-tag" style="background:rgba(200,255,0,.15);color:#c8ff00;border-color:rgba(200,255,0,.3)">G</span><span>Tor-Dialog Gast öffnen.</span></div>
+            <div class="help-row"><span class="help-tag" style="background:rgba(200,255,0,.15);color:#c8ff00;border-color:rgba(200,255,0,.3)">Shift+H / Shift+G</span><span>Letztes Tor Heim / Gast rückgängig machen.</span></div>
+            <div class="help-row"><span class="help-tag" style="background:rgba(200,255,0,.15);color:#c8ff00;border-color:rgba(200,255,0,.3)">1 – 9</span><span>Tabs ansteuern (von links nach rechts, nur sichtbare Tabs werden gezählt).</span></div>
+            <div class="help-row"><span class="help-tag" style="background:rgba(200,255,0,.15);color:#c8ff00;border-color:rgba(200,255,0,.3)">Esc</span><span>Offene Dialoge schließen (Tor-Dialog, Bestätigungsfenster, Setup).</span></div>
           </div>
         </div>
       </div>
@@ -6107,6 +6237,58 @@ function updateCountdown(state) {
       <button onclick="closeHelp()" style="background:var(--lime,#c8ff00);border:none;color:#0a0a0a;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:900;letter-spacing:3px;padding:10px 28px;cursor:pointer;transform:skewX(-8deg)"><span style="display:inline-block;transform:skewX(8deg)">SCHLIESSEN</span></button>
     </div>
 
+  </div>
+</div>
+
+<!-- ── SHORTCUTS OVERLAY ─────────────────────────────────────────── -->
+<div id="ct-shortcuts-overlay">
+  <div class="ct-sc-header">
+    <div class="ct-sc-title">Tastenkürzel</div>
+    <button class="ct-sc-close" onclick="toggleShortcutsOverlay()">✕</button>
+  </div>
+  <div class="ct-sc-section">
+    <div class="ct-sc-group-label">Spieluhr</div>
+    <div class="ct-sc-row">
+      <span class="ct-sc-desc">Starten / Stoppen</span>
+      <div class="ct-sc-keys"><span class="ct-sc-key">Space</span></div>
+    </div>
+  </div>
+  <div class="ct-sc-section">
+    <div class="ct-sc-group-label">Tore</div>
+    <div class="ct-sc-row">
+      <span class="ct-sc-desc">Tor-Dialog Heim</span>
+      <div class="ct-sc-keys"><span class="ct-sc-key">H</span></div>
+    </div>
+    <div class="ct-sc-row">
+      <span class="ct-sc-desc">Tor-Dialog Gast</span>
+      <div class="ct-sc-keys"><span class="ct-sc-key">G</span></div>
+    </div>
+    <div class="ct-sc-row">
+      <span class="ct-sc-desc">Tor Heim rückgängig</span>
+      <div class="ct-sc-keys"><span class="ct-sc-key">⇧</span><span class="ct-sc-key">H</span></div>
+    </div>
+    <div class="ct-sc-row">
+      <span class="ct-sc-desc">Tor Gast rückgängig</span>
+      <div class="ct-sc-keys"><span class="ct-sc-key">⇧</span><span class="ct-sc-key">G</span></div>
+    </div>
+  </div>
+  <div class="ct-sc-section">
+    <div class="ct-sc-group-label">Tabs</div>
+    <div class="ct-sc-row">
+      <span class="ct-sc-desc">Tab öffnen (links → rechts)</span>
+      <div class="ct-sc-keys"><span class="ct-sc-key">1</span><span class="ct-sc-key">–</span><span class="ct-sc-key">9</span></div>
+    </div>
+  </div>
+  <div class="ct-sc-section">
+    <div class="ct-sc-group-label">Sonstiges</div>
+    <div class="ct-sc-row">
+      <span class="ct-sc-desc">Dialog schließen</span>
+      <div class="ct-sc-keys"><span class="ct-sc-key">Esc</span></div>
+    </div>
+    <div class="ct-sc-row">
+      <span class="ct-sc-desc">Diese Übersicht</span>
+      <div class="ct-sc-keys"><span class="ct-sc-key">?</span></div>
+    </div>
   </div>
 </div>
 
