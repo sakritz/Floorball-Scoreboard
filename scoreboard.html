@@ -2848,7 +2848,18 @@ function toggleShortcutsOverlay() {
 }
 
 function push() {
-  BC.postMessage({ type: 'STATE', payload: JSON.parse(JSON.stringify(S)) });
+  const payload = JSON.parse(JSON.stringify(S));
+  BC.postMessage({ type: 'STATE', payload });
+  // Spielstand an lokalen Express-Server schicken (für OBS stream.html)
+  // Nur wenn Server verfügbar (Electron-Modus), sonst still ignorieren
+  if (location.protocol === 'http:') {
+    const streamPayload = Object.assign({}, payload, { _clockMs: clockMs, _sentAt: Date.now() });
+    fetch('/api/state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(streamPayload)
+    }).catch(() => {}); // Fehler still ignorieren (z.B. kein Server)
+  }
 }
 
 // ── Responsive control bar sizing ──
