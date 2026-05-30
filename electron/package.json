@@ -34,12 +34,18 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "installerLanguages": ["de_DE", "en_US"],
+      "installerLanguages": [
+        "de_DE",
+        "en_US"
+      ],
       "language": "1031"
     }
   },
   "devDependencies": {
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
   }
 }
