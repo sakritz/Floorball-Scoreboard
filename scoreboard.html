@@ -2593,11 +2593,19 @@ function saveState() {
   } catch(e) {}
 }
 
+const STATE_MAX_AGE_MS = 15 * 60 * 1000; // 15 Minuten
+
 function loadState() {
   try {
     const raw = localStorage.getItem(LS_KEY);
     if (!raw) return false;
     const saved = JSON.parse(raw);
+
+    // Invalidate state older than 15 minutes
+    if (saved._savedAt && (Date.now() - saved._savedAt) > STATE_MAX_AGE_MS) {
+      localStorage.removeItem(LS_KEY);
+      return false;
+    }
 
     // Compensate for time elapsed while tab was closed
     if (saved.running && saved._savedAt && saved._clockMs != null) {
@@ -2878,7 +2886,16 @@ function _updateBuzzerToggleUI(id, enabled) {
 /* ─── CONTROLLER LOGIC ────────────────────────────────────────────── */
 if (!isScoreboard) {
   document.addEventListener('DOMContentLoaded', () => {
-    var hasSaved = (function(){ try{ return !!localStorage.getItem('floorball_state_v2'); }catch(e){ return false; } })();
+    var hasSaved = (function(){
+      try {
+        var raw = localStorage.getItem('floorball_state_v2');
+        if (!raw) return false;
+        var s = JSON.parse(raw);
+        // expired?
+        if (s._savedAt && (Date.now() - s._savedAt) > STATE_MAX_AGE_MS) return false;
+        return true;
+      } catch(e) { return false; }
+    })();
     initController();
     if (!hasSaved) showStartScreen();
   });
