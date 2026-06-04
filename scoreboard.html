@@ -1105,7 +1105,8 @@ select option { background: var(--ct-card); }
 /* filled solid buttons – Design A style */
 .btn-lime   { background: var(--lime);   color: #0a0a0a; }
 .btn-cyan   { background: var(--cyan);   color: #0a0a0a; }
-.btn-red    { background: var(--red);    color: #fff; }
+.btn-red,
+.btn-danger { background: var(--red);    color: #fff; }
 .btn-orange { background: var(--orange); color: #0a0a0a; }
 .btn-green  { background: var(--green);  color: #062815; }
 .btn-purple { background: var(--purple); color: #fff; }
@@ -2907,7 +2908,7 @@ function initController(skipLoad = false) {
   if (!skipLoad) loadState();
   buildPeriodPills();
   applyControllerColors();
-  switchTab('spiel');
+  switchTab(null);
   renderController();
   initCtNeonPalettes();
 
