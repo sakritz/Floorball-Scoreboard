@@ -448,6 +448,18 @@ body.light-mode #view-controller .ct-bar-toggle.start {
 }
 .open-sb-btn.preview:hover { border-color: var(--ct-muted2); color: var(--ct-text); }
 
+/* ── UNDO TOAST ── */
+#ct-undo-toast {
+  position: fixed; bottom: 72px; left: 50%; transform: translateX(-50%);
+  background: rgba(15,18,24,.96); border: 1px solid rgba(255,140,0,.4);
+  color: var(--orange); padding: 9px 22px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  pointer-events: none; opacity: 0; transition: opacity .2s;
+  z-index: 9000; white-space: nowrap;
+}
+#ct-undo-toast.visible { opacity: 1; }
+
 /* ── SHORTCUTS OVERLAY ── */
 #ct-shortcuts-overlay {
   display: none;
@@ -1016,7 +1028,7 @@ body.light-mode #view-controller .ct-bar-toggle.start {
 
 .ct-tab-content.tab-danger { display: none; }
 .ct-tab-content.tab-danger.active {
-  display: flex; overflow-y: auto; padding: 14px; gap: 14px; align-items: flex-start;
+  display: flex; flex-wrap: wrap; overflow-y: auto; padding: 14px; gap: 14px; align-items: flex-start;
   flex: 1; min-height: 0;
 }
 .ct-danger-inner { flex: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
@@ -2419,6 +2431,23 @@ kbd {
   <!-- ── TAB: DANGER ZONE ── -->
   <div class="ct-tab-content tab-danger" id="tab-danger">
 
+    <!-- Letzte Aktion rückgängig -->
+    <div class="ct-danger-inner" style="flex-basis:100%;flex-shrink:0">
+      <div class="ct-card collapsible" id="ct-undo-card">
+        <div class="ct-card-head neutral" onclick="toggleCard('ct-undo-card')"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-arrows-clockwise"/></svg></span>Aktionsverlauf / Rückgängig</span></div>
+        <div class="ct-card-body">
+          <div class="ct-card-body-inner">
+            <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;line-height:1.7">
+              Jede Aktion kann einzeln rückgängig gemacht werden — unabhängig von ihrer Position im Verlauf. Spätere Aktionen bleiben dabei unangetastet. <strong style="color:var(--ct-text)">Strg+Z</strong> macht immer den letzten Schritt rückgängig.
+            </div>
+            <div id="ct-undo-stack-list" style="display:flex;flex-direction:column;gap:3px;max-height:200px;overflow-y:auto">
+              <div style="color:var(--ct-muted);font-size:12px;text-align:center;padding:12px 0;letter-spacing:1px">Keine Aktionen im Stack</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Uhr überschreiben -->
     <div class="ct-danger-inner">
       <div class="ct-card danger-zone">
@@ -2572,6 +2601,147 @@ let S = {
   leagueName: null,     // from setup
   kickoffTime: null,    // ms timestamp, from setup
 };
+
+/* ─── UNDO STACK (patch-based, selektiv) ──────────────────────────
+   Jeder Eintrag speichert nur die exakt betroffenen Felder (Patch),
+   nicht den gesamten State. Dadurch kann jede Aktion unabhängig
+   rückgängig gemacht werden, ohne spätere Aktionen zu berühren.
+──────────────────────────────────────────────────────────────────── */
+const UNDO_MAX = 20;
+let _undoStack = []; // [{ label, patch }]
+let _undoing   = false;
+
+function pushUndo(label, patch) {
+  if (_undoing || isScoreboard) return;
+  _undoStack.push({ label, patch });
+  if (_undoStack.length > UNDO_MAX) _undoStack.shift();
+  renderUndoStack();
+}
+
+// Wendet den inversen Patch auf den aktuellen State an
+function applyUndoPatch(patch) {
+  switch (patch.type) {
+    case 'goal':
+      if (patch.side === 'home') S.homeScore = patch.prevScore;
+      else                       S.awayScore = patch.prevScore;
+      S.pendingGoal = patch.prevPendingGoal;
+      if (patch.prevEvents !== undefined) S.events = patch.prevEvents;
+      break;
+    case 'penalty':
+      S[patch.side + 'Penalties'] = JSON.parse(JSON.stringify(patch.prevPenalties));
+      break;
+    case 'timeout':
+      S[patch.side + 'ToUsed'] = patch.prevToUsed;
+      S.activeTimeout = patch.prevActiveTimeout;
+      if (toTimer) { clearInterval(toTimer); toTimer = null; }
+      break;
+    case 'period':
+      S.period = patch.prevPeriod;
+      S.clock  = patch.prevClock;
+      clockMs  = patch.prevClockMs;
+      buildPeriodPills();
+      break;
+    case 'clock':
+      S.clock = patch.prevClock;
+      clockMs = patch.prevClockMs;
+      break;
+  }
+}
+
+// Macht genau einen Eintrag rückgängig — unabhängig von seiner Position im Stack
+function undoTo(index) {
+  if (index < 0 || index >= _undoStack.length || isScoreboard) return;
+  const { label } = _undoStack[index];
+  ctConfirm({
+    icon: '↩',
+    title: 'Rückgängig machen?',
+    body: `„${label}" wird rückgängig gemacht. Alle anderen Aktionen bleiben erhalten.`,
+    okLabel: 'Rückgängig',
+    okClass: 'btn-orange',
+    onOk: () => _executeUndo(index),
+  });
+}
+
+function _executeUndo(index) {
+  if (index < 0 || index >= _undoStack.length) return;
+  const { label, patch } = _undoStack[index];
+  _undoing = true;
+
+  // Uhr stoppen während Undo — Benutzer prüft den Stand vor Neustart
+  if (S.running) { clearInterval(clockTimer); clockTimer = null; clockStartedAt = null; S.running = false; }
+
+  applyUndoPatch(patch);
+
+  // Nur diesen einen Eintrag aus dem Stack entfernen
+  _undoStack.splice(index, 1);
+  _undoing = false;
+
+  applyControllerColors();
+  renderUndoStack();
+  pushAndRender();
+  showUndoToast(label);
+}
+
+function undo() {
+  if (!_undoStack.length || isScoreboard) return;
+  undoTo(_undoStack.length - 1);
+}
+
+function renderUndoStack() {
+  const list = document.getElementById('ct-undo-stack-list');
+  if (!list) return;
+  const n = _undoStack.length;
+  if (!n) {
+    list.innerHTML = '<div style="color:var(--ct-muted);font-size:12px;text-align:center;padding:12px 0;letter-spacing:1px">Keine Aktionen im Stack</div>';
+    return;
+  }
+  list.innerHTML = '';
+  // Neueste zuerst: display-Index d → Stack-Index (n-1-d)
+  for (let d = 0; d < n; d++) {
+    const i = n - 1 - d;
+    const entry = _undoStack[i];
+
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:9px;padding:7px 10px;cursor:pointer;' +
+      'background:rgba(255,255,255,.03);border:1px solid var(--ct-border);transition:background .12s,border-color .12s;';
+    row.onmouseenter = () => { row.style.background = 'rgba(255,140,0,.08)'; row.style.borderColor = 'rgba(255,140,0,.4)'; };
+    row.onmouseleave = () => { row.style.background = 'rgba(255,255,255,.03)'; row.style.borderColor = 'var(--ct-border)'; };
+    row.onclick = () => undoTo(i);
+
+    const icon = document.createElement('span');
+    icon.textContent = '↩';
+    icon.style.cssText = 'font-size:13px;color:var(--ct-muted);flex-shrink:0';
+
+    const lbl = document.createElement('span');
+    lbl.textContent = entry.label;
+    lbl.style.cssText = 'font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;' +
+      'color:var(--ct-text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' +
+      'font-family:Barlow Condensed,sans-serif';
+
+    row.appendChild(icon);
+    row.appendChild(lbl);
+
+    if (d === 0) {
+      const badge = document.createElement('span');
+      badge.textContent = 'LETZTER';
+      badge.style.cssText = 'font-size:9px;font-weight:700;letter-spacing:2px;color:var(--orange);' +
+        'border:1px solid rgba(255,140,0,.35);padding:2px 6px;flex-shrink:0;font-family:Barlow Condensed,sans-serif';
+      row.appendChild(badge);
+    }
+
+    list.appendChild(row);
+  }
+}
+
+let _undoToastTimer = null;
+function showUndoToast(label) {
+  const el = document.getElementById('ct-undo-toast');
+  if (!el) return;
+  el.textContent = `↩ Rückgängig: ${label}`;
+  el.classList.add('visible');
+  clearTimeout(_undoToastTimer);
+  _undoToastTimer = setTimeout(() => el.classList.remove('visible'), 2500);
+}
 
 let clockTimer = null;
 // Wall-clock tracking: S.clock stores whole seconds (display),
@@ -2908,7 +3078,7 @@ function initController(skipLoad = false) {
   if (!skipLoad) loadState();
   buildPeriodPills();
   applyControllerColors();
-  switchTab(null);
+  switchTab('spiel');
   renderController();
   initCtNeonPalettes();
 
@@ -2964,6 +3134,9 @@ function initController(skipLoad = false) {
     if (goalOpen || confirmOpen || setupOpen) return;
 
     const key = e.key;
+
+    // Undo
+    if ((e.ctrlKey || e.metaKey) && key === 'z') { undo(); e.preventDefault(); return; }
 
     // Shortcuts-Overlay togglen
     if (key === '?') { toggleShortcutsOverlay(); e.preventDefault(); return; }
@@ -3116,6 +3289,11 @@ function stopClock() {
 }
 
 function setClock() {
+  pushUndo('Uhr gesetzt', {
+    type: 'clock',
+    prevClock:  S.clock,
+    prevClockMs: clockMs ?? S.clock * 1000,
+  });
   const m = parseInt(document.getElementById('ct-set-min').value) || 0;
   const s = parseInt(document.getElementById('ct-set-sec').value) || 0;
   S.clock = m * 60 + s;
@@ -3130,6 +3308,11 @@ function adjScore(side, delta) {
       _pendingGoalSide = side;
       openGoalDialog(side);
     } else {
+      pushUndo(`Tor ${side === 'home' ? S.homeName : S.awayName}`, {
+        type: 'goal', side,
+        prevScore: side === 'home' ? S.homeScore : S.awayScore,
+        prevPendingGoal: S.pendingGoal,
+      });
       if (side === 'home') S.homeScore = Math.max(0, S.homeScore + 1);
       else                 S.awayScore = Math.max(0, S.awayScore + 1);
       S.pendingGoal = { side, scorer: null, assist: null };
@@ -3137,6 +3320,11 @@ function adjScore(side, delta) {
       pushAndRender();
     }
   } else {
+    pushUndo(`Tor entfernt ${side === 'home' ? S.homeName : S.awayName}`, {
+      type: 'goal', side,
+      prevScore: side === 'home' ? S.homeScore : S.awayScore,
+      prevPendingGoal: S.pendingGoal,
+    });
     if (side === 'home') S.homeScore = Math.max(0, S.homeScore + delta);
     else                 S.awayScore = Math.max(0, S.awayScore + delta);
     pushAndRender();
@@ -3693,9 +3881,13 @@ function setPeriod(p, skipConfirm) {
     });
     return;
   }
+  pushUndo(`Abschnitt ${periodName(S.period)}`, {
+    type: 'period',
+    prevPeriod: S.period,
+    prevClock:  S.clock,
+    prevClockMs: clockMs ?? S.clock * 1000,
+  });
   stopClock();
-  S.period = p;
-  const isOT = p > S.maxPeriods;
   S.clock = isOT ? 600 : S.periodSecs;
   clockMs = S.clock * 1000;
   const [m,s] = [Math.floor(S.clock/60), S.clock%60];
@@ -3807,6 +3999,10 @@ function addPenalty(side) {
   const num = document.getElementById('ct-' + side + '-pen-num').value || '?';
   const raw = document.getElementById('ct-' + side + '-pen-type').value;
   const now = Date.now();
+  pushUndo(`Strafe ${side === 'home' ? S.homeName : S.awayName}`, {
+    type: 'penalty', side,
+    prevPenalties: JSON.parse(JSON.stringify(S[side + 'Penalties'])),
+  });
   let penTypeLabel = '';
 
   if (raw === 'double' || raw === 'techMatch' || raw === 'match') {
@@ -3858,6 +4054,10 @@ function addPenalty(side) {
 }
 
 function removePenalty(side, id) {
+  pushUndo(`Strafe entfernt ${side === 'home' ? S.homeName : S.awayName}`, {
+    type: 'penalty', side,
+    prevPenalties: JSON.parse(JSON.stringify(S[side + 'Penalties'])),
+  });
   const pens = S[side + 'Penalties'];
   const removed = pens.find(p => p.id === id);
 
@@ -3908,6 +4108,11 @@ let pauseTimer = null;
 
 function startTimeout(side) {
   if (S[side + 'ToUsed'] || S.activeTimeout) return;
+  pushUndo(`Auszeit ${side === 'home' ? S.homeName : S.awayName}`, {
+    type: 'timeout', side,
+    prevToUsed: S[side + 'ToUsed'],
+    prevActiveTimeout: S.activeTimeout,
+  });
   S[side + 'ToUsed'] = true;
   S.activeTimeout = { team: side, remaining: 30 };
   logEvent('timeout', side, { team: side });
@@ -5227,6 +5432,12 @@ function confirmGoal() {
   }
 
   // Apply score, store as pending
+  pushUndo(`Tor ${side === 'home' ? S.homeName : S.awayName}`, {
+    type: 'goal', side,
+    prevScore: side === 'home' ? S.homeScore : S.awayScore,
+    prevPendingGoal: S.pendingGoal,
+    prevEvents: JSON.parse(JSON.stringify(S.events)),
+  });
   if (side === 'home') S.homeScore = Math.max(0, S.homeScore + 1);
   else                 S.awayScore = Math.max(0, S.awayScore + 1);
   S.pendingGoal = { side, scorer, assist, goalType: _goalType };
@@ -6520,7 +6731,8 @@ function updateCountdown(state) {
             <div class="help-row"><span class="help-tag">GOAL!-Animation</span><span>Blendet nach einem Tor eine animierte Einblendung ein.</span></div>
             <div class="help-row"><span class="help-tag">Vorschau</span><span>⧉-Button öffnet eine skalierte Vorschau des Scoreboards direkt im Controller.</span></div>
             <div class="help-row"><span class="help-tag">Scoreboard öffnen</span><span>Öffnet das Scoreboard in einem neuen Fenster/Tab — ideal für einen zweiten Bildschirm oder Beamer.</span></div>
-            <div class="help-row"><span class="help-tag">Danger Zone</span><span>Uhr überschreiben · Spiel zurücksetzen (behält Teamnamen) · Spiel beenden (neues Spiel starten).</span></div>
+            <div class="help-row"><span class="help-tag">Danger Zone</span><span>Letzte Aktion rückgängig · Uhr überschreiben · Spiel zurücksetzen (behält Teamnamen) · Spiel beenden (neues Spiel starten).</span></div>
+            <div class="help-row"><span class="help-tag" style="background:rgba(200,255,0,.15);color:#c8ff00;border-color:rgba(200,255,0,.3)">Strg+Z</span><span>Letzte Aktion rückgängig machen (Tor, Strafe, Auszeit, Abschnitt, Uhr setzen).</span></div>
             <div class="help-row"><span class="help-tag" style="background:rgba(200,255,0,.15);color:#c8ff00;border-color:rgba(200,255,0,.3)">Leertaste</span><span>Spieluhr starten / stoppen (solange kein Eingabefeld aktiv ist).</span></div>
             <div class="help-row"><span class="help-tag" style="background:rgba(200,255,0,.15);color:#c8ff00;border-color:rgba(200,255,0,.3)">H</span><span>Tor-Dialog Heim öffnen.</span></div>
             <div class="help-row"><span class="help-tag" style="background:rgba(200,255,0,.15);color:#c8ff00;border-color:rgba(200,255,0,.3)">G</span><span>Tor-Dialog Gast öffnen.</span></div>
@@ -6583,6 +6795,10 @@ function updateCountdown(state) {
   <div class="ct-sc-section">
     <div class="ct-sc-group-label">Sonstiges</div>
     <div class="ct-sc-row">
+      <span class="ct-sc-desc">Letzte Aktion rückgängig</span>
+      <div class="ct-sc-keys"><span class="ct-sc-key">Strg</span><span class="ct-sc-key">Z</span></div>
+    </div>
+    <div class="ct-sc-row">
       <span class="ct-sc-desc">Dialog schließen</span>
       <div class="ct-sc-keys"><span class="ct-sc-key">Esc</span></div>
     </div>
@@ -6599,6 +6815,7 @@ function updateCountdown(state) {
   <option value="3s">Großfeld Spieltag (3 × 15 Min)</option>
   <option value="2">Kleinfeld (2 × 20 Min)</option>
 </select>
+<div id="ct-undo-toast"></div>
 
 </body>
 </html>
