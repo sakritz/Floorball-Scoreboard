@@ -334,7 +334,7 @@ body {
 .sb-timeout-label {
   font-size: clamp(64px, 11vw, 150px); font-weight:900; letter-spacing:14px;
   color:var(--orange,#ff9500); text-shadow:0 0 80px rgba(255,149,0,.6);
-  animation:pulse 1.2s ease-in-out infinite;
+  animation:pulse 5s ease-in-out infinite;
 }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.7} }
 .sb-timeout-team {
@@ -346,7 +346,7 @@ body {
   color:#fff; font-family:'Bebas Neue','Barlow Condensed',sans-serif;
   font-variant-numeric: tabular-nums;
 }
-#sb-pause-overlay { background: rgba(0,0,0,.88); }
+#sb-pause-overlay { background: rgba(0,0,0,.92); }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -3105,6 +3105,10 @@ function initController(skipLoad = false) {
   }
   updateControlBarSizes();
 
+  // Keyboard listeners werden nur einmalig registriert
+  if (initController._listenersBound) return;
+  initController._listenersBound = true;
+
   // Spacebar toggles clock unless focus is in a text/number input
   document.addEventListener('keydown', e => {
     if (e.code !== 'Space') return;
@@ -3113,13 +3117,17 @@ function initController(skipLoad = false) {
     const isText = tag === 'textarea' ||
       (tag === 'input' && (type === 'text' || type === 'number' || type === 'search'));
     if (isText) return;
+    const confirmOpen = document.getElementById('ct-confirm-modal')?.classList.contains('open');
+    const goalOpen    = document.getElementById('ct-goal-dialog')?.classList.contains('open');
+    const setupOpen   = !document.getElementById('setup-overlay')?.classList.contains('hidden');
+    if (confirmOpen || goalOpen || setupOpen) return;
     e.preventDefault();
     toggleClock();
   });
 
   // ── Keyboard shortcuts ──────────────────────────────────────────────
   // H/G = Tor-Dialog Heim/Gast · Shift+H/G = Tor rückgängig
-  // 1–5 = Tabs (Spiel, Teams, Strafen, Auszeiten, Einstellungen)
+  // 1–9 = Tabs (Spiel, Teams, Strafen, Auszeiten, Einstellungen)
   document.addEventListener('keydown', e => {
     // Ignore if a text/number input is focused
     const tag  = document.activeElement?.tagName?.toLowerCase();
@@ -3127,10 +3135,18 @@ function initController(skipLoad = false) {
     const isText = tag === 'textarea' ||
       (tag === 'input' && (type === 'text' || type === 'number' || type === 'search'));
     if (isText) return;
-    // Ignore if any modal/dialog is open
+
     const goalOpen    = document.getElementById('ct-goal-dialog')?.classList.contains('open');
     const confirmOpen = document.getElementById('ct-confirm-modal')?.classList.contains('open');
     const setupOpen   = !document.getElementById('setup-overlay')?.classList.contains('hidden');
+
+    // Escape schließt offene Dialoge — läuft VOR dem allgemeinen Block
+    if (e.key === 'Escape') {
+      if (confirmOpen) { document.getElementById('ct-confirm-cancel')?.click(); e.preventDefault(); return; }
+      if (goalOpen)    { closeGoalDialog(); e.preventDefault(); return; }
+      e.preventDefault(); return;
+    }
+
     if (goalOpen || confirmOpen || setupOpen) return;
 
     const key = e.key;
@@ -4218,6 +4234,29 @@ function endGame() {
     okLabel: 'Spiel beenden',
     onOk: () => {
       if (ctCountdownTimer) { clearInterval(ctCountdownTimer); ctCountdownTimer = null; }
+      stopClock();
+      clearInterval(toTimer);   toTimer   = null;
+      clearInterval(pauseTimer); pauseTimer = null;
+
+      // S vollständig auf Standardwerte zurücksetzen, damit saveState()
+      // keinen alten Spielstand zurückschreibt wenn startBlankGame() aufgerufen wird
+      S.homeName = 'HEIMTEAM'; S.awayName = 'GASTTEAM';
+      S.homeLogo = null;        S.awayLogo = null;
+      S.homeAccent = '#c8ff00'; S.awayAccent = '#22c55e';
+      S.homeJersey = '#0d2e0d'; S.awayJersey = '#0a1a0a';
+      S.homeScore = 0;          S.awayScore = 0;
+      S.clock = 1200;           S.running = false;
+      S.period = 1;             S.maxPeriods = 3;
+      S.periodSecs = 1200;      S.pauseSecs = 600;
+      S.homePenalties = [];     S.awayPenalties = [];
+      S.homeToUsed = false;     S.awayToUsed = false;
+      S.activeTimeout = null;   S.pause = null;
+      S.gameStarted = false;    S.pendingGoal = null;
+      S.events = [];            S.penaltyShootout = null;
+      S.leagueName = null;      S.kickoffTime = null;
+      clockMs = 1200 * 1000;
+      _undoStack = [];
+
       try { localStorage.removeItem(LS_KEY); } catch(e) {}
       initController(true);
       showStartScreen();
