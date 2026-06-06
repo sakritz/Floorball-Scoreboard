@@ -4,8 +4,12 @@
   "description": "Floorball Scoreboard – Desktop App",
   "main": "main.js",
   "scripts": {
+    "prestart": "copy ..\\scoreboard.html scoreboard.html & copy ..\\stream.html stream.html",
     "start": "electron .",
     "dev": "NODE_ENV=development electron .",
+    "prebuild:win": "copy ..\\scoreboard.html scoreboard.html & copy ..\\stream.html stream.html",
+    "prebuild:mac": "cp ../scoreboard.html scoreboard.html && cp ../stream.html stream.html",
+    "prebuild:linux": "cp ../scoreboard.html scoreboard.html && cp ../stream.html stream.html",
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
     "build:linux": "electron-builder --linux"
@@ -15,7 +19,9 @@
     "productName": "Floorball Scoreboard",
     "files": [
       "main.js",
-      "../scoreboard.html"
+      "assets/",
+      "scoreboard.html",
+      "stream.html"
     ],
     "win": {
       "target": "nsis",

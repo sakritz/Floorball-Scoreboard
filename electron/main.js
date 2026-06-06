@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, screen, Menu } = require('electron');
+const { app, BrowserWindow, globalShortcut, screen, Menu, dialog } = require('electron');
 const path = require('path');
 const express = require('express');
 
@@ -30,7 +30,7 @@ function startLocalServer() {
   });
 
   // scoreboard.html, stream.html und alle Dateien aus dem Projekt-Root ausliefern
-  expressApp.use(express.static(path.join(__dirname, '..')));
+  expressApp.use(express.static(__dirname));
 
   server = expressApp.listen(PORT, '127.0.0.1', () => {
     console.log(`Lokaler Server läuft auf http://localhost:${PORT}`);
@@ -44,6 +44,7 @@ function startLocalServer() {
 
 function stopLocalServer() {
   if (server) {
+    server.closeAllConnections(); // offene Verbindungen sofort kappen
     server.close(() => console.log('Server gestoppt.'));
     server = null;
   }
@@ -76,9 +77,24 @@ function createControlWindow() {
     controlWindow.webContents.openDevTools();
   }
 
+  controlWindow.on('close', async (e) => {
+    e.preventDefault();
+    const { response } = await dialog.showMessageBox(controlWindow, {
+      type: 'question',
+      buttons: ['Beenden', 'Abbrechen'],
+      defaultId: 1,
+      title: 'Floorball Scoreboard',
+      message: 'Spiel läuft noch. Wirklich beenden?',
+    });
+    if (response === 0) {
+      if (displayWindow) displayWindow.destroy();
+      controlWindow.destroy();
+    }
+  });
+
   controlWindow.on('closed', () => {
     controlWindow = null;
-    if (displayWindow) displayWindow.close();
+    app.quit();
   });
 }
 
@@ -149,7 +165,7 @@ app.whenReady().then(() => {
 // ── App beenden wenn alle Fenster geschlossen (außer macOS) ──────────────────
 app.on('window-all-closed', () => {
   stopLocalServer();
-  if (process.platform !== 'darwin') app.quit();
+  app.quit();
 });
 
 app.on('activate', () => {
