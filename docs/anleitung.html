@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Floorball Scoreboard – Benutzerhandbuch</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;900&family=Barlow:wght@400;500;600&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & BASE ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black:   #080a0e;
+  --dark:    #0f1218;
+  --panel:   #141820;
+  --card:    #1a1f2e;
+  --surface: #20263a;
+  --border:  rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.13);
+  --lime:    #c8ff00;
+  --cyan:    #22c55e;
+  --red:     #ff3b3b;
+  --orange:  #ff8c00;
+  --white:   #f2f5ff;
+  --muted:   #4a5170;
+  --muted2:  #6a7190;
+  --sidebar-w: 280px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--black);
+  color: var(--white);
+  font-family: 'Barlow', sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR ── */
+#sidebar {
+  width: var(--sidebar-w);
+  min-height: 100vh;
+  background: var(--dark);
+  border-right: 1px solid var(--border2);
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  overflow-y: auto;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  padding: 28px 24px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.sidebar-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 4px;
+  color: var(--lime);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.sidebar-sub {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted2);
+}
+
+.sidebar-nav {
+  padding: 16px 0;
+  flex: 1;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 24px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted2);
+  text-decoration: none;
+  transition: all .15s;
+  border-left: 2px solid transparent;
+}
+
+.nav-item:hover {
+  color: var(--white);
+  background: rgba(255,255,255,.04);
+  border-left-color: rgba(200,255,0,.4);
+}
+
+.nav-item.active {
+  color: var(--lime);
+  background: rgba(200,255,0,.06);
+  border-left-color: var(--lime);
+}
+
+.nav-num {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  min-width: 18px;
+}
+
+.sidebar-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+
+/* ── MAIN CONTENT ── */
+#main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  max-width: 900px;
+  padding: 48px 56px 80px;
+}
+
+/* ── HERO ── */
+.doc-hero {
+  margin-bottom: 56px;
+  padding-bottom: 40px;
+  border-bottom: 1px solid var(--border2);
+}
+
+.doc-hero-eyebrow {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: var(--lime);
+  margin-bottom: 12px;
+}
+
+.doc-hero h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 64px;
+  letter-spacing: 6px;
+  color: var(--white);
+  line-height: .95;
+  margin-bottom: 16px;
+  border: none;
+  padding: 0;
+}
+
+.doc-hero-sub {
+  font-size: 16px;
+  color: var(--muted2);
+  line-height: 1.6;
+  max-width: 560px;
+}
+
+.doc-hero-badges {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 1px solid var(--border2);
+  background: var(--card);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted2);
+}
+
+.badge-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--lime);
+}
+
+/* ── TYPOGRAPHY ── */
+h1, h2, h3, h4 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--white);
+  scroll-margin-top: 32px;
+}
+
+h1 { display: none; } /* replaced by hero */
+
+h2 {
+  font-size: 28px;
+  letter-spacing: 4px;
+  margin: 56px 0 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border2);
+  color: var(--lime);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+h2::before {
+  content: '';
+  display: block;
+  width: 3px;
+  height: 28px;
+  background: var(--lime);
+  flex-shrink: 0;
+}
+
+h3 {
+  font-size: 16px;
+  letter-spacing: 3px;
+  margin: 32px 0 12px;
+  color: rgba(242,245,255,.7);
+}
+
+h4 {
+  font-size: 13px;
+  letter-spacing: 3px;
+  margin: 20px 0 8px;
+  color: var(--muted2);
+}
+
+p { margin: 0 0 14px; color: rgba(242,245,255,.8); }
+
+a { color: var(--lime); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+strong { color: var(--white); font-weight: 600; }
+em { color: var(--muted2); font-style: normal; }
+
+/* ── TABLES ── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0 24px;
+  font-size: 14px;
+}
+
+thead tr {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border2);
+}
+
+th {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted2);
+  padding: 10px 14px;
+  text-align: left;
+}
+
+td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: rgba(242,245,255,.8);
+  vertical-align: top;
+}
+
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,.02); }
+
+td:first-child {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--white);
+  white-space: nowrap;
+}
+
+td code {
+  background: rgba(200,255,0,.1);
+  color: var(--lime);
+  border: 1px solid rgba(200,255,0,.2);
+  padding: 1px 6px;
+  font-size: 12px;
+  font-family: 'Barlow Condensed', monospace;
+  letter-spacing: 0;
+}
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: var(--panel);
+  border: 1px solid var(--border2);
+  border-left: 3px solid var(--lime);
+  padding: 18px 20px;
+  margin: 16px 0 24px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+code {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: rgba(200,255,0,.9);
+}
+
+pre code {
+  color: rgba(242,245,255,.85);
+}
+
+/* Inline code */
+p code, li code {
+  background: rgba(255,255,255,.07);
+  color: var(--lime);
+  border: 1px solid var(--border2);
+  padding: 1px 6px;
+  font-size: 12px;
+  border-radius: 2px;
+}
+
+/* ── BLOCKQUOTE / TIP ── */
+blockquote {
+  border: 1px solid rgba(200,255,0,.25);
+  border-left: 3px solid var(--lime);
+  background: rgba(200,255,0,.04);
+  padding: 14px 20px;
+  margin: 16px 0 24px;
+}
+
+blockquote p {
+  margin: 0;
+  color: rgba(200,255,0,.85);
+  font-size: 14px;
+}
+
+/* ── LISTS ── */
+ul, ol {
+  padding-left: 20px;
+  margin: 0 0 16px;
+}
+
+li {
+  margin-bottom: 6px;
+  color: rgba(242,245,255,.8);
+}
+
+li::marker { color: var(--lime); }
+
+/* ── HORIZONTAL RULE ── */
+hr {
+  border: none;
+  border-top: 1px solid var(--border2);
+  margin: 48px 0;
+}
+
+/* ── KEYBOARD ── */
+kbd {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-bottom: 2px solid var(--muted);
+  font-size: 12px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--white);
+}
+
+/* ── SECTION LABELS ── */
+.section-num {
+  display: inline-block;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  padding: 2px 8px;
+  background: rgba(200,255,0,.1);
+  color: var(--lime);
+  border: 1px solid rgba(200,255,0,.2);
+  margin-bottom: 6px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 860px) {
+  #sidebar { display: none; }
+  #main { margin-left: 0; padding: 28px 20px 60px; }
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--dark); }
+::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted2); }
+
+/* ── ACTIVE NAV HIGHLIGHT ── */
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <span class="sidebar-logo">Floorball</span>
+    <span class="sidebar-sub">Scoreboard · Handbuch</span>
+  </div>
+  <div class="sidebar-nav">
+    <a class="nav-item" href="#überblick--architektur"><span class="nav-num">01</span>Überblick</a>
+    <a class="nav-item" href="#erste-schritte--setup"><span class="nav-num">02</span>Setup</a>
+    <a class="nav-item" href="#controller-oberfläche"><span class="nav-num">03</span>Controller</a>
+    <a class="nav-item" href="#spieluhr"><span class="nav-num">04</span>Spieluhr</a>
+    <a class="nav-item" href="#tore-erfassen"><span class="nav-num">05</span>Tore</a>
+    <a class="nav-item" href="#strafen"><span class="nav-num">06</span>Strafen</a>
+    <a class="nav-item" href="#auszeiten"><span class="nav-num">07</span>Auszeiten</a>
+    <a class="nav-item" href="#pausen"><span class="nav-num">08</span>Pausen</a>
+    <a class="nav-item" href="#penalty-shootout"><span class="nav-num">09</span>Shootout</a>
+    <a class="nav-item" href="#teams--farben"><span class="nav-num">10</span>Teams & Farben</a>
+    <a class="nav-item" href="#einstellungen"><span class="nav-num">11</span>Einstellungen</a>
+    <a class="nav-item" href="#danger-zone"><span class="nav-num">12</span>Danger Zone</a>
+    <a class="nav-item" href="#scoreboard-präsentation"><span class="nav-num">13</span>Scoreboard</a>
+    <a class="nav-item" href="#tastenkürzel"><span class="nav-num">14</span>Tastenkürzel</a>
+    <a class="nav-item" href="#tipps--troubleshooting"><span class="nav-num">15</span>Troubleshooting</a>
+  </div>
+  <div class="sidebar-footer">Floorball Scoreboard · v1</div>
+</nav>
+
+<!-- MAIN -->
+<main id="main">
+
+  <!-- HERO -->
+  <div class="doc-hero">
+    <div class="doc-hero-eyebrow">Benutzerhandbuch</div>
+    <h1>Floorball<br>Scoreboard</h1>
+    <p class="doc-hero-sub">Vollständige Anleitung für Controller und Präsentations-Ansicht. Offline-fähig, keine Installation erforderlich.</p>
+    <div class="doc-hero-badges">
+      <span class="badge"><span class="badge-dot"></span>Einzelne HTML-Datei</span>
+      <span class="badge"><span class="badge-dot"></span>Offline-fähig</span>
+      <span class="badge"><span class="badge-dot"></span>Echtzeit-Sync</span>
+    </div>
+  </div>
+
+  <!-- CONTENT (from markdown) -->
+  <h1>Floorball Scoreboard – Benutzerhandbuch</h1>
+<blockquote>
+<p>Vollständige Anleitung für Controller und Präsentations-Ansicht</p>
+</blockquote>
+<hr>
+<h2>Inhaltsverzeichnis</h2>
+<ol>
+<li><a href="#%C3%BCberblick--architektur">Überblick &amp; Architektur</a></li>
+<li><a href="#erste-schritte--setup">Erste Schritte – Setup</a></li>
+<li><a href="#controller-oberfl%C3%A4che">Controller-Oberfläche</a></li>
+<li><a href="#spieluhr">Spieluhr</a></li>
+<li><a href="#tore-erfassen">Tore erfassen</a></li>
+<li><a href="#strafen">Strafen</a></li>
+<li><a href="#auszeiten">Auszeiten</a></li>
+<li><a href="#pausen">Pausen</a></li>
+<li><a href="#penalty-shootout">Penalty-Shootout</a></li>
+<li><a href="#teams--farben">Teams &amp; Farben</a></li>
+<li><a href="#einstellungen">Einstellungen</a></li>
+<li><a href="#danger-zone">Danger Zone</a></li>
+<li><a href="#scoreboard-pr%C3%A4sentation">Scoreboard-Präsentation</a></li>
+<li><a href="#tastenk%C3%BCrzel">Tastenkürzel</a></li>
+<li><a href="#tipps--troubleshooting">Tipps &amp; Troubleshooting</a></li>
+</ol>
+<hr>
+<h2>Überblick &amp; Architektur</h2>
+<p>Das Floorball Scoreboard ist eine <strong>einzelne HTML-Datei</strong>, die in zwei Modi betrieben wird:</p>
+<table>
+<thead>
+<tr>
+<th>Modus</th>
+<th>URL</th>
+<th>Zweck</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Controller</strong></td>
+<td><code>scoreboard.html</code></td>
+<td>Steuerung des Spiels</td>
+</tr>
+<tr>
+<td><strong>Präsentation</strong></td>
+<td><code>scoreboard.html?view=scoreboard</code></td>
+<td>Anzeige auf Beamer / zweitem Bildschirm</td>
+</tr>
+</tbody></table>
+<p>Beide Fenster kommunizieren in <strong>Echtzeit</strong> über den Browser-internen <code>BroadcastChannel</code>. Eine Serververbindung ist nicht erforderlich – die App funktioniert vollständig offline, auch über <code>file://</code>.</p>
+<p>Der Spielstand wird automatisch im <code>localStorage</code> des Browsers gespeichert. Falls der Controller-Tab versehentlich geschlossen wird, wird beim erneuten Öffnen der Zustand wiederhergestellt – inklusive Korrektur der abgelaufenen Zeit.</p>
+<h3>Empfohlenes Setup</h3>
+<pre><code>Laptop (Controller)  ──BroadcastChannel──  Beamer-Tab (Scoreboard)
+</code></pre>
+<ol>
+<li>Datei im Browser öffnen → <strong>Controller</strong> lädt</li>
+<li>Über den Button <strong>„Scoreboard öffnen&quot;</strong> ein zweites Fenster / einen zweiten Tab starten → <strong>Präsentation</strong> lädt</li>
+<li>Den Präsentations-Tab auf den Beamer / zweiten Monitor ziehen und auf Vollbild stellen (<code>F11</code>)</li>
+</ol>
+<hr>
+<h2>Erste Schritte – Setup</h2>
+<p>Beim ersten Start erscheint automatisch der <strong>Setup-Dialog</strong>. Er kann jederzeit über den Tab <strong>Spiel</strong> → Karte <strong>„Spiel einrichten&quot;</strong> → Button <strong>„⚙ Setup öffnen&quot;</strong> wieder aufgerufen werden.</p>
+<h3>Felder im Setup</h3>
+<table>
+<thead>
+<tr>
+<th>Feld</th>
+<th>Beschreibung</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Saisonmanager-Import</strong></td>
+<td>Spieldaten automatisch aus Saisonmanager-URL oder Spiel-ID laden</td>
+</tr>
+<tr>
+<td><strong>Spielformat</strong></td>
+<td>Großfeld 3 × 20 Min · Großfeld-Spieltag 3 × 15 Min · Kleinfeld 2 × 20 Min · Benutzerdefiniert</td>
+</tr>
+<tr>
+<td><strong>Liga / Turnier</strong></td>
+<td>Wird in der Topbar des Scoreboards angezeigt (optional)</td>
+</tr>
+<tr>
+<td><strong>Anpfiff</strong></td>
+<td>Datum &amp; Uhrzeit; startet optional einen Countdown auf dem Scoreboard</td>
+</tr>
+<tr>
+<td><strong>Heimteam / Gastteam</strong></td>
+<td>Teamname (wird großgeschrieben angezeigt)</td>
+</tr>
+<tr>
+<td><strong>Teamfarbe (Akzent)</strong></td>
+<td>Hauptfarbe des Teams auf dem Scoreboard</td>
+</tr>
+<tr>
+<td><strong>Trikotfarbe</strong></td>
+<td>Sekundärfarbe (optionaler Farbbalken unter dem Teamnamen)</td>
+</tr>
+<tr>
+<td><strong>Team-Logo</strong></td>
+<td>Bild-Upload; wird auf dem Scoreboard angezeigt</td>
+</tr>
+</tbody></table>
+<h3>Farben wählen</h3>
+<ul>
+<li><strong>Neon-Palette</strong>: 9 vorbereitete Neon-Farben per Klick auswählen</li>
+<li><strong>Color Picker</strong>: Beliebige Farbe manuell einstellen</li>
+<li><strong>Logo-Extraktion</strong>: Wird ein Logo hochgeladen, schlägt das System automatisch passende Farben aus dem Logo vor</li>
+</ul>
+<h3>Setup abschließen</h3>
+<p>Klick auf <strong>„Spiel starten&quot;</strong> übernimmt alle Einstellungen und schließt den Dialog. Falls eine Anpfiffzeit gesetzt wurde, fragt die App, ob ein Countdown auf dem Scoreboard angezeigt werden soll.</p>
+<hr>
+<h2>Controller-Oberfläche</h2>
+<p>Der Controller besteht aus drei Bereichen:</p>
+<pre><code>┌─────────────────────────────────────────────────┐
+│              CONTROL BAR (fest oben)            │
+│  [Heim] [−][Score][+]  [Uhr] [Abschnitt]  [+][Score][−] [Gast]  │
+├─────────────────────────────────────────────────┤
+│                    TAB-LEISTE                   │
+│  Spiel | Strafen | Auszeiten | Teams | ⚙ | ⚠   │
+├─────────────────────────────────────────────────┤
+│                 TAB-INHALT                      │
+│  (wechselt je nach aktivem Tab)                 │
+└─────────────────────────────────────────────────┘
+</code></pre>
+<h3>Control Bar</h3>
+<p>Die <strong>Control Bar</strong> ist immer sichtbar und enthält die wichtigsten Steuerelemente:</p>
+<ul>
+<li><strong>Teamnamen</strong> mit Strafen- und Auszeit-Indikatoren</li>
+<li><strong><code>−</code> / <code>+</code>-Buttons</strong>: Score direkt anpassen (öffnet bei <code>+</code> den Tor-Dialog)</li>
+<li><strong>Spieluhr</strong> in der Mitte mit Start/Stopp-Button</li>
+<li><strong>Abschnitts-Chip</strong>: Zeigt aktuellen Abschnitt (z. B. „2. DRITTEL&quot;)</li>
+<li><strong>Sekundär-Timer</strong>: Erscheint bei laufender Auszeit oder Pause</li>
+</ul>
+<h3>Tab-Leiste</h3>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>Inhalt</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Spiel</strong></td>
+<td>Abschnittssteuerung, Pause, Penaltyschießen, Setup</td>
+</tr>
+<tr>
+<td><strong>Strafen</strong></td>
+<td>Strafen erfassen und verwalten</td>
+</tr>
+<tr>
+<td><strong>Auszeiten</strong></td>
+<td>Auszeit starten und zurücksetzen</td>
+</tr>
+<tr>
+<td><strong>Teams</strong></td>
+<td>Teamnamen, Farben, Logos bearbeiten</td>
+</tr>
+<tr>
+<td><strong>⚙ Einstellungen</strong></td>
+<td>Uhr, Buzzer, Präsentations-Optionen</td>
+</tr>
+<tr>
+<td><strong>⚠ Danger Zone</strong></td>
+<td>Uhr überschreiben, Spiel zurücksetzen / beenden</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>Tipp:</strong> Tabs können auch per Tastatur aufgerufen werden – die Ziffern <code>1</code> bis <code>9</code> wählen die sichtbaren Tabs von links nach rechts aus.</p>
+</blockquote>
+<hr>
+<h2>Spieluhr</h2>
+<h3>Starten &amp; Stoppen</h3>
+<table>
+<thead>
+<tr>
+<th>Aktion</th>
+<th>Möglichkeit</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Starten / Stoppen</td>
+<td>Großer Button in der Control Bar</td>
+</tr>
+<tr>
+<td>Starten / Stoppen</td>
+<td><code>Leertaste</code> (nur wenn kein Eingabefeld aktiv ist)</td>
+</tr>
+</tbody></table>
+<p>Die Uhr zeigt in der Control Bar die <strong>Controller-Zeit</strong> an. Das Scoreboard kann eine abweichende Zählrichtung haben (einstellbar unter <strong>⚙ Einstellungen → Uhranzeige</strong>).</p>
+<h3>Zählrichtung</h3>
+<ul>
+<li><strong>Countdown</strong> (↓): Uhr zählt von der Periodenzeit auf 0 herunter <em>(Standard)</em></li>
+<li><strong>Count-up</strong> (↑): Uhr zählt von 0 aufwärts</li>
+</ul>
+<p>Zählrichtung kann <strong>separat</strong> für Controller und Scoreboard eingestellt werden.</p>
+<h3>Abschnitt wechseln</h3>
+<p>Im Tab <strong>Spiel</strong> → Karte <strong>„Abschnitt&quot;</strong> sind die Abschnitts-Pills (z. B. D1, D2, D3) anklickbar:</p>
+<ul>
+<li>Bei <strong>gestoppter Uhr oder vor Spielbeginn</strong>: Wechsel sofort</li>
+<li>Bei <strong>laufender Uhr und gestarteter Partie</strong>: Sicherheitsabfrage erscheint</li>
+</ul>
+<h3>Buzzer</h3>
+<p>Am Ende jeder Periode ertönt automatisch ein <strong>elektronischer Buzzer-Ton</strong> (sofern aktiviert). Der Buzzer kann in den Einstellungen deaktiviert oder durch verschiedene Sounds ersetzt werden.</p>
+<hr>
+<h2>Tore erfassen</h2>
+<h3>Tor eintragen</h3>
+<ol>
+<li>Klick auf den <strong><code>+</code>-Button</strong> neben dem jeweiligen Team (oder Taste <code>H</code> für Heim, <code>G</code> für Gast)</li>
+<li>Im Tor-Dialog erscheinen folgende Felder:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Feld</th>
+<th>Beschreibung</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Tortyp-Buttons</strong></td>
+<td><strong>Strafstoß</strong> oder <strong>Eigentor</strong> (optional; kein Tortyp = normales Tor)</td>
+</tr>
+<tr>
+<td><strong>Schütze (Nummer)</strong></td>
+<td>Rückennummer des Torschützen (optional)</td>
+</tr>
+<tr>
+<td><strong>Vorlage (Nummer)</strong></td>
+<td>Rückennummer des Assistenten (optional; entfällt bei Strafstoß/Eigentor)</td>
+</tr>
+</tbody></table>
+<ol start="3">
+<li>Klick auf <strong>„Bestätigen&quot;</strong> speichert das Tor</li>
+</ol>
+<blockquote>
+<p>Bei einem <strong>Eigentor</strong> werden Schützen- und Vorlagenfeld ausgeblendet. Bei einem <strong>Strafstoß</strong> entfällt nur das Vorlagenfeld.</p>
+</blockquote>
+<h3>Tor rückgängig machen</h3>
+<ul>
+<li>Taste <code>Shift + H</code> → letztes Heimtor entfernen</li>
+<li>Taste <code>Shift + G</code> → letztes Gasttor entfernen</li>
+<li>Alternativ: <code>−</code>-Button in der Control Bar</li>
+</ul>
+<h3>Pending-Goal (Bully-Regelung)</h3>
+<p>Wird ein Tor eingetragen, während die <strong>Uhr gestoppt</strong> war, gilt die Bully-Regelung:</p>
+<ul>
+<li>Das Tor wird als <strong>„Pending&quot;</strong> gespeichert</li>
+<li>Der Score auf dem Scoreboard erscheint <strong>abgedunkelt</strong></li>
+<li>Erst beim <strong>nächsten Uhrstart</strong> wird das Tor sichtbar und die TOR!-Animation abgespielt</li>
+</ul>
+<h3>TOR!-Animation</h3>
+<p>Nach einem Tor zeigt das Scoreboard eine <strong>animierte „TOR!&quot;-Einblendung</strong> in der jeweiligen Teamfarbe. Falls der <strong>Events-Tab aktiviert</strong> ist, folgt danach eine Einblendung mit Trikotnummer des Torschützen und ggf. des Assistenten.</p>
+<p>Die Animation kann in den <strong>Einstellungen</strong> deaktiviert werden.</p>
+<hr>
+<h2>Strafen</h2>
+<h3>Strafe hinzufügen</h3>
+<ol>
+<li>Tab <strong>Strafen</strong> öffnen</li>
+<li>Klick auf <strong>„+ Strafe hinzufügen&quot;</strong> beim jeweiligen Team</li>
+<li>Trikotnummer und Strafart auswählen</li>
+<li>Klick auf <strong>„+ Eintragen&quot;</strong></li>
+</ol>
+<h3>Strafarten</h3>
+<table>
+<thead>
+<tr>
+<th>Typ</th>
+<th>Beschreibung</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>2 Min (einfach)</strong></td>
+<td>Standard-Zeitstrafe. Erlischt bei Überzahltor automatisch.</td>
+</tr>
+<tr>
+<td><strong>2+2 Min (doppelt)</strong></td>
+<td>Zwei aufeinanderfolgende 2-Min-Strafen. Die erste erlischt bei Überzahltor; die zweite läuft danach automatisch an.</td>
+</tr>
+<tr>
+<td><strong>10 Min (pers.) + 2 Min</strong></td>
+<td>Persönliche 10-Min-Strafe (zählt nicht für Unter-/Überzahl) plus eine normale 2-Min-Zeitstrafe (erlischt bei Überzahltor).</td>
+</tr>
+<tr>
+<td><strong>Techn. Matchstrafe + 2+2 Min</strong></td>
+<td>Technische Matchstrafe mit zwei 2-Min-Zeitstrafen.</td>
+</tr>
+<tr>
+<td><strong>Matchstrafe + 2+2 Min</strong></td>
+<td>Matchstrafe mit zwei 2-Min-Zeitstrafen.</td>
+</tr>
+</tbody></table>
+<h3>Strafuhr</h3>
+<ul>
+<li>Die Strafuhr läuft <strong>parallel zur Spieluhr</strong></li>
+<li>Bei gestoppter Spieluhr pausiert auch die Strafuhr</li>
+<li>Aktive Strafen werden als <strong>Chips</strong> unter dem Score auf dem Scoreboard angezeigt, mit Countdown</li>
+<li>Wartende zweite Teile einer Doppelstrafe zeigen <strong>„– –&quot;</strong> bis sie aktiviert werden</li>
+</ul>
+<h3>Strafe löschen</h3>
+<p>In der Strafenliste erscheint bei jeder aktiven Strafe ein <strong>✕-Button</strong> zum manuellen Entfernen. Wird der erste Teil einer Doppelstrafe gelöscht, wird der wartende zweite Teil sofort aktiviert.</p>
+<h3>Über-/Unterzahl-Anzeige</h3>
+<p>Das Scoreboard zeigt in der <strong>Fußleiste</strong> automatisch das aktuelle Kräfteverhältnis an (z. B. <code>5 vs 4</code>), wenn eine Strafe aktiv ist.</p>
+<hr>
+<h2>Auszeiten</h2>
+<p>Jedes Team hat pro Spiel <strong>eine Auszeit</strong> von 30 Sekunden.</p>
+<h3>Auszeit starten</h3>
+<ol>
+<li>Tab <strong>Auszeiten</strong> öffnen</li>
+<li>Klick auf <strong>„⏱ Auszeit starten&quot;</strong> beim jeweiligen Team</li>
+</ol>
+<p>Das Scoreboard zeigt ein <strong>AUSZEIT-Overlay</strong> mit Teamname und Countdown (30 → 0).</p>
+<p>Die Auszeit läuft <strong>unabhängig von der Spieluhr</strong>.</p>
+<h3>Auszeit beenden</h3>
+<ul>
+<li>Automatisch nach 30 Sekunden (optionaler Buzzer)</li>
+<li>Manuell über <strong>„✕ Beenden&quot;</strong> im Controller (erscheint im Sekundär-Timer-Bereich der Control Bar)</li>
+</ul>
+<h3>Auszeit zurücksetzen</h3>
+<p>Falls eine Auszeit fälschlicherweise verbraucht wurde: Im Tab <strong>Auszeiten</strong> per <strong>↺-Button</strong> direkt bei dem betreffenden Team zurücksetzen.</p>
+<hr>
+<h2>Pausen</h2>
+<p>Nach einem Abschnitt (außer dem letzten) schlägt die App automatisch eine <strong>Pause</strong> vor.</p>
+<h3>Pausendauer</h3>
+<p>Standard: <strong>10 Minuten</strong> (600 Sekunden). Bei benutzerdefiniertem Format kann die Pausendauer frei eingestellt werden.</p>
+<h3>Pause starten</h3>
+<p>Im Tab <strong>Spiel</strong> → Karte <strong>„Pause&quot;</strong> → Button <strong>„⏱ Pause starten&quot;</strong>. Alternativ erscheint nach Ablauf eines Abschnitts automatisch ein Bestätigungsdialog.</p>
+<h3>Pause-Overlay</h3>
+<p>Das Scoreboard zeigt während der Pause ein <strong>PAUSE-Overlay</strong> mit Countdown und dem nächsten Abschnittsnamen.</p>
+<h3>Pause manuell beenden</h3>
+<p>Im Controller erscheint während der Pause ein <strong>Sekundär-Timer</strong> in der Control Bar mit einem <strong>✕-Button</strong> zum vorzeitigen Beenden. Nach Ablauf der Pause erscheint ein Dialog zur Bestätigung des nächsten Abschnitts.</p>
+<hr>
+<h2>Penalty-Shootout</h2>
+<h3>Shootout starten</h3>
+<ol>
+<li>Tab <strong>Spiel</strong> öffnen</li>
+<li>Karte <strong>„Penaltyschießen&quot;</strong> aufklappen</li>
+<li>Klick auf <strong>„▶ Penaltyschießen starten&quot;</strong></li>
+</ol>
+<p>Das Scoreboard wechselt automatisch in die <strong>Shootout-Ansicht</strong>. Im Controller öffnet sich das Shootout-Overlay.</p>
+<h3>Schüsse erfassen</h3>
+<p>Im Shootout-Overlay:</p>
+<ol>
+<li>Optionale Trikotnummer des Schützen eingeben</li>
+<li>Klick auf <strong>„✓&quot;</strong> (Tor) oder <strong>„✕&quot;</strong> (Fehlschuss)</li>
+</ol>
+<p>Schüsse werden abwechselnd für Heim und Gast erfasst. Jeder Klick auf denselben Button hebt die Eingabe wieder auf (Toggle).</p>
+<h3>Visualisierung auf dem Scoreboard</h3>
+<p>Dots zeigen den aktuellen Stand:</p>
+<table>
+<thead>
+<tr>
+<th>Dot-Zustand</th>
+<th>Bedeutung</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Gefüllt</td>
+<td>Tor erzielt</td>
+</tr>
+<tr>
+<td>Kreuz</td>
+<td>Fehlschuss</td>
+</tr>
+<tr>
+<td>Pulsierend</td>
+<td>Nächster ausstehender Schuss</td>
+</tr>
+<tr>
+<td>Schwach</td>
+<td>Noch nicht an der Reihe</td>
+</tr>
+</tbody></table>
+<h3>Zusatzrunden</h3>
+<p>Steht es nach 5 Schüssen unentschieden, werden automatisch <strong>Zusatzrunden</strong> hinzugefügt (je ein Schuss pro Team), bis ein Sieger feststeht.</p>
+<h3>Sieger-Ermittlung</h3>
+<p>Sobald ein Team <strong>mathematisch nicht mehr eingeholt</strong> werden kann, wird der Sieger automatisch angezeigt.</p>
+<h3>Shootout beenden</h3>
+<p>Klick auf <strong>„✕ Beenden&quot;</strong> (mit Bestätigungsdialog) schließt das Shootout-Overlay und das normale Scoreboard wird wieder angezeigt. Über <strong>„↺ Neu&quot;</strong> kann das Schießen zurückgesetzt werden.</p>
+<hr>
+<h2>Teams &amp; Farben</h2>
+<h3>Im Tab „Teams&quot;</h3>
+<table>
+<thead>
+<tr>
+<th>Einstellung</th>
+<th>Beschreibung</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Teamname</strong></td>
+<td>Wird in Echtzeit übernommen</td>
+</tr>
+<tr>
+<td><strong>Logo</strong></td>
+<td>Bild hochladen; wird auf dem Scoreboard angezeigt</td>
+</tr>
+<tr>
+<td><strong>Akzentfarbe</strong></td>
+<td>Hauptfarbe auf dem Scoreboard (Score, Teamname, Glow)</td>
+</tr>
+<tr>
+<td><strong>Trikotfarbe</strong></td>
+<td>Sekundärfarbe (Farbbalken, sofern in Einstellungen aktiviert)</td>
+</tr>
+</tbody></table>
+<h3>Farbauswahl</h3>
+<ul>
+<li><strong>Neon-Palette</strong>: 9 Schnellzugriff-Farben</li>
+<li><strong>Color Picker</strong>: Beliebige Farbe per Farbwähler</li>
+<li><strong>Hex-Anzeige</strong>: Aktueller Hex-Code wird neben dem Picker angezeigt</li>
+<li><strong>Zurücksetzen</strong>: ↺-Button stellt die Standard-Farbe wieder her</li>
+<li><strong>Logo-Vorschläge</strong>: Nach Logo-Upload werden passende Farben automatisch aus dem Logo extrahiert und als Swatches vorgeschlagen</li>
+</ul>
+<hr>
+<h2>Einstellungen</h2>
+<h3>Uhranzeige</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Beschreibung</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Steuerung: ↓ Runter / ↑ Hoch</strong></td>
+<td>Zählrichtung im Controller</td>
+</tr>
+<tr>
+<td><strong>Präsentation: ↓ Runter / ↑ Hoch</strong></td>
+<td>Zählrichtung auf dem Scoreboard</td>
+</tr>
+</tbody></table>
+<h3>Präsentation</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Standard</th>
+<th>Beschreibung</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Fußleiste anzeigen</strong></td>
+<td>AN</td>
+<td>Ticker-Leiste mit Liga, Überzahl, Format</td>
+</tr>
+<tr>
+<td><strong>Events-Tab &amp; Ereignisse</strong></td>
+<td>AUS</td>
+<td>Spielprotokoll-Tab einblenden; aktiviert auch Scorer-Einblendung nach Toren</td>
+</tr>
+<tr>
+<td><strong>Tor-Animation</strong></td>
+<td>AN</td>
+<td>TOR!-Einblendung nach Tor</td>
+</tr>
+<tr>
+<td><strong>Trikotfarben anzeigen</strong></td>
+<td>AUS</td>
+<td>Farbbalken unter Teamnamen auf dem Scoreboard</td>
+</tr>
+</tbody></table>
+<h3>Buzzer</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Beschreibung</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Spielende</strong></td>
+<td>Buzzer bei Ablauf der Periodenzeit</td>
+</tr>
+<tr>
+<td><strong>Pausenende</strong></td>
+<td>Buzzer bei Ablauf der Pause</td>
+</tr>
+<tr>
+<td><strong>Auszeit-Ende</strong></td>
+<td>Buzzer bei Ablauf der Auszeit</td>
+</tr>
+<tr>
+<td><strong>Sound</strong></td>
+<td>Classic · Horn · Beep · Bell · Eigene Datei (max. 3 MB)</td>
+</tr>
+</tbody></table>
+<p>Ein <strong>„▶ Test-Buzzer&quot;</strong>-Button ermöglicht die Vorschau des gewählten Sounds.</p>
+<h3>Scoreboard-Vorschau (PiP)</h3>
+<p>Der <strong>⧉-Button</strong> in der Control Bar öffnet eine skalierte Live-Vorschau des Scoreboards direkt im Controller-Fenster. Das Vorschaufenster ist frei positionierbar (Titelleiste ziehen) und größenveränderbar (Anfasser rechts unten).</p>
+<hr>
+<h2>Danger Zone</h2>
+<blockquote>
+<p>⚠️ Aktionen in diesem Tab erfordern eine Bestätigung und können nicht rückgängig gemacht werden.</p>
+</blockquote>
+<h3>Uhr überschreiben</h3>
+<p>Erlaubt das manuelle Setzen der Spielzeit auf einen beliebigen Wert im Format <code>MM : SS</code>.</p>
+<p><strong>Nur bei gestoppter Uhr möglich.</strong></p>
+<h3>Spiel zurücksetzen</h3>
+<p>Setzt Score, Spielzeit, Abschnitt (zurück auf 1), Strafen und Auszeiten zurück – <strong>Teamnamen, Farben und Logos bleiben erhalten</strong>.</p>
+<h3>Spiel beenden</h3>
+<p>Beendet das aktuelle Spiel, löscht den gespeicherten Stand vollständig und öffnet den <strong>Setup-Dialog</strong> für ein neues Spiel.</p>
+<hr>
+<h2>Scoreboard-Präsentation</h2>
+<p>Das Scoreboard ist die Vollbild-Ansicht für Beamer oder zweiten Monitor.</p>
+<h3>Layout-Überblick</h3>
+<pre><code>┌──────────────────────────────────────────────────┐
+│ 🔴 LIVE    [Liga]              ● SPIELZEIT LÄUFT │  ← Topbar
+├──────────────────────────────────────────────────┤
+│              2. DRITTEL                          │  ← Periode
+│         ██ ██ ░░  (Perioden-Balken)              │
+├──────────────┬───────────────┬───────────────────┤
+│ HEIMTEAM     │               │       GASTTEAM    │
+│              │   20:00       │                   │
+│   3          │               │           1       │
+│              │  VERBLEIBEND  │                   │
+│ [Strafchip]  │               │   [Strafchip]     │
+├──────────────┴───────────────┴───────────────────┤
+│ #7 · 2 MIN   │   5 vs 4 PP   │  Großfeld 3×20    │  ← Fußleiste
+└──────────────────────────────────────────────────┘
+</code></pre>
+<h3>Overlays</h3>
+<table>
+<thead>
+<tr>
+<th>Overlay</th>
+<th>Auslöser</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>TOR!</strong></td>
+<td>Tor wird sichtbar (sofort oder nach Uhrstart bei Pending-Goal)</td>
+</tr>
+<tr>
+<td><strong>AUSZEIT</strong></td>
+<td>Auszeit läuft</td>
+</tr>
+<tr>
+<td><strong>PAUSE</strong></td>
+<td>Abschnittspause läuft</td>
+</tr>
+<tr>
+<td><strong>Shootout</strong></td>
+<td>Penalty-Shootout aktiv</td>
+</tr>
+<tr>
+<td><strong>Countdown</strong></td>
+<td>Vor dem Anpfiff, wenn Anpfiffzeit gesetzt ist</td>
+</tr>
+</tbody></table>
+<h3>Responsive Skalierung</h3>
+<p>Alle Schriftgrößen und Abstände skalieren über CSS <code>clamp()</code> automatisch mit der Fenstergröße. Das Scoreboard sieht auf jedem Format gut aus – vom 13&quot;-Laptop-Screen bis zum 4K-Beamer.</p>
+<hr>
+<h2>Tastenkürzel</h2>
+<table>
+<thead>
+<tr>
+<th>Taste</th>
+<th>Aktion</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Leertaste</code></td>
+<td>Spieluhr starten / stoppen</td>
+</tr>
+<tr>
+<td><code>H</code></td>
+<td>Tor-Dialog für Heimteam öffnen</td>
+</tr>
+<tr>
+<td><code>G</code></td>
+<td>Tor-Dialog für Gastteam öffnen</td>
+</tr>
+<tr>
+<td><code>Shift + H</code></td>
+<td>Letztes Heimtor rückgängig</td>
+</tr>
+<tr>
+<td><code>Shift + G</code></td>
+<td>Letztes Gasttor rückgängig</td>
+</tr>
+<tr>
+<td><code>1</code> – <code>9</code></td>
+<td>Tabs wechseln (links → rechts, nur sichtbare Tabs)</td>
+</tr>
+<tr>
+<td><code>Esc</code></td>
+<td>Offene Dialoge schließen</td>
+</tr>
+<tr>
+<td><code>?</code></td>
+<td>Tastenkürzel-Übersicht anzeigen</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>Hinweis:</strong> <code>Leertaste</code> funktioniert nur, wenn kein Eingabefeld (Textfeld, Zahlenfeld) aktiv ist.</p>
+</blockquote>
+<hr>
+<h2>Tipps &amp; Troubleshooting</h2>
+<h3>Scoreboard und Controller synchronisieren sich nicht</h3>
+<ul>
+<li>Beide Tabs müssen aus <strong>derselben Datei</strong> geöffnet sein (gleiche URL / gleicher <code>file://</code>-Pfad)</li>
+<li>Der <code>BroadcastChannel</code> funktioniert <strong>nicht</strong> über verschiedene Browser oder Geräte</li>
+<li>Lösung für Netzwerk-Einsatz: Datei über einen lokalen Webserver bereitstellen (z. B. <code>npx serve</code>)</li>
+</ul>
+<h3>Spielstand nach Tab-Schließen wiederhergestellt?</h3>
+<p>Ja – der Zustand wird im <code>localStorage</code> gespeichert. Beim erneuten Öffnen des Controllers wird die Zeit automatisch um die Abwesenheitsdauer korrigiert.</p>
+<h3>Uhr läuft im Hintergrund weiter?</h3>
+<p>Ja, bewusst so gestaltet. Auch wenn der Controller-Tab nicht aktiv ist, läuft der Timer weiter. Beim Zurückkehren ist die Zeit korrekt.</p>
+<h3>Browser-Refresh vermeiden</h3>
+<p>Der Controller warnt bei <code>F5</code> / <code>Ctrl+R</code> / <code>Cmd+R</code>, sobald das Spiel gestartet wurde. Der gespeicherte Zustand wird beim Reload wiederhergestellt.</p>
+<h3>Buzzer ertönt nicht</h3>
+<ul>
+<li>Prüfen ob der Buzzer unter <strong>⚙ Einstellungen → Buzzer → Spielende</strong> aktiviert ist</li>
+<li>Der Browser benötigt eine <strong>Benutzeraktion</strong> (Klick), bevor er Audio abspielen darf – einfach die Uhr einmal manuell starten</li>
+<li>Bei Custom-Sound: Datei unter 3 MB halten</li>
+</ul>
+<h3>Score stimmt nicht</h3>
+<ul>
+<li><code>−</code>-Button in der Control Bar korrigiert das letzte Tor</li>
+<li>Alternativ: <code>Shift + H</code> / <code>Shift + G</code> per Tastatur</li>
+</ul>
+<h3>Vollbild auf dem Beamer</h3>
+<ul>
+<li>Scoreboard-Tab auf den Beamer-Monitor ziehen</li>
+<li><code>F11</code> drücken → Vollbild</li>
+<li>Browser-Adressleiste und Tabs verschwinden</li>
+</ul>
+<hr>
+<p><em>Floorball Scoreboard · Alle Rechte vorbehalten</em></p>
+
+
+</main>
+
+<script>
+// Active nav highlight on scroll
+const sections = document.querySelectorAll('h2[id]');
+const navItems = document.querySelectorAll('.nav-item');
+
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navItems.forEach(n => n.classList.remove('active'));
+      const match = document.querySelector('.nav-item[href="#' + e.target.id + '"]');
+      if (match) match.classList.add('active');
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+
+sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>
