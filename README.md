@@ -29,37 +29,99 @@ Eine Scoreboard-App für Floorball – verfügbar als HTML-Datei (z.B. via GitHu
 **Teamkonfiguration**
 - Teamname, Logo (Upload), Akzentfarbe und Trikotfarbe pro Team
 - Alle Farben wirken live auf Scoreboard und Vorschau
+- Import von Spieldaten (Liga, Teamnamen, Logos, Spielbeginn) direkt aus dem Saisonmanager
 
 **Präsentation**
-- Separates Scoreboard-Fenster für zweiten Monitor / Beamer
+- Separates Scoreboard-Fenster als Hallenanzeige für zweiten Monitor / Beamer
 - Uhrrichtung (hoch/runter) für Steuerung und Präsentation unabhängig einstellbar
 - Eingebettete Vorschau (PiP) direkt in der Steuerungsansicht
-- Tor-Animation, Auszeit-Overlay, Pause-Overlay
+- Tor-Animation, Auszeit-Overlay, Pausen-Overlay
 
 ---
 
 ## Benutzung
 
-1. `floorball.html` herunterladen
-2. Im Browser öffnen – das ist die **Steuerungsansicht**
+### Option A – Browser / GitHub Pages (kein Install)
+
+1. Repository herunterladen oder klonen
+2. `scoreboard.html` im Browser öffnen – das ist die **Steuerungsansicht**
 3. Auf **📺 Scoreboard öffnen** klicken – öffnet das Scoreboard in einem neuen Fenster
 4. Scoreboard-Fenster auf den zweiten Monitor / Beamer ziehen und maximieren
 
-Kein Server, kein Build-Schritt, keine Abhängigkeiten. Die Datei funktioniert direkt von der Festplatte (`file://`).
+Kein Server, kein Build-Schritt, keine Abhängigkeiten. Die Dateien funktionieren direkt von der Festplatte (`file://`) oder über [GitHub Pages](https://sakritz.github.io/Floorball-Scoreboard/scoreboard.html).
 
-> **Hinweis:** Steuerung und Scoreboard müssen im selben Browser geöffnet sein, da die Synchronisation über den `BroadcastChannel`-API des Browsers läuft.
+> **Hinweis:** Steuerung und Scoreboard müssen im selben Browser geöffnet sein, da die Synchronisation über die `BroadcastChannel`-API läuft.
+
+### Option B – Electron Desktop-App
+
+Die Electron-App schaltet zusätzliche Features frei: automatisches Öffnen des Scoreboards auf dem zweiten Monitor und ein OBS-Overlay für Streams.
+
+**Als Endnutzer** einfach den passenden Installer herunterladen und ausführen – keine weiteren Voraussetzungen.
+ 
+**Für Entwickler** (selbst bauen / starten):
+
+```bash
+cd electron
+npm install
+npm start
+```
+
+| Shortcut | Aktion |
+|---|---|
+| `F12` | Scoreboard-Fenster auf zweitem Monitor öffnen / schließen |
+| `F11` | Controller-Fenster Fullscreen umschalten |
+| `Escape` | Fullscreen beenden |
+
+**OBS-Overlay:** Wenn die Electron-App läuft, ist das Overlay unter `http://localhost:8080/stream.html` erreichbar. In OBS als Browser-Quelle hinzufügen.
+
+---
+
+## Dateistruktur
+
+```
+scoreboard.html       Markup-Gerüst (Steuerung + Scoreboard)
+stream.html           OBS-Overlay (Score-Leiste für Streams)
+logo.png
+
+css/
+  base.css            CSS-Variablen & Reset
+  scoreboard.css      TV-/Monitor-Ansicht
+  controller.css      Steuer-Panel
+  ui.css              Dialoge & Overlays
+
+js/
+  state.js            Zentrales State-Objekt
+  undo.js             Undo-Stack
+  persistence.js      localStorage
+  controller.js       Spieluhr & Score-Steuerung
+  palette.js          Farbpalette & Periodensteuerung
+  game-flow.js        Spielfluss (Strafen, Perioden, Auszeiten)
+  logo.js             Logo-Farbextraktion
+  buzzer.js           Buzzer-Sounds
+  render.js           Scoreboard-Rendering
+  ui.js               Dialoge, Startscreen, Setup
+
+electron/
+  main.js             Electron-Hauptprozess
+  package.json
+  assets/icon.png
+```
 
 ---
 
 ## Technischer Hintergrund
 
-Die App ist eine einzelne HTML-Datei (~2400 Zeilen) mit Vanilla HTML, CSS und JavaScript.
+Die App besteht aus einer schlanken `scoreboard.html` (~1400 Zeilen reines Markup) mit ausgelagertem CSS (`css/`) und JavaScript (`js/`). Kein Framework, kein Build-Schritt – Vanilla HTML, CSS und JS.
 
-**Synchronisation** zwischen Steuerung und Scoreboard läuft über [`BroadcastChannel`](https://developer.mozilla.org/en-US/docs/Web/API/BroadcastChannel) – kein WebSocket, kein Server nötig. Beide Fenster teilen denselben `file://`-Ursprung, wodurch die API zuverlässig funktioniert.
+**Synchronisation** zwischen Steuerung und Scoreboard läuft über [`BroadcastChannel`](https://developer.mozilla.org/en-US/docs/Web/API/BroadcastChannel) – kein WebSocket, kein Server nötig. Im Browser-Modus teilen beide Fenster denselben Ursprung, wodurch die API zuverlässig funktioniert.
+
+**OBS-Overlay** (nur Electron): Die Electron-App startet einen lokalen Express-Server auf Port 8080. Der Controller schickt bei jeder Änderung den State per HTTP POST an `/api/state`; `stream.html` pollt diesen Endpoint alle 200 ms. BroadcastChannel funktioniert zwischen Electron und OBS nicht (separate Chromium-Prozesse), daher der HTTP-Polling-Ansatz.
 
 **Buzzer-Sound** wird über die [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API) synthetisiert – kein externes Audio-File.
 
 **Schriften** werden von Google Fonts geladen (Barlow Condensed, Bebas Neue). Bei fehlendem Internetzugang fallen die Texte auf Systemschriften zurück.
+
+Eine ausführliche Beschreibung der internen Architektur (Datenfluß, State-Objekt, Undo-System) findet sich in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ---
 
