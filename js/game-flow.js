@@ -698,6 +698,9 @@ function renderController() {
   if (s.clock <= 0 && !s.pause) {
     setCardCollapsed('ct-admin-pause-card', false);
   }
+
+  // Mobile-Ansicht (Logos, Perioden-Segmente, Uhr-Label) synchron halten
+  if (typeof renderMobileBars === 'function') renderMobileBars(s);
 }
 
 function renderPenList(side, pens, fmt) {

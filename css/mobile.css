@@ -1,0 +1,241 @@
+/* ── Floorball Scoreboard ──────────────────────────────────────────────
+   MOBILE-ANSICHT · Controller · Variante A „Uhr-fokussiert"
+   Rein additiv: alle Regeln greifen erst < 640px. Desktop bleibt unberührt.
+────────────────────────────────────────────────────────────────────── */
+
+/* Mobile-only Elemente sind auf dem Desktop generell ausgeblendet */
+.ct-m-only { display: none !important; }
+
+@media (max-width: 640px) {
+
+  /* ════════════════════════════════════════════════════════════════
+     GRUNDGERÜST  ·  Topbar (fix) · Scroll-Bereich · Bottom-Nav (fix)
+  ════════════════════════════════════════════════════════════════ */
+  /* dvh = korrekte Höhe trotz ein-/ausfahrender Browser-Leiste.
+     bottom:auto löst das top:0/bottom:0-Paar auf, damit die Box exakt den
+     sichtbaren Viewport füllt – sonst verschwindet die Bottom-Nav hinter
+     der unteren Browser-Leiste. */
+  #view-controller { height: 100vh; height: 100dvh; bottom: auto; }
+
+  /* Mobile-only Elemente einblenden */
+  .ct-m-only { display: flex !important; }
+
+  /* Desktop-Tabbar & Resize-Griffe verschwinden komplett */
+  .ct-tabbar          { display: none !important; }
+  .ct-resize-handle,
+  .ct-tab-drag-handle { display: none !important; }
+
+  /* ════════════════════════════════════════════════════════════════
+     TOPBAR
+  ════════════════════════════════════════════════════════════════ */
+  .ct-topbar { height: 56px; padding: 0 14px; gap: 10px; }
+  .ct-logo { font-size: 13px; letter-spacing: 2px; line-height: 1.05; }
+  .ct-logo > span { display: inline; }
+  .ct-logo-icon { font-size: 22px; }
+  .ct-top-right { gap: 8px; }
+  .ct-period-chip { font-size: 10px; letter-spacing: 2px; padding: 6px 11px; }
+
+  /* Topbar-Buttons (Scoreboard öffnen / Vorschau / Hilfe) gehören nicht in die
+     mobile Topbar. Scoreboard öffnen & Hilfe sind über das „Mehr"-Menü erreichbar,
+     Vorschau (PiP) entfällt auf Mobile ganz. */
+  .open-sb-btn { display: none !important; }
+
+  /* ════════════════════════════════════════════════════════════════
+     STARTBILDSCHIRM  ·  beide Buttons untereinander statt nebeneinander
+  ════════════════════════════════════════════════════════════════ */
+  .start-btn-row { flex-direction: column; align-items: center; }
+  .start-btn { width: min(86vw, 380px); padding: 0 24px; }
+
+  /* ════════════════════════════════════════════════════════════════
+     SPIEL-VIEW  ·  Uhr-Karte + Team-Leisten (Control-Bar neu gestapelt)
+  ════════════════════════════════════════════════════════════════ */
+  /* Control-Bar nur im Spiel-View zeigen, sonst Panel im Vollbild */
+  #view-controller[data-mobile-view="spiel"] .ct-main-area     { display: flex; }
+  #view-controller:not([data-mobile-view="spiel"]) .ct-main-area { display: none; }
+
+  .ct-main-area {
+    flex: 1 1 auto; min-height: 0;
+    justify-content: flex-start; overflow: hidden;
+  }
+
+  .ct-control-bar {
+    display: flex; flex-direction: column; gap: 14px;
+    grid-template-columns: none;
+    flex: 1; min-height: 0;
+    padding: 14px 14px 88px;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+  }
+  .ct-control-bar::after { display: none; }
+
+  /* Reihenfolge: Uhr-Karte → Heim → Gast */
+  .ct-clock-bar     { order: 0; }
+  .ct-team-bar.home { order: 1; }
+  .ct-team-bar.away { order: 2; }
+
+  /* ── UHR-KARTE ── */
+  .ct-clock-bar {
+    width: 100%; min-width: 0;
+    padding: 18px 16px 16px;
+    background: var(--ct-card);
+    border: 1px solid var(--ct-border);
+    position: relative; gap: 8px;
+  }
+  .ct-bar-clock { font-size: clamp(64px, 21vw, 96px) !important; letter-spacing: 2px; }
+  .ct-m-clock-label {
+    font-size: 12px; font-weight: 700; letter-spacing: 5px; text-transform: uppercase;
+    color: var(--ct-muted); margin-top: -4px; justify-content: center;
+  }
+  .ct-bar-toggle {
+    font-size: 17px !important;
+    padding: 16px 24px !important;
+    margin-top: 8px; letter-spacing: 5px;
+  }
+
+  /* Perioden-Segmente in der Uhr-Karte */
+  #ct-m-period-pills { display: flex; gap: 6px; width: 100%; margin-bottom: 2px; }
+  .ct-m-seg {
+    flex: 1; height: 5px; border-radius: 2px;
+    background: var(--ct-border);
+  }
+  .ct-m-seg.done   { background: var(--ct-muted2); }
+  .ct-m-seg.active { background: var(--orange); }
+  .ct-m-seg.ot     { background: var(--purple); }
+
+  /* mini-Countdown / Sekundär-Uhr mittig halten */
+  #ct-countdown-bar, #ct-secondary-clock { align-self: center; }
+
+  /* ── TEAM-LEISTEN ── */
+  .ct-team-bar {
+    width: 100%; gap: 12px; flex-wrap: nowrap;
+    padding: 14px 14px 14px 18px;
+    background: var(--ct-card);
+    border: 1px solid var(--ct-border);
+    position: relative; justify-content: flex-start; align-items: center;
+  }
+  /* farbiger Akzentbalken links */
+  .ct-team-bar::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  }
+  .ct-team-bar.home::before { background: var(--ct-home, var(--lime)); }
+  .ct-team-bar.away::before { background: var(--ct-away, var(--cyan)); }
+
+  /* Team-Logo */
+  .ct-m-logo {
+    width: 46px; height: 46px; flex-shrink: 0; order: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 22px;
+    transform: skewX(-8deg); overflow: hidden;
+  }
+  .ct-m-logo img { width: 100%; height: 100%; object-fit: contain; transform: skewX(8deg); }
+
+  /* Namens-Block links neben dem Logo, Score-Gruppe nach rechts */
+  .ct-team-bar .ct-bar-name { font-size: 19px !important; letter-spacing: 1.5px; }
+  .ct-team-bar.away .ct-bar-name { text-align: left !important; }
+
+  /* HOME: DOM = logo, –, score, +, name  →  visuell: logo, name … –, score, + */
+  .ct-team-bar.home > div:not(.ct-m-logo):not(.ct-bar-score) { order: 1; }
+  .ct-team-bar.home .ct-bar-adj.minus { order: 2; margin-left: auto; }
+  .ct-team-bar.home .ct-bar-score     { order: 3; }
+  .ct-team-bar.home .ct-bar-adj.plus  { order: 4; }
+  /* AWAY: DOM = logo, name, –, score, +  →  Score-Gruppe nur nach rechts schieben */
+  .ct-team-bar.away .ct-bar-adj.minus { margin-left: auto; }
+
+  .ct-team-bar .ct-bar-score {
+    font-size: 44px !important; min-width: 46px; line-height: 1;
+  }
+  .ct-team-bar .ct-bar-adj {
+    width: 48px !important; height: 48px !important; font-size: 26px !important;
+  }
+
+  /* ════════════════════════════════════════════════════════════════
+     PANEL-VIEWS  ·  Events / Strafen / Auszeit / Mehr-Inhalte
+     (im Mockup nicht spezifiziert → sauber einspaltig & bedienbar)
+  ════════════════════════════════════════════════════════════════ */
+  #view-controller[data-mobile-view="spiel"] .ct-tab-area     { flex: 0 0 0 !important; }
+  #view-controller:not([data-mobile-view="spiel"]) .ct-tab-area {
+    flex: 1 1 auto !important; min-height: 0; display: flex;
+  }
+  .ct-tab-area.tab-open { flex: 1 1 auto !important; }
+
+  .ct-tab-content.active {
+    display: flex !important; flex-direction: column !important;
+    flex-wrap: nowrap !important;       /* sonst brechen Karten nach rechts um */
+    grid-template-columns: 1fr !important;
+    align-items: stretch !important;   /* alle Karten auf volle Breite */
+    gap: 12px !important;
+    overflow-y: auto !important; -webkit-overflow-scrolling: touch;
+    padding: 14px 14px 90px !important;
+  }
+  /* interne Spalten-Trenner & Mindestbreiten auflösen, Spalten voll ausdehnen.
+     flex: 0 0 auto verhindert, dass Karten in die Höhe wachsen (schlägt auch
+     das Inline flex-basis:100% der ersten Danger-Karte). */
+  .ct-spiel-col, .ct-admin-col, .ct-teams-col,
+  .ct-settings-col, .ct-danger-inner {
+    flex: 0 0 auto !important;
+    min-width: 0 !important; width: 100% !important;
+    border-right: none !important; padding-right: 0 !important;
+  }
+  .ct-spiel-col:first-child, .ct-teams-col:first-child {
+    border-right: none !important; padding-right: 0 !important;
+  }
+
+  /* ════════════════════════════════════════════════════════════════
+     BOTTOM-NAV
+  ════════════════════════════════════════════════════════════════ */
+  .ct-mobile-nav {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+    flex-shrink: 0; display: flex; align-items: stretch;
+    background: var(--ct-surface);
+    border-top: 1px solid var(--ct-border);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  .ct-mnav-item {
+    flex: 1; position: relative; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    background: none; border: none; padding: 7px 2px 5px;
+    color: var(--ct-muted2);
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+  .ct-mnav-ico { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+  .ct-mnav-ico svg { width: 24px; height: 24px; fill: currentColor; stroke: none; }
+  .ct-mnav-lbl {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  }
+  .ct-mnav-item.active { color: var(--lime); }
+  .ct-mnav-item.active::before {
+    content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 26px; height: 3px; border-radius: 2px; background: var(--lime);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   MEHR-SHEET  (Bottom-Sheet — nur über die mobile Bottom-Nav erreichbar)
+════════════════════════════════════════════════════════════════════ */
+.ct-mehr-sheet { position: fixed; inset: 0; z-index: 16000; display: none; }
+.ct-mehr-sheet.open { display: block; }
+.ct-mehr-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.55); }
+.ct-mehr-panel {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: var(--ct-surface); border-top: 1px solid var(--ct-border);
+  padding: 10px 16px calc(20px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 6px;
+  animation: ctSheetUp .2s ease;
+}
+@keyframes ctSheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.ct-mehr-grip { width: 40px; height: 4px; border-radius: 2px; background: var(--ct-border); margin: 2px auto 10px; }
+.ct-mehr-title {
+  font-size: 11px; font-weight: 900; letter-spacing: 4px; text-transform: uppercase;
+  color: var(--ct-muted); margin-bottom: 4px;
+}
+.ct-mehr-row {
+  display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+  background: var(--ct-card); border: 1px solid var(--ct-border); color: var(--ct-text);
+  padding: 15px 16px; cursor: pointer;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+}
+.ct-mehr-row:active { filter: brightness(1.15); }
+.ct-mehr-row .ph-icon { color: var(--ct-muted2); }
+.ct-mehr-row .ph-icon svg { width: 20px; height: 20px; }
+.ct-mehr-row.danger { color: var(--red); }
+.ct-mehr-row.danger .ph-icon { color: var(--red); }

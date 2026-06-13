@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="css/scoreboard.css">
 <link rel="stylesheet" href="css/controller.css">
 <link rel="stylesheet" href="css/ui.css">
+<link rel="stylesheet" href="css/mobile.css">
 <!-- Inline SVG icon sprite – no CDN needed -->
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
   <!-- flag-pennant -->
@@ -279,7 +280,7 @@
 <!-- ══════════════════════════════════════════════════════
      CONTROLLER VIEW
 ══════════════════════════════════════════════════════ -->
-<div id="view-controller">
+<div id="view-controller" data-mobile-view="spiel">
 
   <!-- TOPBAR -->
   <div class="ct-topbar">
@@ -303,6 +304,7 @@
 
     <!-- HOME: [−] [Score] [+] [Name + indicators] -->
     <div class="ct-team-bar home">
+      <div class="ct-m-logo ct-m-only" id="ct-m-home-logo"></div>
       <button class="ct-bar-adj minus" onclick="adjScore('home',-1)"><span>−</span></button>
       <div class="ct-bar-score" id="ct-home-score">0</div>
       <button class="ct-bar-adj plus home" onclick="adjScore('home',1)"><span>+</span></button>
@@ -315,6 +317,7 @@
 
     <!-- CLOCK: big clock on top, button below -->
     <div class="ct-clock-bar">
+      <div class="ct-m-only" id="ct-m-period-pills"></div>
       <div id="ct-countdown-bar" style="display:none;flex-direction:column;align-items:center;gap:3px;margin-bottom:4px">
         <div style="font-size:9px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,.3);text-transform:uppercase">Anpfiff in</div>
         <div style="display:flex;align-items:center;gap:8px">
@@ -331,11 +334,13 @@
         </div>
       </div>
       <div class="ct-bar-clock stopped" id="ct-bar-clock">20:00</div>
+      <div class="ct-m-clock-label ct-m-only" id="ct-m-clock-label">VERBLEIBEND</div>
       <button class="ct-bar-toggle start" id="ct-toggle-btn" onclick="toggleClock()">▶ STARTEN</button>
     </div>
 
     <!-- AWAY: [Name + indicators] [−] [Score] [+] -->
     <div class="ct-team-bar away">
+      <div class="ct-m-logo ct-m-only" id="ct-m-away-logo"></div>
       <div style="min-width:0;text-align:right;word-break:break-word;overflow-wrap:break-word">
         <div class="ct-bar-name" id="ct-bar-away-name">GASTTEAM</div>
         <div id="ct-away-pen-count" style="font-size:10px;letter-spacing:2px;color:var(--red);margin-top:4px;display:none;font-weight:700">STRAFE ●</div>
@@ -974,6 +979,57 @@
 
   </div> <!-- /ct-tab-area -->
 
+  <!-- ══ MOBILE BOTTOM-NAV (nur < 640px sichtbar) ══ -->
+  <nav class="ct-mobile-nav ct-m-only" id="ct-mobile-nav">
+    <button class="ct-mnav-item active" data-view="spiel" onclick="mobileNav('spiel')">
+      <span class="ct-mnav-ico"><svg viewBox="0 0 256 256"><use href="#ph-monitor"/></svg></span>
+      <span class="ct-mnav-lbl">Spiel</span>
+    </button>
+    <button class="ct-mnav-item" data-view="events" onclick="mobileNav('events')">
+      <span class="ct-mnav-ico"><svg viewBox="0 0 256 256"><use href="#ph-clipboard-text"/></svg></span>
+      <span class="ct-mnav-lbl">Events</span>
+    </button>
+    <button class="ct-mnav-item" data-view="strafen" onclick="mobileNav('strafen')">
+      <span class="ct-mnav-ico"><svg viewBox="0 0 256 256"><use href="#ph-warning-circle"/></svg></span>
+      <span class="ct-mnav-lbl">Strafen</span>
+    </button>
+    <button class="ct-mnav-item" data-view="auszeit" onclick="mobileNav('auszeit')">
+      <span class="ct-mnav-ico"><svg viewBox="0 0 256 256"><use href="#ph-pause-circle"/></svg></span>
+      <span class="ct-mnav-lbl">Auszeit</span>
+    </button>
+    <button class="ct-mnav-item" data-view="mehr" onclick="mobileNav('mehr')">
+      <span class="ct-mnav-ico"><svg viewBox="0 0 256 256"><circle cx="64" cy="128" r="16"/><circle cx="128" cy="128" r="16"/><circle cx="192" cy="128" r="16"/></svg></span>
+      <span class="ct-mnav-lbl">Mehr</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- ══ MEHR-SHEET (Bottom-Sheet, nur mobil) ══ -->
+<div class="ct-mehr-sheet" id="ct-mehr-sheet">
+  <div class="ct-mehr-backdrop" onclick="closeMehrSheet()"></div>
+  <div class="ct-mehr-panel">
+    <div class="ct-mehr-grip"></div>
+    <div class="ct-mehr-title">Mehr</div>
+    <button class="ct-mehr-row" onclick="mehrSelect('admin')">
+      <span class="ph-icon"><svg viewBox="0 0 256 256"><use href="#ph-hourglass-medium"/></svg></span> Spielsteuerung
+    </button>
+    <button class="ct-mehr-row" onclick="mehrSelect('teams')">
+      <span class="ph-icon"><svg viewBox="0 0 256 256"><use href="#ph-flag-pennant"/></svg></span> Teams
+    </button>
+    <button class="ct-mehr-row" onclick="mehrSelect('settings')">
+      <span class="ph-icon"><svg viewBox="0 0 256 256"><use href="#ph-gear"/></svg></span> Einstellungen
+    </button>
+    <button class="ct-mehr-row" onclick="closeMehrSheet(); openScoreboard();">
+      <span class="ph-icon"><svg viewBox="0 0 256 256"><use href="#ph-monitor"/></svg></span> Scoreboard öffnen
+    </button>
+    <button class="ct-mehr-row" onclick="closeMehrSheet(); openHelp();">
+      <span class="ph-icon"><svg viewBox="0 0 256 256"><use href="#ph-warning-circle"/></svg></span> Hilfe
+    </button>
+    <button class="ct-mehr-row danger" onclick="mehrSelect('danger')">
+      <span class="ph-icon"><svg viewBox="0 0 256 256"><use href="#ph-skull"/></svg></span> Danger Zone
+    </button>
+  </div>
 </div>
 <!-- ══════════════════════════════════════════════════════
      SHARED JS
@@ -988,6 +1044,7 @@
 <script src="js/buzzer.js"></script>
 <script src="js/render.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/mobile.js"></script>
 <!-- PENALTY SHOOTOUT CONTROLLER OVERLAY -->
 <div id="ct-ps-overlay">
   <div class="ct-ps-ov-header">
