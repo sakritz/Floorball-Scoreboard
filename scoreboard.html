@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Floorball Scoreboard</title>
-<link rel="stylesheet" href="css/fonts.css">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,900;1,700&family=Barlow:wght@400;500;600&family=Bebas+Neue&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/scoreboard.css">
 <link rel="stylesheet" href="css/controller.css">
@@ -914,7 +914,10 @@
     <div class="ct-events-inner">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-shrink:0">
         <div style="font-size:11px;font-weight:700;letter-spacing:3px;color:var(--ct-muted2)">SPIELEREIGNISSE</div>
-        <button class="btn btn-danger" style="font-size:11px;padding:4px 10px;width:auto;align-self:flex-end" onclick="clearEvents()"><span class="ph-icon ph-sm"><svg><use href="#ph-trash"/></svg></span> Löschen</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-lime" style="font-size:11px;padding:4px 10px;width:auto" onclick="openReport()"><span class="ph-icon ph-sm"><svg><use href="#ph-upload"/></svg></span> Export</button>
+          <button class="btn btn-danger" style="font-size:11px;padding:4px 10px;width:auto" onclick="clearEvents()"><span class="ph-icon ph-sm"><svg><use href="#ph-trash"/></svg></span> Löschen</button>
+        </div>
       </div>
       <div id="ct-events-list" style="display:flex;flex-direction:column;gap:6px;flex:1;overflow-y:auto;min-height:0">
         <div style="color:var(--ct-muted2);font-size:12px;text-align:center;margin-top:24px">Noch keine Ereignisse</div>
@@ -1050,6 +1053,7 @@
 <script src="js/buzzer.js"></script>
 <script src="js/render.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/report.js"></script>
 <script src="js/mobile.js"></script>
 <!-- PENALTY SHOOTOUT CONTROLLER OVERLAY -->
 <div id="ct-ps-overlay">
@@ -1090,6 +1094,21 @@
       <button class="btn btn-ghost" style="flex:1" id="ct-confirm-cancel">Abbrechen</button>
       <button class="btn btn-danger" style="flex:1" id="ct-confirm-ok">Bestätigen</button>
     </div>
+  </div>
+</div>
+
+<!-- SPIELBERICHT EXPORT MODAL -->
+<div id="ct-report-modal" onclick="if(event.target===this)closeReport()">
+  <div class="ct-confirm-box" style="width:360px">
+    <div class="ct-confirm-icon">📄</div>
+    <div class="ct-confirm-title">Spielbericht exportieren</div>
+    <div class="ct-confirm-body">Endstand, Tore, Strafen, Auszeiten und Penaltyschießen aus dem aktuellen Spiel.</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-lime"  onclick="reportExportPDF()">📄 Als PDF / drucken</button>
+      <button class="btn btn-ghost" onclick="reportCopyMarkdown()">📋 Als Markdown kopieren</button>
+      <button class="btn btn-ghost" onclick="reportDownloadJSON()">⟱ Als JSON speichern</button>
+    </div>
+    <button class="btn btn-ghost" style="opacity:.65" onclick="closeReport()">Schließen</button>
   </div>
 </div>
 

@@ -521,6 +521,12 @@ body.light-mode #view-controller .ct-bar-toggle.start {
   animation: ctFadeIn .15s ease;
 }
 #ct-confirm-modal.open { display: flex; }
+#ct-report-modal {
+  display: none; position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,.75); align-items: center; justify-content: center;
+  animation: ctFadeIn .15s ease;
+}
+#ct-report-modal.open { display: flex; }
 @keyframes ctFadeIn { from { opacity: 0; } to { opacity: 1; } }
 .ct-confirm-box {
   background: var(--ct-surface); border: 1px solid var(--ct-border);
