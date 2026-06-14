@@ -1,5 +1,6 @@
 const { app, BrowserWindow, globalShortcut, screen, Menu, dialog } = require('electron');
 const path = require('path');
+const APP_ROOT = path.resolve(__dirname, '..');
 const express = require('express');
 
 // Menüleiste komplett entfernen
@@ -30,7 +31,8 @@ function startLocalServer() {
   });
 
   // scoreboard.html, stream.html und alle Dateien aus dem Projekt-Root ausliefern
-  expressApp.use(express.static(__dirname));
+  expressApp.use(express.static(APP_ROOT));
+
 
   server = expressApp.listen(PORT, '127.0.0.1', () => {
     console.log(`Lokaler Server läuft auf http://localhost:${PORT}`);
