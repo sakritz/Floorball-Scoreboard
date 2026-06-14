@@ -44,7 +44,12 @@ document.addEventListener('DOMContentLoaded', () => {
 function showStartScreen() {
   var vs = document.getElementById('view-start');
   var vc = document.getElementById('view-controller');
-  if (vs) { vs.style.display = 'flex'; vs.classList.add('visible'); }
+  if (vs) {
+    vs.style.display = 'flex';
+    vs.classList.remove('visible');
+    void vs.offsetWidth;          // Reflow erzwingen → Animation spielt jedes Mal neu
+    vs.classList.add('visible');
+  }
   if (vc) vc.style.display = 'none';
 }
 function hideStartScreen() {

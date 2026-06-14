@@ -293,7 +293,57 @@ kbd {
 }
 .start-btn-desc { font-size: clamp(11px,1vw,13px); font-weight: 600; letter-spacing: 1px; opacity: 0.55; }
 .start-btn-primary .start-btn-desc { opacity: 0.65; color: #0a0a0a; }
-@keyframes startFadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-#view-start.visible .start-hero { animation: startFadeIn .4s ease both; }
-#view-start.visible .start-btn-row { animation: startFadeIn .4s .12s ease both; }
+/* ── Einblend-Choreografie (einmalig, kurz) ──────────────────────────
+   Gestaffelter Auftritt: erst die Bühne (Ring, VS-Linie), dann Logo +
+   Subtext, zuletzt die Buttons. Alles ist nach ~0,85 s fertig und ruht
+   danach – kein Dauer-Loop, damit es nicht nervt. */
+@keyframes startFadeIn   { from{opacity:0;transform:translateY(12px)}                  to{opacity:1;transform:translateY(0)} }
+@keyframes startLogoIn   { from{opacity:0;transform:translateY(8px) scale(.94)}        to{opacity:1;transform:none} }
+@keyframes startSubIn    { from{opacity:0;letter-spacing:16px}                         to{opacity:1;letter-spacing:8px} }
+@keyframes startRingIn   { from{opacity:0;transform:translate(-50%,-50%) scale(.8)}    to{opacity:1;transform:translate(-50%,-50%) scale(1)} }
+@keyframes startDivIn    { from{opacity:0;transform:translateX(-50%) scaleY(0)}        to{opacity:1;transform:translateX(-50%) scaleY(1)} }
+@keyframes startBtnIn    { from{opacity:0;transform:skewX(-8deg) translateY(16px)}     to{opacity:1;transform:skewX(-8deg) translateY(0)} }
+
+/* ┌─ TEMPO ZENTRAL EINSTELLEN ─────────────────────────────────────┐
+   │ --start-speed   Gesamttempo. 1 = Standard, <1 schneller (z.B.   │
+   │                 .6 = deutlich flotter), >1 langsamer.           │
+   │ --start-dur     Dauer einer einzelnen Einblendung.              │
+   │ --start-stagger Versatz zwischen den Elementen (Staffelung).    │
+   │ Diese drei Werte ändern → der Rest skaliert automatisch mit.    │
+   └────────────────────────────────────────────────────────────────┘ */
+#view-start {
+  --start-speed:   1.2;
+  --start-dur:     .7s;
+  --start-stagger: .1s;
+}
+/* Hilfsrechnung: Dauer und Startverzögerung je Element (Stufe ×).
+   Stufe steigt von früh (Ring) nach spät (2. Button). */
+#view-start.visible .start-circle-ring,
+#view-start.visible .start-circle-inner,
+#view-start.visible .start-vs-divider,
+#view-start.visible .start-hero-logo,
+#view-start.visible .start-hero-sub,
+#view-start.visible .start-btn-primary,
+#view-start.visible .start-btn-secondary {
+  animation-duration:  calc(var(--start-dur) * var(--start-speed));
+  animation-fill-mode: both;
+}
+#view-start.visible .start-circle-ring   { animation-name: startRingIn; animation-timing-function: cubic-bezier(.22,.9,.32,1);  animation-delay: calc(var(--start-stagger) * 0   * var(--start-speed)); }
+#view-start.visible .start-vs-divider    { animation-name: startDivIn;  animation-timing-function: ease-out;                    animation-delay: calc(var(--start-stagger) * 1   * var(--start-speed)); transform-origin: center; }
+#view-start.visible .start-hero-logo     { animation-name: startLogoIn; animation-timing-function: cubic-bezier(.34,1.28,.64,1); animation-delay: calc(var(--start-stagger) * 1   * var(--start-speed)); }
+#view-start.visible .start-circle-inner  { animation-name: startRingIn; animation-timing-function: cubic-bezier(.22,.9,.32,1);  animation-delay: calc(var(--start-stagger) * 2   * var(--start-speed)); }
+#view-start.visible .start-hero-sub      { animation-name: startSubIn;  animation-timing-function: ease-out;                    animation-delay: calc(var(--start-stagger) * 4   * var(--start-speed)); }
+#view-start.visible .start-btn-primary   { animation-name: startBtnIn;  animation-timing-function: cubic-bezier(.22,.9,.32,1);  animation-delay: calc(var(--start-stagger) * 4.5 * var(--start-speed)); }
+#view-start.visible .start-btn-secondary { animation-name: startBtnIn;  animation-timing-function: cubic-bezier(.22,.9,.32,1);  animation-delay: calc(var(--start-stagger) * 5.5 * var(--start-speed)); }
+
+/* Barrierefreiheit: bei Reduced-Motion alles still einblenden */
+@media (prefers-reduced-motion: reduce) {
+  #view-start.visible .start-circle-ring,
+  #view-start.visible .start-circle-inner,
+  #view-start.visible .start-vs-divider,
+  #view-start.visible .start-hero-logo,
+  #view-start.visible .start-hero-sub,
+  #view-start.visible .start-btn-primary,
+  #view-start.visible .start-btn-secondary { animation: none; }
+}
 
