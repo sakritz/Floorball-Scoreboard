@@ -22,7 +22,8 @@
       "stream.html",
         "css/**/*",
         "js/**/*",
-        "img/**/*"
+        "img/**/*",
+        "fonts/**/*"
     ],
     "win": {
       "target": "nsis",

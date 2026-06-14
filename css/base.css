@@ -32,6 +32,9 @@ html, body { height: 100%; }
   --sb-away-glow-dim: rgba(34,197,94,0.08);
   --sb-home-jersey: #0d2e0d;
   --sb-away-jersey: #0a1a0a;
+  --font-display: "Barlow Condensed Local", "Arial Narrow", "Segoe UI Condensed", sans-serif;
+  --font-body: "Barlow Local", "Segoe UI", Roboto, Arial, sans-serif;
+  --font-score: "Bebas Neue Local", "Barlow Condensed Local", Impact, sans-serif;
 }
 
 body {
