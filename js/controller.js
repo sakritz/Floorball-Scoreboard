@@ -57,6 +57,17 @@ function initController(skipLoad = false) {
   if (initController._listenersBound) return;
   initController._listenersBound = true;
 
+  // Einheitliches Ein-/Ausklappen aller Cards: Klick auf den Card-Kopf.
+  // Delegiert über document → gilt auch für Cards ohne eigenes onclick.
+  document.addEventListener('click', e => {
+    const head = e.target.closest('.ct-card-head');
+    if (!head) return;
+    const card = head.closest('.ct-card.collapsible');
+    if (!card || head.parentElement !== card) return;                    // nur der eigene Kopf zählt
+    if (e.target.closest('button, input, select, textarea, a, label')) return; // Bedienelemente nicht abfangen
+    card.classList.toggle('collapsed');
+  });
+
   // Spacebar toggles clock unless focus is in a text/number input
   document.addEventListener('keydown', e => {
     if (e.code !== 'Space') return;

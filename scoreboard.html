@@ -426,7 +426,7 @@
     <!-- HOME side -->
     <div class="ct-spiel-col">
       <!-- Active timeout display (home, shown here too) -->
-      <div class="ct-card" id="ct-to-active-card" style="display:none">
+      <div class="ct-card collapsible" id="ct-to-active-card" style="display:none">
         <div class="ct-card-head neutral">Auszeit läuft</div>
         <div class="ct-card-body">
           <div class="active-timeout-box">
@@ -439,7 +439,7 @@
       </div>
 
       <!-- Penalties home -->
-      <div class="ct-card" id="card-home-pen">
+      <div class="ct-card collapsible" id="card-home-pen">
         <div class="ct-card-head lime" style="justify-content:space-between">
           <span>Strafzeit · Heim</span>
           <span id="ct-home-pen-count-badge" style="display:none;font-size:10px;
@@ -481,7 +481,7 @@
     <!-- AWAY side -->
     <div class="ct-spiel-col">
       <!-- Penalties away -->
-      <div class="ct-card" id="card-away-pen">
+      <div class="ct-card collapsible" id="card-away-pen">
         <div class="ct-card-head cyan" style="justify-content:space-between">
           <span>Strafzeit · Gast</span>
           <span id="ct-away-pen-count-badge" style="display:none;font-size:10px;
@@ -526,7 +526,7 @@
 
     <!-- HOME side -->
     <div class="ct-spiel-col">
-      <div class="ct-card" id="card-home-to">
+      <div class="ct-card collapsible" id="card-home-to">
         <div class="ct-card-head lime">Auszeit · Heim</div>
         <div class="ct-card-body">
           <div class="ct-card-body-inner">
@@ -540,7 +540,7 @@
 
     <!-- AWAY side -->
     <div class="ct-spiel-col">
-      <div class="ct-card" id="card-away-to">
+      <div class="ct-card collapsible" id="card-away-to">
         <div class="ct-card-head cyan">Auszeit · Gast</div>
         <div class="ct-card-body">
           <div class="ct-card-body-inner">
@@ -557,7 +557,7 @@
   <div class="ct-tab-content tab-teams" id="tab-teams">
 
     <div class="ct-teams-col">
-      <div class="ct-card">
+      <div class="ct-card collapsible">
         <div class="ct-card-head lime"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-house"/></svg></span>Heimteam</span></div>
         <div class="ct-card-body">
           <div>
@@ -603,7 +603,7 @@
     </div>
 
     <div class="ct-teams-col">
-      <div class="ct-card">
+      <div class="ct-card collapsible">
         <div class="ct-card-head cyan"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-airplane"/></svg></span>Gastteam</span></div>
         <div class="ct-card-body">
           <div>
@@ -652,8 +652,11 @@
   <!-- ── TAB: SPIELADMINISTRATION ── -->
   <div class="ct-tab-content tab-admin" id="tab-admin">
 
+    <!-- LEFT col: Spiel einrichten + Pause -->
+    <div class="ct-admin-col">
+
       <div class="ct-card collapsible collapsed" id="ct-admin-setup-card">
-        <div class="ct-card-head neutral" onclick="toggleCard('ct-admin-setup-card')">Spiel einrichten</div>
+        <div class="ct-card-head neutral">Spiel einrichten</div>
         <div class="ct-card-body">
           <div class="ct-card-body-inner">
             <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;line-height:1.5">
@@ -666,18 +669,8 @@
         </div>
       </div>
 
-      <div class="ct-card collapsible" id="ct-admin-period-card">
-        <div class="ct-card-head neutral" onclick="toggleCard('ct-admin-period-card')">Abschnitt</div>
-        <div class="ct-card-body">
-          <div class="ct-card-body-inner">
-            <label class="ct-label">Aktueller Abschnitt</label>
-            <div class="period-pills" id="ct-period-pills"></div>
-          </div>
-        </div>
-      </div>
-
       <div class="ct-card collapsible collapsed" id="ct-admin-pause-card">
-        <div class="ct-card-head neutral" onclick="toggleCard('ct-admin-pause-card')">Pause</div>
+        <div class="ct-card-head neutral">Pause</div>
         <div class="ct-card-body">
           <div class="ct-card-body-inner">
             <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;line-height:1.5" id="ct-pause-duration-label">
@@ -697,8 +690,23 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- RIGHT col: Abschnitt + Penaltyschießen -->
+    <div class="ct-admin-col">
+
+      <div class="ct-card collapsible" id="ct-admin-period-card">
+        <div class="ct-card-head neutral">Abschnitt</div>
+        <div class="ct-card-body">
+          <div class="ct-card-body-inner">
+            <label class="ct-label">Aktueller Abschnitt</label>
+            <div class="period-pills" id="ct-period-pills"></div>
+          </div>
+        </div>
+      </div>
+
       <div class="ct-card collapsible collapsed" id="ct-ps-card">
-        <div class="ct-card-head neutral" onclick="toggleCard('ct-ps-card')">Penaltyschießen</div>
+        <div class="ct-card-head neutral">Penaltyschießen</div>
         <div class="ct-card-body">
           <div class="ct-card-body-inner">
             <div id="ct-ps-start-wrap">
@@ -733,6 +741,8 @@
         </div>
       </div>
 
+    </div>
+
   </div>
 
 
@@ -742,7 +752,7 @@
     <!-- LEFT col: Uhranzeige -->
     <div class="ct-settings-col">
 
-      <div class="ct-card">
+      <div class="ct-card collapsible">
         <div class="ct-card-head neutral"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-clock"/></svg></span>Uhranzeige</span></div>
         <div class="ct-card-body">
           <div style="font-size:11px;color:var(--ct-muted);letter-spacing:1px;line-height:1.5">
@@ -773,7 +783,7 @@
         </div>
       </div>
 
-      <div class="ct-card">
+      <div class="ct-card collapsible">
         <div class="ct-card-head neutral"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-monitor"/></svg></span>Präsentation</span></div>
         <div class="ct-card-body">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
@@ -826,7 +836,12 @@
         </div>
       </div>
 
-      <div class="ct-card">
+    </div>
+
+    <!-- RIGHT col: Darstellung & Buzzer -->
+    <div class="ct-settings-col">
+
+      <div class="ct-card collapsible">
         <div class="ct-card-head neutral"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-sun"/></svg></span>Darstellung</span></div>
         <div class="ct-card-body">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
@@ -846,12 +861,7 @@
         </div>
       </div>
 
-    </div>
-
-    <!-- RIGHT col: Buzzer -->
-    <div class="ct-settings-col">
-
-      <div class="ct-card">
+      <div class="ct-card collapsible">
         <div class="ct-card-head neutral"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-bell"/></svg></span>Buzzer</span></div>
         <div class="ct-card-body">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px">
@@ -915,10 +925,10 @@
   <!-- ── TAB: DANGER ZONE ── -->
   <div class="ct-tab-content tab-danger" id="tab-danger">
 
-    <!-- Letzte Aktion rückgängig -->
-    <div class="ct-danger-inner" style="flex-basis:100%;flex-shrink:0">
+    <!-- Letzte Aktion rückgängig + Uhr überschreiben -->
+    <div class="ct-danger-inner">
       <div class="ct-card collapsible" id="ct-undo-card">
-        <div class="ct-card-head neutral" onclick="toggleCard('ct-undo-card')"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-arrows-clockwise"/></svg></span>Aktionsverlauf / Rückgängig</span></div>
+        <div class="ct-card-head neutral"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-arrows-clockwise"/></svg></span>Aktionsverlauf / Rückgängig</span></div>
         <div class="ct-card-body">
           <div class="ct-card-body-inner">
             <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;line-height:1.7">
@@ -930,11 +940,9 @@
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Uhr überschreiben -->
-    <div class="ct-danger-inner">
-      <div class="ct-card danger-zone">
+      <!-- Uhr überschreiben -->
+      <div class="ct-card collapsible danger-zone">
         <div class="ct-card-head danger"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-warning-circle"/></svg></span>Uhr überschreiben</span></div>
         <div class="ct-card-body">
           <div style="font-size:12px;color:var(--muted2);letter-spacing:1px;line-height:1.5">
@@ -953,7 +961,7 @@
 
     <!-- Spiel zurücksetzen -->
     <div class="ct-danger-inner">
-      <div class="ct-card danger-zone">
+      <div class="ct-card collapsible danger-zone">
         <div class="ct-card-head danger"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-warning-circle"/></svg></span>Spiel zurücksetzen</span></div>
         <div class="ct-card-body">
           <div style="font-size:12px;color:var(--muted2);letter-spacing:1px;line-height:1.5">
@@ -962,11 +970,9 @@
           <button class="btn btn-danger-ghost" onclick="resetGame()">🔄 Jetzt zurücksetzen</button>
         </div>
       </div>
-    </div>
 
-    <!-- Spiel beenden -->
-    <div class="ct-danger-inner">
-      <div class="ct-card danger-zone">
+      <!-- Spiel beenden -->
+      <div class="ct-card collapsible danger-zone">
         <div class="ct-card-head danger"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-warning-circle"/></svg></span>Spiel beenden / abbrechen</span></div>
         <div class="ct-card-body">
           <div style="font-size:12px;color:var(--muted2);letter-spacing:1px;line-height:1.5">

@@ -625,10 +625,7 @@ body.light-mode #view-controller .ct-bar-toggle.start {
 
 .ct-tab-content.tab-admin { display: none; }
 .ct-tab-content.tab-admin.active {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto;
-  overflow-y: auto; padding: 14px; gap: 14px; align-content: start;
+  display: flex; overflow-y: auto; padding: 14px; gap: 14px; align-items: flex-start;
   flex: 1; min-height: 0;
 }
 .ct-admin-col { flex: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
@@ -715,23 +712,22 @@ body.light-mode #view-controller .ct-bar-toggle.start {
 .ct-card-head.danger::before { background: var(--red); }
 .ct-card-body { padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; }
 
-/* collapsible */
-.ct-card.collapsible .ct-card-head { cursor: pointer; user-select: none; }
-.ct-card.collapsible .ct-card-head::after {
+/* collapsible — die Card selbst ist das Grid: Kopf (auto) + Body (1fr→0fr).
+   So klappt jede Card sauber ein, egal ob ihr Body einen Innen-Wrapper hat. */
+.ct-card.collapsible {
+  display: grid; grid-template-rows: auto 1fr;
+  transition: grid-template-rows .25s ease;
+}
+.ct-card.collapsible.collapsed { grid-template-rows: auto 0fr; }
+.ct-card.collapsible > .ct-card-head { cursor: pointer; user-select: none; }
+.ct-card.collapsible > .ct-card-head::after {
   content: '▲'; font-size: 9px; color: var(--ct-muted); transition: transform .2s;
   margin-left: auto; padding-left: 10px;
 }
-.ct-card.collapsible.collapsed .ct-card-head { border-bottom-color: transparent; }
-.ct-card.collapsible.collapsed .ct-card-head::after { transform: rotate(180deg); }
-.ct-card.collapsible .ct-card-body {
-  display: grid; grid-template-rows: 1fr;
-  transition: grid-template-rows .25s ease, padding .25s ease;
-  overflow: visible;   /* allow dynamic content to grow freely */
-}
-.ct-card.collapsible.collapsed .ct-card-body {
-  grid-template-rows: 0fr; padding-top: 0; padding-bottom: 0;
-  overflow: hidden;    /* clip only when actually collapsed */
-}
+.ct-card.collapsible.collapsed > .ct-card-head { border-bottom-color: transparent; }
+.ct-card.collapsible.collapsed > .ct-card-head::after { transform: rotate(180deg); }
+.ct-card.collapsible > .ct-card-body { min-height: 0; overflow: hidden; transition: padding .25s ease; }
+.ct-card.collapsible.collapsed > .ct-card-body { padding-top: 0; padding-bottom: 0; }
 .ct-card.collapsible .ct-card-body > .ct-card-body-inner {
   min-height: 0; display: flex; flex-direction: column; gap: 10px;
 }
