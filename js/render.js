@@ -310,7 +310,7 @@ function renderScoreboard(s) {
           evSub   = isOwn ? 'ET' : [ev.data.scorer ? `#${ev.data.scorer}` : '', !isPen && ev.data.assist ? `▶ #${ev.data.assist}` : ''].filter(Boolean).join('  ') || '–';
         } else if (ev.type === 'penalty') {
           evLabel = `STRAFE · ${teamName}`;
-          evSub   = `#${ev.data.number} · ${ev.data.penType}`;
+          evSub   = ev.data.penReason ? `#${ev.data.number} · ${ev.data.penReason}` : `#${ev.data.number} · ${ev.data.penType}`;
         } else if (ev.type === 'timeout') {
           evLabel = `AUSZEIT · ${teamName}`;
           evSub   = '–';
@@ -666,7 +666,7 @@ function renderEvents() {
       const teamName = ev.side === 'home' ? S.homeName : S.awayName;
       icon = '<span class="ph-icon ph-lg"><svg><use href="#ph-warning-circle"/></svg></span>';
       main = `STRAFE · ${teamName}`;
-      sub = `#${ev.data.number} · ${ev.data.penType}`;
+      sub = `#${ev.data.number} · ${ev.data.penType}` + (ev.data.penReason ? ` · ${ev.data.penReason}` : '');
     } else if (ev.type === 'timeout') {
       const teamName = ev.side === 'home' ? S.homeName : S.awayName;
       icon = '<span class="ph-icon ph-lg"><svg><use href="#ph-hourglass-medium"/></svg></span>';
@@ -810,7 +810,7 @@ function renderTickerEvents(ticker, s) {
     } else if (ev.type === 'penalty') {
       return `<div class="sb-ticker-cell cell-${ev.side}">
         <div><div class="sb-ticker-label">STRAFE · ${teamName}</div>
-        <div class="sb-ticker-value">#${ev.data.number} · ${ev.data.penType}</div></div>
+        <div class="sb-ticker-value">#${ev.data.number} · ${ev.data.penReason || ev.data.penType}</div></div>
         <div class="sb-ticker-accent" style="color:${color}"><span class="ph-icon ph-md"><svg><use href="#ph-warning-circle"/></svg></span></div>
       </div>`;
     } else if (ev.type === 'timeout') {

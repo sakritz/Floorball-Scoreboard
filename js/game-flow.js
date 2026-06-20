@@ -166,6 +166,38 @@ function teamStrengthPensS(pens) {
   return (pens || []).filter(p => !p.personal && !p.waiting);
 }
 
+/* ─── STRAFCODES (Spielberichtsbogen SPRGK 2022) ──────────────────────── */
+const PENALTY_CODES = [
+  { code: '901', name: 'Stockschlag' },
+  { code: '902', name: 'Blockieren des Stocks' },
+  { code: '903', name: 'Anheben des Stocks' },
+  { code: '904', name: 'Hoher Stock' },
+  { code: '906', name: 'Haken' },
+  { code: '907', name: 'Stoßen' },
+  { code: '909', name: 'Überharter Körpereinsatz' },
+  { code: '910', name: 'Halten' },
+  { code: '911', name: 'Sperren' },
+  { code: '913', name: 'Hoher Fuß' },
+  { code: '915', name: 'Unkorrekter Abstand' },
+  { code: '919', name: 'Bodenspiel' },
+  { code: '920', name: 'Handspiel' },
+  { code: '922', name: 'Wechselfehler' },
+  { code: '923', name: 'Wiederholte Vergehen' },
+  { code: '924', name: 'Spielverzögerung' },
+  { code: '925', name: 'Reklamieren' },
+  { code: '950', name: 'Unsportliches Verhalten' },
+  { code: '999', name: 'Sonstige Vergehen' },
+];
+
+function updatePenReason(side) {
+  const reasonEl = document.getElementById('ct-' + side + '-pen-reason');
+  if (!reasonEl) return;
+  reasonEl.innerHTML = '<option value="">– auswählen –</option>' +
+    PENALTY_CODES.map(c =>
+      `<option value="${c.code}|${c.name}">${c.code} – ${c.name}</option>`
+    ).join('');
+}
+
 function addPenalty(side) {
   const num = document.getElementById('ct-' + side + '-pen-num').value || '?';
   const raw = document.getElementById('ct-' + side + '-pen-type').value;
@@ -220,7 +252,19 @@ function addPenalty(side) {
   }
 
   document.getElementById('ct-' + side + '-pen-num').value = '';
-  logEvent('penalty', side, { number: num, penType: penTypeLabel });
+  // Strafgrund aus Events-Feld lesen (nur wenn aktiviert)
+  let penReason = '';
+  if (S.showEventsTab) {
+    const rv = document.getElementById('ct-' + side + '-pen-reason')?.value || '';
+    if (rv) {
+      const [code, name] = rv.split('|');
+      penReason = (code && code !== '–') ? `${code} – ${name}` : name;
+    }
+    // Reset für nächste Strafe
+    const reasonEl = document.getElementById('ct-' + side + '-pen-reason');
+    if (reasonEl) reasonEl.value = '';
+  }
+  logEvent('penalty', side, { number: num, penType: penTypeLabel, penReason });
   pushAndRender();
 }
 
@@ -564,7 +608,15 @@ function togglePenAdd(side) {
   const btn  = document.getElementById('ct-' + side + '-pen-add-btn');
   const open = form.classList.toggle('open');
   btn.textContent = open ? '× Schließen' : '+ Strafe hinzufügen';
-  if (open) setTimeout(() => document.getElementById('ct-' + side + '-pen-num').focus(), 50);
+  if (open) {
+    setTimeout(() => document.getElementById('ct-' + side + '-pen-num').focus(), 50);
+    // Strafgrund-Row zeigen/verstecken und Optionen befüllen
+    const reasonRow = document.getElementById('ct-' + side + '-pen-reason-row');
+    if (reasonRow) {
+      reasonRow.style.display = S.showEventsTab ? '' : 'none';
+      if (S.showEventsTab) updatePenReason(side);
+    }
+  }
 }
 
 function addPenaltyAndClose(side) {

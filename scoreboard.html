@@ -462,7 +462,7 @@
                 </div>
                 <div>
                   <label class="ct-label">Strafart</label>
-                  <select id="ct-home-pen-type">
+                  <select id="ct-home-pen-type" onchange="updatePenReason('home')">
                     <option value="120">2 Min (einfach)</option>
                     <option value="double">2+2 Min (doppelt)</option>
                     <option value="personal10">10 Min (pers.) + 2 Min</option>
@@ -470,6 +470,10 @@
                     <option value="match">Matchstrafe + 2+2 Min</option>
                   </select>
                 </div>
+              </div>
+              <div id="ct-home-pen-reason-row" style="display:none">
+                <label class="ct-label">Strafgrund (§)</label>
+                <select id="ct-home-pen-reason"><option value="">– auswählen –</option></select>
               </div>
               <button class="btn btn-red" onclick="addPenaltyAndClose('home')">+ Eintragen</button>
             </div>
@@ -504,7 +508,7 @@
                 </div>
                 <div>
                   <label class="ct-label">Strafart</label>
-                  <select id="ct-away-pen-type">
+                  <select id="ct-away-pen-type" onchange="updatePenReason('away')">
                     <option value="120">2 Min (einfach)</option>
                     <option value="double">2+2 Min (doppelt)</option>
                     <option value="personal10">10 Min (pers.) + 2 Min</option>
@@ -512,6 +516,10 @@
                     <option value="match">Matchstrafe + 2+2 Min</option>
                   </select>
                 </div>
+              </div>
+              <div id="ct-away-pen-reason-row" style="display:none">
+                <label class="ct-label">Strafgrund (§)</label>
+                <select id="ct-away-pen-reason"><option value="">– auswählen –</option></select>
               </div>
               <button class="btn btn-red" onclick="addPenaltyAndClose('away')">+ Eintragen</button>
             </div>
