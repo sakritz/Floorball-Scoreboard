@@ -287,18 +287,16 @@ function startTimeout(side) {
   S[side + 'ToUsed'] = true;
   const clockWasRunning = !!S.running;
   if (clockWasRunning) stopClock();                          // Spieluhr anhalten
-  S.activeTimeout = { team: side, remaining: 30, clockWasRunning };
+  S.activeTimeout = { team: side, remaining: 30 };
   logEvent('timeout', side, { team: side });
   clearInterval(toTimer);
   toTimer = setInterval(() => {
     if (S.activeTimeout) {
       S.activeTimeout.remaining--;
       if (S.activeTimeout.remaining <= 0) {
-        const resume = S.activeTimeout.clockWasRunning;
         S.activeTimeout = null;
         clearInterval(toTimer); toTimer = null;
         if (S.timeoutBuzzerEnabled) playBuzzerShort();
-        if (resume) startClock();                            // Spieluhr wieder starten
       }
     } else {
       clearInterval(toTimer); toTimer = null;
@@ -309,12 +307,10 @@ function startTimeout(side) {
 }
 
 function endTimeout() {
-  const resume = S.activeTimeout?.clockWasRunning;
   S.activeTimeout = null;
   clearInterval(toTimer); toTimer = null;
   S.pause = null;
   clearInterval(pauseTimer); pauseTimer = null;
-  if (resume) startClock();                                  // Spieluhr wieder starten
   pushAndRender();
 }
 
