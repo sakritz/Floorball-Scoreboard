@@ -4,6 +4,35 @@
 
 /* ─── SPIELFLUSS-AUTOMATIK ─────────────────────────────────────────── */
 
+// Erkennt ob ein benutzerdefiniertes Format aktiv ist (nicht Regelstandard)
+function _isCustomFormat() {
+  return !(
+    (S.maxPeriods === 3 && S.periodSecs === 1200) || // Großfeld 3×20
+    (S.maxPeriods === 3 && S.periodSecs === 900)  || // Großfeld Spieltag 3×15
+    (S.maxPeriods === 2 && S.periodSecs === 1200)    // Kleinfeld 2×20
+  );
+}
+
+// Regelkonforme VL-Dauer (§2.3): Kleinfeld 5 Min, sonst 10 Min
+function _defaultOtSecs() {
+  return (S.maxPeriods === 2 && S.periodSecs === 1200) ? 300 : 600;
+}
+
+// Golden Goal: Tor in der Verlängerung beendet das Spiel sofort (§2.3)
+function checkGoldenGoal(side) {
+  if (S.period <= S.maxPeriods) return false;
+  stopClock();
+  const winner = side === 'home' ? S.homeName : S.awayName;
+  setTimeout(() => {
+    ctAlert({
+      icon: '🏆',
+      title: 'Golden Goal!',
+      body: `${winner} gewinnt die Verlängerung! Endstand: ${S.homeScore}:${S.awayScore}`,
+    });
+  }, 80);
+  return true;
+}
+
 function periodName(p) {
   if (p > S.maxPeriods) return 'Verlängerung';
   if (S.maxPeriods === 2) return p === 1 ? '1. Halbzeit' : '2. Halbzeit';
@@ -21,23 +50,60 @@ function onPeriodEnd() {
   const isOT    = S.period > S.maxPeriods;
   const isLast  = S.period === S.maxPeriods || isOT;
   const pauseMin = Math.round((S.pauseSecs || 600) / 60);
+  const isTied  = S.homeScore === S.awayScore;
 
-  if (isLast) {
-    // Letzter Abschnitt oder Verlängerung abgelaufen
-    ctConfirm({
-      icon: '🏁',
-      title: 'Spiel beendet?',
-      body: `${periodName(S.period)} ist abgelaufen. Spiel als beendet markieren oder Verlängerung starten?`,
-      okLabel: 'Spiel beendet',
-      okClass: 'btn-lime',
-      onOk: () => { /* nothing — clock stays at 0, game just stops */ pushAndRender(); },
-      onCancel: () => { /* user wants OT — set up OT */ setPeriod(S.maxPeriods + 1, true); },
-    });
-    // Patch cancel button label
-    setTimeout(() => {
-      const cancel = document.getElementById('ct-confirm-cancel');
-      if (cancel) cancel.textContent = 'Verlängerung';
-    }, 0);
+  if (isOT) {
+    // Verlängerung abgelaufen
+    if (isTied) {
+      // Noch Gleichstand → Penaltyschießen anbieten
+      S.shootoutReady = true;
+      saveState();
+      ctConfirm({
+        icon: '🥊',
+        title: 'Verlängerung – Penaltyschießen?',
+        body: `Verlängerung ohne Tor · Stand ${S.homeScore}:${S.awayScore}. Jetzt Penaltyschießen starten?`,
+        okLabel: '▶ Penaltyschießen starten',
+        okClass: 'btn-orange',
+        onOk: () => { startPenaltyShootout(); },
+        onCancel: () => { pushAndRender(); },
+      });
+      setTimeout(() => {
+        const cancel = document.getElementById('ct-confirm-cancel');
+        if (cancel) cancel.textContent = 'Manuell steuern';
+      }, 0);
+    } else {
+      // Gewinner in der VL – Spiel beendet
+      ctAlert({ icon: '🏁', title: 'Spielende nach Verlängerung', body: `${S.homeName} ${S.homeScore}:${S.awayScore} ${S.awayName}` });
+      pushAndRender();
+    }
+  } else if (isLast) {
+    // Letzter regulärer Abschnitt
+    if (isTied) {
+      // Gleichstand → Verlängerung anbieten (mit Dauerwahl bei Custom-Format)
+      const isCustom = _isCustomFormat();
+      const defaultOtMin = _defaultOtSecs() / 60;
+      ctConfirm({
+        icon: '⚖',
+        title: 'Gleichstand – Verlängerung?',
+        body: `${periodName(S.period)} abgelaufen · Stand ${S.homeScore}:${S.awayScore}. Verlängerung starten?`,
+        okLabel: '▶ Verlängerung starten',
+        okClass: 'btn-orange',
+        input: isCustom ? { label: 'Verlängerungsdauer', value: defaultOtMin, unit: 'Min', min: 1, max: 60 } : null,
+        onOk: (duration) => {
+          S.otSecs = isCustom ? (parseInt(duration) || defaultOtMin) * 60 : _defaultOtSecs();
+          setPeriod(S.maxPeriods + 1, true);
+        },
+        onCancel: () => { pushAndRender(); },
+      });
+      setTimeout(() => {
+        const cancel = document.getElementById('ct-confirm-cancel');
+        if (cancel) cancel.textContent = 'Spiel beendet';
+      }, 0);
+    } else {
+      // Klarer Sieger – einfache Meldung
+      ctAlert({ icon: '🏁', title: 'Spielende', body: `${periodName(S.period)} abgelaufen · ${S.homeName} ${S.homeScore}:${S.awayScore} ${S.awayName}` });
+      pushAndRender();
+    }
   } else {
     // Zwischendrittel / Halbzeit
     const next = nextPeriodName();
@@ -300,6 +366,8 @@ function resetGame() {
       S.homeToUsed = false; S.awayToUsed = false;
       S.activeTimeout = null;
       S.gameStarted = false;
+      S.shootoutReady = false;
+      S.otSecs = null;
       clearInterval(toTimer); toTimer = null;
       S.pause = null;
       clearInterval(pauseTimer); pauseTimer = null;
@@ -343,6 +411,7 @@ function endGame() {
       S.gameStarted = false;    S.pendingGoal = null;
       S.events = [];            S.penaltyShootout = null;
       S.leagueName = null;      S.kickoffTime = null;
+      S.shootoutReady = false;  S.otSecs = null;
       clockMs = 1200 * 1000;
       _undoStack = [];
 
@@ -665,38 +734,67 @@ function renderController() {
     }
   });
 
-  // Pause
-  const pauseBtn    = document.getElementById('ct-pause-btn');
-  const pauseDurLabel = document.getElementById('ct-pause-duration-label');
-  if (pauseDurLabel) {
-    const pauseMin = Math.round((s.pauseSecs || 600) / 60);
-    pauseDurLabel.textContent = `Pausendauer: ${pauseMin} Min`;
-  }
-  // Hide in-tab pause active box (now shown in control bar)
-  const pauseActiveBox = document.getElementById('ct-pause-active');
-  if (pauseActiveBox) pauseActiveBox.style.display = 'none';
-  if (pauseBtn) pauseBtn.style.display = s.pause ? 'none' : 'block';
-
   // Penalty shootout controller state
   const psActive = s.penaltyShootout && s.penaltyShootout.active;
-  document.getElementById('ct-ps-start-wrap').style.display  = psActive ? 'none' : '';
-  document.getElementById('ct-ps-active-wrap').style.display = psActive ? '' : 'none';
   if (psActive) renderPenaltyShootoutCtrl();
 
+  // PS-Card nur sichtbar wenn PS aktiv
+  const psCard = document.getElementById('ct-ps-card');
+  if (psCard) psCard.style.display = psActive ? '' : 'none';
+
+  // Flow-Knoten im Spielabschnitt-Card: Zustände live aktualisieren
+  const inOT = s.period > s.maxPeriods;
+  // Perioden-Knoten
+  for (let i = 1; i <= s.maxPeriods; i++) {
+    const el = document.getElementById('ct-flow-p-' + i);
+    if (!el) continue;
+    const past    = inOT || i < s.period;
+    const current = !inOT && i === s.period;
+    el.style.background  = current ? 'var(--lime)' : past ? 'rgba(255,255,255,.09)' : 'transparent';
+    el.style.color       = current ? '#0a0a0a' : past ? 'rgba(255,255,255,.3)' : 'rgba(255,255,255,.45)';
+    el.style.borderColor = current ? 'var(--lime)' : 'rgba(255,255,255,.12)';
+  }
+  // Pause-Knoten
+  for (let j = 1; j < s.maxPeriods; j++) {
+    const el = document.getElementById('ct-flow-pause-' + j);
+    if (!el) continue;
+    const running = !!s.pause;
+    el.disabled = running;
+    el.style.background  = running ? 'rgba(180,79,255,.14)' : 'transparent';
+    el.style.color       = running ? 'var(--purple,#b44fff)' : 'rgba(255,255,255,.4)';
+    el.style.borderColor = running ? 'rgba(180,79,255,.35)' : 'rgba(255,255,255,.12)';
+  }
+  // VL-Knoten
+  const vlNode = document.getElementById('ct-flow-vl');
+  if (vlNode) {
+    vlNode.disabled = inOT;
+    vlNode.style.background  = inOT ? 'rgba(255,140,0,.14)' : 'transparent';
+    vlNode.style.color       = inOT ? 'var(--orange)' : 'rgba(255,255,255,.4)';
+    vlNode.style.borderColor = inOT ? 'rgba(255,140,0,.35)' : 'rgba(255,255,255,.12)';
+  }
+  // PS-Knoten
+  const psNode = document.getElementById('ct-flow-ps');
+  if (psNode) {
+    psNode.disabled = psActive;
+    psNode.style.background  = psActive ? 'rgba(255,140,0,.14)' : 'transparent';
+    psNode.style.color       = psActive ? 'var(--orange)' : 'rgba(255,255,255,.4)';
+    psNode.style.borderColor = psActive ? 'rgba(255,140,0,.35)' : 'rgba(255,255,255,.12)';
+  }
+  // Legende: konfigurierte Zeiten
+  const flowLegend = document.getElementById('ct-flow-legend');
+  if (flowLegend) {
+    const pMin   = Math.round(s.periodSecs / 60);
+    const pausMin = Math.round((s.pauseSecs || 600) / 60);
+    const otMin  = Math.round((s.otSecs || _defaultOtSecs()) / 60);
+    const pLabel = s.maxPeriods === 3 ? 'Drittel' : 'HZ';
+    flowLegend.textContent = `${s.maxPeriods} × ${pMin} Min  ·  Pause ${pausMin} Min  ·  VL ${otMin} Min`;
+  }
+
   // Smart auto-collapse in Spiel tab (only on first render, not on every tick)
-  // Setup: auto-expand before game starts, auto-collapse once running
-  // Penalty: auto-expand in last period or if scores are tied late; stays open if active
   if (!renderController._collapseInitDone) {
     renderController._collapseInitDone = true;
     setCardCollapsed('ct-admin-setup-card', s.gameStarted);
-    const lateGame = s.period >= s.maxPeriods || (s.gameStarted && s.homeScore === s.awayScore);
-    setCardCollapsed('ct-ps-card', !lateGame && !psActive);
-    setCardCollapsed('ct-admin-pause-card', s.clock > 0);
-  }
-
-  // Auto-expand pause card when clock hits 0
-  if (s.clock <= 0 && !s.pause) {
-    setCardCollapsed('ct-admin-pause-card', false);
+    if (psActive) setCardCollapsed('ct-ps-card', false);
   }
 
   // Mobile-Ansicht (Logos, Perioden-Segmente, Uhr-Label) synchron halten
@@ -747,6 +845,31 @@ function renderPenList(side, pens, fmt) {
   });
 }
 
+function startPauseWithDialog() {
+  if (S.pause) return;
+  const pauseMin = Math.round((S.pauseSecs || 600) / 60);
+  ctConfirm({
+    icon: '⏸',
+    title: 'Pause starten?',
+    body: `${pauseMin}-minütige Pause starten?`,
+    okLabel: '▶ Pause starten',
+    okClass: 'btn-lime',
+    onOk: () => { startPause(); _flowPauseCallback = false; },
+  });
+}
+
+function startPenaltyShootoutWithDialog() {
+  if (S.penaltyShootout && S.penaltyShootout.active) return;
+  ctConfirm({
+    icon: '🥊',
+    title: 'Penaltyschießen starten?',
+    body: 'Startet das Penaltyschießen im Presentation Mode. Je 5 Schüsse abwechselnd.',
+    okLabel: '▶ Starten',
+    okClass: 'btn-orange',
+    onOk: () => startPenaltyShootout(),
+  });
+}
+
 function pushAndRender() {
   push();
   saveState();
@@ -755,13 +878,17 @@ function pushAndRender() {
 }
 
 // ── Styled confirm modal ──
-function ctConfirm({ icon = '⚠', title, body = '', okLabel = 'Bestätigen', okClass = 'btn-danger', onOk, onCancel } = {}) {
-  const modal   = document.getElementById('ct-confirm-modal');
-  const iconEl  = document.getElementById('ct-confirm-icon');
-  const titleEl = document.getElementById('ct-confirm-title');
-  const bodyEl  = document.getElementById('ct-confirm-body');
-  const okBtn   = document.getElementById('ct-confirm-ok');
+function ctConfirm({ icon = '⚠', title, body = '', okLabel = 'Bestätigen', okClass = 'btn-danger', onOk, onCancel, input = null } = {}) {
+  const modal     = document.getElementById('ct-confirm-modal');
+  const iconEl    = document.getElementById('ct-confirm-icon');
+  const titleEl   = document.getElementById('ct-confirm-title');
+  const bodyEl    = document.getElementById('ct-confirm-body');
+  const okBtn     = document.getElementById('ct-confirm-ok');
   const cancelBtn = document.getElementById('ct-confirm-cancel');
+  const inputRow  = document.getElementById('ct-confirm-input-row');
+  const inputEl   = document.getElementById('ct-confirm-input');
+  const inputLbl  = document.getElementById('ct-confirm-input-label');
+  const inputUnit = document.getElementById('ct-confirm-input-unit');
 
   iconEl.textContent  = icon;
   titleEl.textContent = title;
@@ -770,15 +897,33 @@ function ctConfirm({ icon = '⚠', title, body = '', okLabel = 'Bestätigen', ok
   okBtn.className     = `btn ${okClass}`;
   okBtn.style.flex    = '1';
 
+  // Optional input field
+  if (inputRow) {
+    if (input) {
+      if (inputLbl)  inputLbl.textContent  = input.label || '';
+      if (inputUnit) inputUnit.textContent = input.unit  || 'Min';
+      if (inputEl) {
+        inputEl.value = input.value ?? 10;
+        inputEl.min   = String(input.min ?? 1);
+        inputEl.max   = String(input.max ?? 60);
+      }
+      inputRow.style.display = '';
+      setTimeout(() => inputEl && inputEl.focus(), 80);
+    } else {
+      inputRow.style.display = 'none';
+    }
+  }
+
   modal.classList.add('open');
 
   const close = () => {
     modal.classList.remove('open');
+    if (inputRow) inputRow.style.display = 'none';
     okBtn.removeEventListener('click', handleOk);
     cancelBtn.removeEventListener('click', handleCancel);
     modal.removeEventListener('click', handleBackdrop);
   };
-  const handleOk      = () => { close(); onOk?.(); };
+  const handleOk      = () => { const val = (input && inputEl) ? inputEl.value : undefined; close(); onOk?.(val); };
   const handleCancel  = () => { close(); onCancel?.(); };
   const handleBackdrop = e => { if (e.target === modal) handleCancel(); };
 

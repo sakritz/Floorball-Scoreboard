@@ -242,22 +242,85 @@ function applyFormat(val) {
 }
 
 function buildPeriodPills() {
-  const c = document.getElementById('ct-period-pills'); if (!c) return;
+  buildGameFlow();
+}
+
+function buildGameFlow() {
+  const c = document.getElementById('ct-game-flow');
+  if (!c) return;
   c.innerHTML = '';
-  const labels3 = ['D1','D2','D3','VL'];
-  const labels2 = ['H1','H2','VL'];
-  const labels = S.maxPeriods === 3 ? labels3 : labels2;
-  for (let i = 1; i <= S.maxPeriods + 1; i++) {
-    const b = document.createElement('div');
-    b.className = 'period-pill' + (i === S.period ? ' active' : '');
-    b.textContent = labels[i-1] || 'VL';
-    b.onclick = () => setPeriod(i);
+
+  // Parallelogram shape matching .btn design language (skewX -8deg, counter-rotate text)
+  const BASE = [
+    'display:inline-flex', 'align-items:center', 'justify-content:center',
+    'padding:4px 11px', 'font-size:11px', 'font-weight:700',
+    'letter-spacing:1px', 'cursor:pointer',
+    'border:1px solid rgba(255,255,255,.12)',
+    'background:transparent', 'color:rgba(255,255,255,.45)',
+    'line-height:1', 'white-space:nowrap',
+    'transform:skewX(-8deg)', 'border-radius:0',
+  ].join(';');
+
+  const addSep = () => {
+    const s = document.createElement('span');
+    s.style.cssText = 'color:rgba(255,255,255,.15);font-size:11px;padding:0 1px;user-select:none;line-height:1';
+    s.textContent = '›';
+    c.appendChild(s);
+  };
+
+  const addNode = (id, label, onclick) => {
+    const b = document.createElement('button');
+    b.id = id;
+    b.style.cssText = BASE;
+    b.onclick = onclick;
+    // Counter-rotate text so it stays upright inside the skewed shape
+    const span = document.createElement('span');
+    span.style.cssText = 'transform:skewX(8deg);display:inline-block';
+    span.textContent = label;
+    b.appendChild(span);
     c.appendChild(b);
+  };
+
+  const pLabels = S.maxPeriods === 3 ? ['D1','D2','D3'] : ['H1','H2'];
+
+  for (let i = 1; i <= S.maxPeriods; i++) {
+    if (i > 1) addSep();
+    const idx = i;
+    addNode('ct-flow-p-' + i, pLabels[i - 1], () => setPeriod(idx));
+    if (i < S.maxPeriods) {
+      addSep();
+      addNode('ct-flow-pause-' + i, 'Pause', () => startPauseWithDialog());
+    }
   }
+
+  addSep();
+  addNode('ct-flow-vl', 'VL', () => startOvertime());
+  addSep();
+  addNode('ct-flow-ps', 'PS', () => startPenaltyShootoutWithDialog());
+}
+
+function startOvertime() {
+  if (S.period > S.maxPeriods) return;
+  const isCustom = _isCustomFormat();
+  const defaultOtMin = _defaultOtSecs() / 60;
+  ctConfirm({
+    icon: '⏱',
+    title: 'Verlängerung starten?',
+    body: isCustom
+      ? 'Benutzerdefiniertes Format – Verlängerungsdauer festlegen:'
+      : `${defaultOtMin} Minuten Verlängerung starten?`,
+    okLabel: '▶ Verlängerung starten',
+    okClass: 'btn-orange',
+    input: isCustom ? { label: 'Verlängerungsdauer', value: defaultOtMin, unit: 'Min', min: 1, max: 60 } : null,
+    onOk: (duration) => {
+      S.otSecs = isCustom ? (parseInt(duration) || defaultOtMin) * 60 : _defaultOtSecs();
+      setPeriod(S.maxPeriods + 1, true);
+    },
+  });
 }
 
 function setPeriod(p, skipConfirm) {
-  if (!skipConfirm && S.clock > 0 && S.gameStarted) {
+  if (!skipConfirm && p !== S.period) {
     const pn3 = ['1. Drittel','2. Drittel','3. Drittel','Verlängerung'];
     const pn2 = ['1. Halbzeit','2. Halbzeit','Verlängerung'];
     const pn  = S.maxPeriods === 3 ? pn3 : pn2;
@@ -279,7 +342,7 @@ function setPeriod(p, skipConfirm) {
   });
   stopClock();
   S.period = p;
-  S.clock = (S.period > S.maxPeriods) ? 600 : S.periodSecs;
+  S.clock = (S.period > S.maxPeriods) ? (S.otSecs || _defaultOtSecs()) : S.periodSecs;
   clockMs = S.clock * 1000;
   const [m,s] = [Math.floor(S.clock/60), S.clock%60];
   document.getElementById('ct-set-min').value = m;

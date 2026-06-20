@@ -290,9 +290,16 @@ function adjScore(side, delta) {
       });
       if (side === 'home') S.homeScore = Math.max(0, S.homeScore + 1);
       else                 S.awayScore = Math.max(0, S.awayScore + 1);
-      S.pendingGoal = { side, scorer: null, assist: null };
-      checkPowerPlayPenalty(side, null); // null = no goalType known (not penalty/own)
-      pushAndRender();
+      if (S.period > S.maxPeriods) {
+        // Golden Goal – kein Bully, Uhr stoppen
+        S.pendingGoal = null;
+        pushAndRender();
+        checkGoldenGoal(side);
+      } else {
+        S.pendingGoal = { side, scorer: null, assist: null };
+        checkPowerPlayPenalty(side, null); // null = no goalType known (not penalty/own)
+        pushAndRender();
+      }
     }
   } else {
     pushUndo(`Tor entfernt ${side === 'home' ? S.homeName : S.awayName}`, {

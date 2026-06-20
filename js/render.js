@@ -758,6 +758,22 @@ function confirmGoal() {
   });
   if (side === 'home') S.homeScore = Math.max(0, S.homeScore + 1);
   else                 S.awayScore = Math.max(0, S.awayScore + 1);
+
+  if (S.period > S.maxPeriods) {
+    // Golden Goal in VL – kein Bully, kein pendingGoal
+    logEvent('goal', side, { scorer, assist, goalType: _goalType, goalTypeLabel }, _goalEventId);
+    pushAndRender();
+    const capturedSide = side;
+    const capturedGoalType = _goalType;
+    closeGoalDialog();
+    _pendingGoalSide = null;
+    setTimeout(() => {
+      checkGoldenGoal(capturedSide);
+      checkPowerPlayPenalty(capturedSide, capturedGoalType);
+    }, 50);
+    return;
+  }
+
   S.pendingGoal = { side, scorer, assist, goalType: _goalType };
 
   logEvent('goal', side, { scorer, assist, goalType: _goalType, goalTypeLabel }, _goalEventId);

@@ -49,5 +49,7 @@ let S = {
   penaltyShootout: null, // { active, shots: [{home,away}], round }
   leagueName: null,     // from setup
   kickoffTime: null,    // ms timestamp, from setup
+  otSecs: null,         // Verlängerungsdauer in Sek. (null = Regelwert je Format)
+  shootoutReady: false, // true nachdem VL mit Gleichstand endete → PS-Card freischalten
 };
 

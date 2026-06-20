@@ -652,7 +652,7 @@
   <!-- ── TAB: SPIELADMINISTRATION ── -->
   <div class="ct-tab-content tab-admin" id="tab-admin">
 
-    <!-- LEFT col: Spiel einrichten + Pause -->
+    <!-- LEFT col: Spiel einrichten -->
     <div class="ct-admin-col">
 
       <div class="ct-card collapsible collapsed" id="ct-admin-setup-card">
@@ -669,53 +669,26 @@
         </div>
       </div>
 
-      <div class="ct-card collapsible collapsed" id="ct-admin-pause-card">
-        <div class="ct-card-head neutral">Pause</div>
-        <div class="ct-card-body">
-          <div class="ct-card-body-inner">
-            <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;line-height:1.5" id="ct-pause-duration-label">
-              Pausendauer: 10 Min
-            </div>
-            <button class="btn btn-purple" id="ct-pause-btn" onclick="startPause()">
-              <span class="ph-icon ph-sm"><svg><use href="#ph-clock"/></svg></span> Pause starten
-            </button>
-            <div id="ct-pause-active" style="display:none">
-              <div class="active-timeout-box" style="background:rgba(180,79,255,.08);border-color:rgba(180,79,255,.3)">
-                <div class="active-timeout-label" style="color:#b44fff">Pause läuft</div>
-                <div class="active-timeout-count" id="ct-pause-count">10:00</div>
-                <button class="btn btn-ghost btn-sm" style="width:auto;margin:0 auto" onclick="endPause()">✕ Beenden</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
 
-    <!-- RIGHT col: Abschnitt + Penaltyschießen -->
+    <!-- RIGHT col: Spielabschnitt + Penaltyschießen (nur wenn aktiv) -->
     <div class="ct-admin-col">
 
       <div class="ct-card collapsible" id="ct-admin-period-card">
-        <div class="ct-card-head neutral">Abschnitt</div>
+        <div class="ct-card-head neutral">Spielabschnitt</div>
         <div class="ct-card-body">
           <div class="ct-card-body-inner">
-            <label class="ct-label">Aktueller Abschnitt</label>
-            <div class="period-pills" id="ct-period-pills"></div>
+            <div id="ct-game-flow" style="display:flex;flex-wrap:wrap;align-items:center;gap:4px;min-height:28px"></div>
+            <div id="ct-flow-legend" style="font-size:10px;letter-spacing:1.2px;color:rgba(255,255,255,.28);margin-top:8px;line-height:1.8;text-transform:uppercase"></div>
           </div>
         </div>
       </div>
 
-      <div class="ct-card collapsible collapsed" id="ct-ps-card">
+      <div class="ct-card collapsible" id="ct-ps-card" style="display:none">
         <div class="ct-card-head neutral">Penaltyschießen</div>
         <div class="ct-card-body">
           <div class="ct-card-body-inner">
-            <div id="ct-ps-start-wrap">
-              <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;line-height:1.6;margin-bottom:8px">
-                Startet das Penaltyschießen im Presentation Mode. Je 5 Schüsse, abwechselnd.
-              </div>
-              <button class="btn btn-orange" onclick="startPenaltyShootout()" style="font-weight:900;letter-spacing:2px">▶ Penaltyschießen starten</button>
-            </div>
-            <div id="ct-ps-active-wrap" style="display:none">
+            <div id="ct-ps-active-wrap">
               <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
                 <div style="font-size:11px;color:var(--ct-muted2);letter-spacing:1px">Penaltyschießen aktiv</div>
                 <button class="btn btn-ghost btn-sm" style="width:auto;font-size:11px" onclick="document.getElementById('ct-ps-overlay').classList.add('open');renderPenaltyShootoutCtrl()">⊞ Öffnen</button>
@@ -1090,6 +1063,14 @@
     <div class="ct-confirm-icon" id="ct-confirm-icon"></div>
     <div class="ct-confirm-title" id="ct-confirm-title"></div>
     <div class="ct-confirm-body" id="ct-confirm-body"></div>
+    <div id="ct-confirm-input-row" style="display:none;margin-top:12px">
+      <label id="ct-confirm-input-label" style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:6px"></label>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input id="ct-confirm-input" type="number" min="1" max="60" value="10"
+          style="flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);border-radius:6px;color:#fff;font-size:22px;font-weight:700;padding:8px 12px;text-align:center;outline:none;-moz-appearance:textfield">
+        <span id="ct-confirm-input-unit" style="font-size:13px;color:rgba(255,255,255,.45);letter-spacing:1px">Min</span>
+      </div>
+    </div>
     <div class="ct-confirm-btns">
       <button class="btn btn-ghost" style="flex:1" id="ct-confirm-cancel">Abbrechen</button>
       <button class="btn btn-danger" style="flex:1" id="ct-confirm-ok">Bestätigen</button>
