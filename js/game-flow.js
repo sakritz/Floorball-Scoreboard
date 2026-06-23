@@ -157,13 +157,50 @@ function prevPeriod() { if (S.period > 1) setPeriod(S.period - 1); }
 
 // ── Penalties ──
 
-// Returns only penalties that affect team strength (not personal 10-min)
-function teamStrengthPens(side) {
-  return (S[side + 'Penalties'] || []).filter(p => !p.personal && !p.waiting);
+// §6.3.3: Maximal gleichzeitig GEMESSENE Zeitstrafen je Team.
+// Großfeld (5 gegen 5): 2 · Kleinfeld (2×20, 3 gegen 3): 1.
+// Liest aus einem State-Objekt, damit es auch auf dem Scoreboard
+// (das aus dem per BroadcastChannel empfangenen State rendert) stimmt.
+function maxPensFor(state) {
+  const st = state || S;
+  return (st.maxPeriods === 2 && st.periodSecs === 1200) ? 1 : 2;
 }
-function teamStrengthPensS(pens) {
-  // scoreboard version — filters from array
-  return (pens || []).filter(p => !p.personal && !p.waiting);
+
+// ids der aktuell GEMESSENEN (laufenden) Zeitstrafen eines Teams,
+// unter Beachtung des Team-Limits (§6.3.3): Es laufen nur die ersten
+// `maxActive` Strafen in Reihenfolge der Aussprache (id aufsteigend);
+// jede weitere wartet, bis eine laufende endet.
+// Persönliche Strafen (§6.8.1) und noch wartende 2+2-Zweitteile belegen
+// keinen Slot und tauchen daher hier nicht auf.
+function runningPenIds(pens, maxActive) {
+  return new Set(
+    (pens || [])
+      .filter(p => !p.personal && !p.waiting)   // belegen einen Slot
+      .sort((a, b) => a.id - b.id)              // Reihenfolge der Aussprache
+      .slice(0, maxActive)
+      .map(p => p.id)
+  );
+}
+
+// True, wenn die Strafe wegen des Team-Limits (§6.3.3) noch wartet –
+// also eine reguläre Zeitstrafe ist, die (noch) nicht gemessen wird.
+// Wird nur fürs Anzeigen/„– –“ gebraucht; 2+2-Zweitteile haben weiterhin
+// ihr eigenes `waiting`-Flag.
+function isQueuedByCap(p, runningIds) {
+  return !p.personal && !p.waiting && !runningIds.has(p.id);
+}
+
+// Returns only penalties that affect team strength (not personal 10-min),
+// gedeckelt auf die je Team gleichzeitig messbaren Strafen (§6.3.3).
+function teamStrengthPens(side) {
+  const pens = S[side + 'Penalties'] || [];
+  const running = runningPenIds(pens, maxPensFor(S));
+  return pens.filter(p => running.has(p.id));
+}
+function teamStrengthPensS(pens, state) {
+  // scoreboard version — filters from array; State liefert die Feldgröße
+  const running = runningPenIds(pens || [], maxPensFor(state));
+  return (pens || []).filter(p => running.has(p.id));
 }
 
 /* ─── STRAFCODES (Spielberichtsbogen SPRGK 2022) ──────────────────────── */
@@ -290,13 +327,19 @@ function removePenalty(side, id) {
 }
 
 function tickPenalties() {
+  const maxActive = maxPensFor(S);
   ['home','away'].forEach(side => {
     const pens = S[side + 'Penalties'];
+    // §6.3.3: Nur die ersten `maxActive` Zeitstrafen werden gemessen.
+    const running = runningPenIds(pens, maxActive);
     // Find which double-first penalties just expired this tick
     const expiredDoubleFirstIds = new Set();
 
     const ticked = pens.map(p => {
-      if (p.waiting) return p; // don't tick waiting second part
+      if (p.waiting) return p;                 // 2+2-Zweitteil: wartet auf ersten Teil
+      // Persönliche Strafen laufen immer (§6.8.1); reguläre nur, wenn sie
+      // gemessen werden – über dem Team-Limit warten sie und ticken nicht.
+      if (!p.personal && !running.has(p.id)) return p;
       return { ...p, remaining: p.remaining - 1 };
     });
 
@@ -859,6 +902,12 @@ function renderPenList(side, pens, fmt) {
   const c = document.getElementById('ct-' + side + '-pen-list');
   const typeLabel = (secs, p) => { if (p&&p.redCardLabel) return p.redCardLabel+' 2+2'; if (p&&p.doubleFirst) return '2+2 MIN (1)'; if (p&&p.doubleSecond) return '2+2 MIN (2)'; if (p&&p.waiting) return '2+2 MIN (2)'; if (p&&p.personal) return '10 MIN PERS.'; return secs<=120?'2 MIN':'10 MIN'; };
 
+  // §6.3.3: Welche Strafen werden tatsächlich gemessen? Der Rest wartet.
+  const running = runningPenIds(pens, maxPensFor(S));
+  const isWaiting = p => p.waiting || isQueuedByCap(p, running);
+  const timeText = p => isWaiting(p) ? '– –' : fmt(p.remaining);
+  const badgeText = p => typeLabel(p.secs, p) + (isQueuedByCap(p, running) ? ' · WARTET' : '');
+
   if (!pens.length) {
     c.innerHTML = '<div class="empty-msg">Keine aktiven Strafen</div>';
     return;
@@ -882,16 +931,20 @@ function renderPenList(side, pens, fmt) {
   pens.forEach(p => {
     const idStr = String(p.id);
     if (existing[idStr]) {
-      // only update the time — no DOM rebuild, no animation re-trigger
-      existing[idStr].querySelector('.pen-time').textContent = fmt(p.remaining);
+      // only update the time + badge — no DOM rebuild, no animation re-trigger
+      const el = existing[idStr];
+      el.querySelector('.pen-time').textContent = timeText(p);
+      const badge = el.querySelector('.pen-badge');
+      if (badge) badge.textContent = badgeText(p);
+      el.classList.toggle('pen-waiting', isWaiting(p));
     } else {
       const d = document.createElement('div');
-      d.className = 'penalty-item';
+      d.className = 'penalty-item' + (isWaiting(p) ? ' pen-waiting' : '');
       d.dataset.id = idStr;
       d.innerHTML = `
         <div class="pen-num">#${p.number}</div>
-        <div class="pen-time">${fmt(p.remaining)}</div>
-        <div class="pen-badge">${typeLabel(p.secs, p)}</div>
+        <div class="pen-time">${timeText(p)}</div>
+        <div class="pen-badge">${badgeText(p)}</div>
         <div class="pen-del" onclick="removePenalty('${side}',${p.id})">\u2715</div>
       `;
       c.appendChild(d);

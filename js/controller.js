@@ -331,9 +331,13 @@ function checkPowerPlayPenalty(scoringSide, goalType) {
   // True power play: opposing team has strictly more penalties
   if (oppPens <= myPens) return;
 
-  // Find the shortest active (non-waiting, non-personal) penalty on opposing team
-  const active = (S[oppSide + 'Penalties'] || [])
-    .filter(p => !p.waiting && !p.personal)
+  // Find the shortest currently MEASURED penalty on opposing team.
+  // §6.3.3: nur laufende Strafen zählen – eine wegen des Team-Limits
+  // wartende Strafe wird nicht aufgehoben.
+  const oppPensArr = S[oppSide + 'Penalties'] || [];
+  const running = runningPenIds(oppPensArr, maxPensFor(S));
+  const active = oppPensArr
+    .filter(p => running.has(p.id))
     .sort((a, b) => a.remaining - b.remaining);
   if (!active.length) return;
 

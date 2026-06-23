@@ -831,6 +831,14 @@ select option { background: var(--ct-card); }
 }
 .pen-del:hover { background: rgba(255,45,85,.45); }
 
+/* §6.3.3: wegen Team-Limit wartende Strafe – gedimmt, läuft noch nicht */
+.penalty-item.pen-waiting {
+  background: rgba(255,255,255,.04); border-color: var(--ct-border);
+}
+.penalty-item.pen-waiting .pen-num,
+.penalty-item.pen-waiting .pen-time { color: var(--ct-muted2); }
+.penalty-item.pen-waiting .pen-badge { border-color: rgba(255,180,0,.5); color: #ffb400; }
+
 /* add form – hidden by default */
 .pen-add-form {
   display: none; flex-direction: column; gap: 9px;

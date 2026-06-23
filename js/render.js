@@ -195,10 +195,15 @@ function renderScoreboard(s) {
 
   // Penalty chips under scores
   const typeLabel = (secs, p) => { if (p&&p.redCardLabel) return p.redCardLabel+' 2+2'; if (p&&p.doubleFirst) return '2+2 MIN (1)'; if (p&&p.doubleSecond) return '2+2 MIN (2)'; if (p&&p.waiting) return '2+2 MIN (2)'; if (p&&p.personal) return '10 MIN PERS.'; return secs<=120?'2 MIN':'10 MIN'; };
+  const sbMaxActive = maxPensFor(s);   // §6.3.3: 2 (Großfeld) / 1 (Kleinfeld)
   ['home','away'].forEach(side => {
     const c = document.getElementById('sb-' + side + '-pen-chips');
     if (!c) return;
     const pens = s[side + 'Penalties'] || [];
+    // §6.3.3: wegen des Team-Limits wartende Strafen werden wie wartende
+    // 2+2-Zweitteile mit „– –“ angezeigt (laufen noch nicht).
+    const running = runningPenIds(pens, sbMaxActive);
+    const isWaitingDisp = p => p.waiting || isQueuedByCap(p, running);
     // smart update – only rebuild if count changed
     const existing = c.querySelectorAll('.sb-pen-chip[data-id]');
     const existingMap = {};
@@ -208,14 +213,14 @@ function renderScoreboard(s) {
     pens.forEach(p => {
       const idStr = String(p.id);
       if (existingMap[idStr]) {
-        existingMap[idStr].querySelector('.sb-pen-chip-time').textContent = p.waiting ? '– –' : fmt(p.remaining);
+        existingMap[idStr].querySelector('.sb-pen-chip-time').textContent = isWaitingDisp(p) ? '– –' : fmt(p.remaining);
       } else {
         const el = document.createElement('div');
         el.className = 'sb-pen-chip' + (side==='away'?' away':'');
         el.dataset.id = idStr;
         el.innerHTML = `
           <div class="sb-pen-chip-num">#${p.number}</div>
-          <div class="sb-pen-chip-time">${p.waiting ? '– –' : fmt(p.remaining)}</div>
+          <div class="sb-pen-chip-time">${isWaitingDisp(p) ? '– –' : fmt(p.remaining)}</div>
           <div class="sb-pen-chip-type">${typeLabel(p.secs, p)}</div>`;
         c.appendChild(el);
       }
@@ -238,8 +243,13 @@ function renderScoreboard(s) {
       return secs <= 120 ? '2 MIN' : '10 MIN';
     };
 
-    // LEFT: home penalty (shortest active team-strength first, then personal)
-    const homePen = (s.homePenalties||[]).filter(p=>!p.waiting&&!p.personal).sort((a,b)=>a.remaining-b.remaining)[0]
+    // §6.3.3: nur tatsächlich gemessene Strafen sind „aktiv“.
+    const homeRunning = runningPenIds(s.homePenalties || [], sbMaxActive);
+    const awayRunning = runningPenIds(s.awayPenalties || [], sbMaxActive);
+    const isWaitingDisp = (p, running) => p.waiting || isQueuedByCap(p, running);
+
+    // LEFT: home penalty (shortest measured first, then personal/waiting)
+    const homePen = (s.homePenalties||[]).filter(p=>homeRunning.has(p.id)).sort((a,b)=>a.remaining-b.remaining)[0]
                  || (s.homePenalties||[]).filter(p=>!p.waiting).sort((a,b)=>a.remaining-b.remaining)[0];
     let leftHtml = '';
     if (homePen) {
@@ -248,16 +258,16 @@ function renderScoreboard(s) {
           <div class="sb-ticker-label" style="color:${hc}">STRAFE HEIM</div>
           <div class="sb-ticker-value">#${homePen.number} · ${typeLabel(homePen.secs,homePen)}</div>
         </div>
-        <div class="sb-ticker-time" style="color:${hc};margin-left:auto">${homePen.waiting?'– –':fmt(homePen.remaining)}</div>`;
+        <div class="sb-ticker-time" style="color:${hc};margin-left:auto">${isWaitingDisp(homePen,homeRunning)?'– –':fmt(homePen.remaining)}</div>`;
     }
 
-    // RIGHT: away penalty (shortest active team-strength first, then personal)
-    const awayPen = (s.awayPenalties||[]).filter(p=>!p.waiting&&!p.personal).sort((a,b)=>a.remaining-b.remaining)[0]
+    // RIGHT: away penalty (shortest measured first, then personal/waiting)
+    const awayPen = (s.awayPenalties||[]).filter(p=>awayRunning.has(p.id)).sort((a,b)=>a.remaining-b.remaining)[0]
                  || (s.awayPenalties||[]).filter(p=>!p.waiting).sort((a,b)=>a.remaining-b.remaining)[0];
     let rightHtml = '';
     if (awayPen) {
       rightHtml = `
-        <div class="sb-ticker-time" style="color:${ac};margin-right:auto">${awayPen.waiting?'– –':fmt(awayPen.remaining)}</div>
+        <div class="sb-ticker-time" style="color:${ac};margin-right:auto">${isWaitingDisp(awayPen,awayRunning)?'– –':fmt(awayPen.remaining)}</div>
         <div style="display:flex;flex-direction:column;gap:1px;text-align:right">
           <div class="sb-ticker-label" style="color:${ac}">STRAFE GAST</div>
           <div class="sb-ticker-value">#${awayPen.number} · ${typeLabel(awayPen.secs,awayPen)}</div>
@@ -271,8 +281,8 @@ function renderScoreboard(s) {
     }
 
     // CENTER: Power Play, Timeout, or empty
-    const homePens = teamStrengthPensS(s.homePenalties).length;
-    const awayPens = teamStrengthPensS(s.awayPenalties).length;
+    const homePens = teamStrengthPensS(s.homePenalties, s).length;
+    const awayPens = teamStrengthPensS(s.awayPenalties, s).length;
     const hasPenAction = homePen || awayPen || homePens !== awayPens || s.activeTimeout;
 
     let midHtml = '';
@@ -283,8 +293,9 @@ function renderScoreboard(s) {
         <div class="sb-ticker-time" style="color:var(--orange,#ff9500)">${fmt(s.activeTimeout.remaining)}</div>
         <div class="sb-ticker-value" style="color:rgba(255,255,255,.5)">${toTeam}</div>`;
     } else if (homePens !== awayPens) {
-      const ppHome = homePens < awayPens ? 5 : 5 - (homePens - awayPens);
-      const ppAway = awayPens < homePens ? 5 : 5 - (awayPens - homePens);
+      const base = sbMaxActive === 1 ? 3 : 5;   // Feldspieler ohne Torwart
+      const ppHome = homePens < awayPens ? base : base - (homePens - awayPens);
+      const ppAway = awayPens < homePens ? base : base - (awayPens - homePens);
       midHtml = `
         <div class="sb-ticker-mid-label">POWER PLAY</div>
         <div style="display:flex;align-items:baseline;gap:4px">
