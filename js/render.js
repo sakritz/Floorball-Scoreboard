@@ -661,7 +661,7 @@ function renderEvents() {
     let icon, main, sub;
     if (ev.type === 'goal') {
       const teamName = ev.side === 'home' ? S.homeName : S.awayName;
-      icon = '<span class="ph-icon ph-lg"><svg><use href="#ph-flag-pennant"/></svg></span>';
+      icon = '<span class="ph-icon ph-lg"><svg><use href="#icon-floorball-ball"/></svg></span>';
       if (ev.data.goalType === 'own') {
         main = `EIGENTOR · ${teamName}`;
         sub  = 'ET';
@@ -675,7 +675,7 @@ function renderEvents() {
       }
     } else if (ev.type === 'penalty') {
       const teamName = ev.side === 'home' ? S.homeName : S.awayName;
-      icon = '<span class="ph-icon ph-lg"><svg><use href="#ph-warning-circle"/></svg></span>';
+      icon = '<span class="ph-icon ph-lg"><svg><use href="#ph-flag-pennant"/></svg></span>';
       main = `STRAFE · ${teamName}`;
       sub = `#${ev.data.number} · ${ev.data.penType}` + (ev.data.penReason ? ` · ${ev.data.penReason}` : '');
     } else if (ev.type === 'timeout') {
