@@ -564,6 +564,8 @@ function toggleTickerVisibility() {
       if (tog)   tog.style.background = 'var(--lime)';
       if (label) label.textContent = 'AN';
     }
+    const savedEntryMode = localStorage.getItem('ct-player-entry-mode');
+    if (savedEntryMode === 'name') applyEntryMode('name');
   } catch(e) {}
 })();
 
@@ -608,6 +610,55 @@ function toggleGoalAnim() {
   if (label) label.textContent = on ? 'AN' : 'AUS';
   try { localStorage.setItem('ct-goal-anim-on', on ? '1' : '0'); } catch(e) {}
   pushAndRender();
+}
+
+// ── Entry Mode (Nummern / Namen) ──
+function applyEntryMode(mode) {
+  const isName = mode === 'name';
+  // Penalty inputs
+  ['home', 'away'].forEach(side => {
+    const inp   = document.getElementById('ct-' + side + '-pen-num');
+    const lbl   = document.getElementById('ct-' + side + '-pen-num-label');
+    if (inp) {
+      inp.type        = isName ? 'text' : 'number';
+      inp.placeholder = isName ? 'Name' : '#';
+      if (isName) { inp.removeAttribute('min'); inp.removeAttribute('max'); }
+      else        { inp.min = '2'; inp.max = '99'; }
+    }
+    if (lbl) lbl.textContent = isName ? 'Name' : '#';
+  });
+  // Goal dialog inputs
+  const scorer     = document.getElementById('ct-goal-scorer');
+  const assist     = document.getElementById('ct-goal-assist');
+  const scorerLbl  = document.getElementById('ct-goal-scorer-label');
+  const assistLbl  = document.getElementById('ct-goal-assist-label');
+  if (scorer) {
+    scorer.type        = isName ? 'text' : 'number';
+    scorer.placeholder = isName ? 'z.B. Müller' : 'z.B. 17';
+    if (isName) { scorer.removeAttribute('min'); scorer.removeAttribute('max'); }
+    else        { scorer.min = '0'; scorer.max = '99'; }
+  }
+  if (assist) {
+    assist.type        = isName ? 'text' : 'number';
+    assist.placeholder = isName ? 'z.B. Müller' : 'z.B. 9';
+    if (isName) { assist.removeAttribute('min'); assist.removeAttribute('max'); }
+    else        { assist.min = '0'; assist.max = '99'; }
+  }
+  if (scorerLbl) scorerLbl.textContent = isName ? 'SCHÜTZE (NAME)'           : 'SCHÜTZE (NUMMER)';
+  if (assistLbl) assistLbl.textContent = isName ? 'VORLAGE (NAME, optional)' : 'VORLAGE (NUMMER, optional)';
+  // Toggle UI
+  const knob  = document.getElementById('ct-entry-mode-knob');
+  const tog   = document.getElementById('ct-entry-mode-toggle');
+  const label = document.getElementById('ct-entry-mode-label');
+  if (knob)  knob.style.left      = isName ? '22px' : '2px';
+  if (tog)   tog.style.background  = isName ? 'var(--lime)' : 'var(--ct-muted)';
+  if (label) label.textContent    = isName ? 'NAMEN' : 'NUMMERN';
+}
+function toggleEntryMode() {
+  const cur = localStorage.getItem('ct-player-entry-mode') || 'number';
+  const next = cur === 'name' ? 'number' : 'name';
+  try { localStorage.setItem('ct-player-entry-mode', next); } catch(e) {}
+  applyEntryMode(next);
 }
 function fmtClock(secs) {
   const m = Math.floor(Math.abs(secs)/60).toString().padStart(2,'0');
