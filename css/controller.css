@@ -68,7 +68,7 @@ body.light-mode #view-controller .ct-bar-toggle.start {
   /* lime accent line at very top */
   box-shadow: none;
   border-bottom: 3px solid transparent;
-  border-image: linear-gradient(to right, var(--ct-home, #c8ff00) 50%, var(--ct-away, #22c55e) 50%) 1;
+  border-image: linear-gradient(to right, #c8ff00 50%, #22c55e 50%) 1;
   padding: 0 24px;
   height: 64px;
   display: flex; align-items: center; justify-content: space-between;
