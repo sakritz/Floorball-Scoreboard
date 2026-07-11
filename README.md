@@ -140,3 +140,5 @@ Die Spielzeiten, Strafzeiten und Auszeiten entsprechen den **Floorball Spielrege
 ## Lizenz
 
 MIT – frei nutzbar, veränderbar und weitergeben.
+
+The electron releases of this project bundle Node.js/Electron and third-party npm packages under their respective licenses – see `electron/THIRD-PARTY-LICENSES.md`.
