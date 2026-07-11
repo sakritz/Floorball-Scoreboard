@@ -1,3 +1,5 @@
+// Copyright (c) 2026 sakritz — MIT License
+
 const { app, BrowserWindow, globalShortcut, screen, Menu, dialog } = require('electron');
 const path = require('path');
 const APP_ROOT = path.resolve(__dirname, '..');

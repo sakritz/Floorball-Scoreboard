@@ -1,6 +1,7 @@
 /* ── Floorball Scoreboard ──────────────────────────────────────────────
    Controller-Logik: initController, push, Uhr, Score – benötigt: S, BC, saveState, pushUndo, renderController, buildPeriodPills
 ────────────────────────────────────────────────────────────────────── */
+// Copyright (c) 2026 sakritz — MIT License
 
 /* ─── CONTROLLER LOGIC ────────────────────────────────────────────── */
 if (!isScoreboard) {

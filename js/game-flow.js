@@ -1,6 +1,7 @@
 /* ── Floorball Scoreboard ──────────────────────────────────────────────
    Spielfluss: renderController, pushAndRender, Strafen, Perioden, Auszeiten – benötigt: S, BC, push, saveState, pushUndo
 ────────────────────────────────────────────────────────────────────── */
+// Copyright (c) 2026 sakritz — MIT License
 
 /* ─── SPIELFLUSS-AUTOMATIK ─────────────────────────────────────────── */
 

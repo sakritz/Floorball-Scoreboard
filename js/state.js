@@ -2,6 +2,7 @@
    Globale Grundvariablen: isScoreboard, BC (BroadcastChannel), S (State)
    Muss als erstes <script> geladen werden – alle anderen Dateien bauen darauf auf.
 ──────────────────────────────────────────────────────────────────── */
+// Copyright (c) 2026 sakritz — MIT License
 
 /* ─── ROUTING ─────────────────────────────────────────────────────── */
 const isScoreboard = new URLSearchParams(location.search).get('view') === 'scoreboard';
