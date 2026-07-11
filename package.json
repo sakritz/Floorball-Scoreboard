@@ -1,7 +1,9 @@
 {
   "name": "floorball-scoreboard",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "Floorball Scoreboard – Desktop App",
+  "author": "sakritz",
+  "license": "MIT",
   "main": "electron/main.js",
   "scripts": {
     "start": "electron .",
@@ -20,24 +22,25 @@
       "electron/main.js",
       "scoreboard.html",
       "stream.html",
-        "css/**/*",
-        "js/**/*",
-        "img/**/*",
-        "fonts/**/*"
+      "css/**/*",
+      "js/**/*",
+      "img/**/*",
+      "fonts/**/*",
+      "node_modules/**/*"
     ],
     "win": {
       "target": "nsis",
-      "icon": "assets/icon.ico",
+      "icon": "img/icon.ico",
       "signingHashAlgorithms": null,
       "sign": null
     },
     "mac": {
       "target": "dmg",
-      "icon": "assets/icon.icns"
+      "icon": "img/icon.icns"
     },
     "linux": {
       "target": "AppImage",
-      "icon": "assets/icon.png"
+      "icon": "img/icon.png"
     },
     "nsis": {
       "oneClick": false,
@@ -50,7 +53,7 @@
     }
   },
   "devDependencies": {
-    "electron": "^33.0.0",
+    "electron": "^43.1.0",
     "electron-builder": "^25.0.0"
   },
   "dependencies": {
