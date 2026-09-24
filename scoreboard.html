@@ -765,7 +765,7 @@
   <!-- ── TAB: EINSTELLUNGEN ── -->
   <div class="ct-tab-content tab-settings" id="tab-settings">
 
-    <!-- LEFT col: Uhranzeige -->
+    <!-- LEFT col: Anzeige (Uhr, Präsentation, Darstellung) -->
     <div class="ct-settings-col">
 
       <div class="ct-card collapsible">
@@ -840,10 +840,6 @@
         </div>
       </div>
 
-    </div>
-
-    <!-- RIGHT col: Darstellung & Buzzer -->
-    <div class="ct-settings-col">
 
       <div class="ct-card collapsible">
         <div class="ct-card-head neutral"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-sun"/></svg></span>Darstellung</span></div>
@@ -862,8 +858,19 @@
               </div>
             </label>
           </div>
+          <div style="height:1px;background:var(--ct-border);margin:10px 0"></div>
+          <div>
+            <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px">Schriftgröße</div>
+            <div style="font-size:11px;color:var(--ct-muted);letter-spacing:1px;margin-top:2px;margin-bottom:8px">Gilt für Tabs und Tab-Leiste</div>
+            <div id="ct-font-scale-picker" style="display:flex;gap:6px"></div>
+          </div>
         </div>
       </div>
+
+    </div>
+
+    <!-- RIGHT col: Buzzer & Spielbericht -->
+    <div class="ct-settings-col">
 
       <div class="ct-card collapsible">
         <div class="ct-card-head neutral"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-bell"/></svg></span>Buzzer</span></div>

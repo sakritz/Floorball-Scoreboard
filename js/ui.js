@@ -140,6 +140,42 @@ function updateThemeToggleUI(isLight) {
   } catch(e) {}
 })();
 
+// ── Schriftgröße der Tabs (CSS zoom auf .ct-tab-content, siehe controller.css) ──
+const FONT_SCALES = [
+  { zoom: 1,    label: 'Normal' },
+  { zoom: 1.15, label: 'Groß' },
+  { zoom: 1.3,  label: 'Sehr groß' },
+];
+
+function setFontScale(zoom) {
+  document.body.style.setProperty('--ct-fs-zoom', zoom);
+  try { localStorage.setItem('ct-font-scale', zoom); } catch(e) {}
+  renderFontScalePicker(zoom);
+}
+
+function renderFontScalePicker(current) {
+  const el = document.getElementById('ct-font-scale-picker');
+  if (!el) return;
+  el.innerHTML = FONT_SCALES.map(f => {
+    const on = f.zoom === current;
+    return `<button onclick="setFontScale(${f.zoom})" style="flex:1;padding:6px 4px;font-size:11px;font-weight:900;letter-spacing:1px;
+      font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;cursor:pointer;
+      border:1px solid ${on ? 'var(--lime)' : 'var(--ct-border)'};
+      background:${on ? 'rgba(200,255,0,.15)' : 'transparent'};
+      color:${on ? 'var(--lime)' : 'var(--ct-muted2)'};">${f.label}</button>`;
+  }).join('');
+}
+
+(function initFontScale() {
+  let zoom = 1;
+  try {
+    const saved = parseFloat(localStorage.getItem('ct-font-scale'));
+    if (FONT_SCALES.some(f => f.zoom === saved)) zoom = saved;
+  } catch(e) {}
+  document.body.style.setProperty('--ct-fs-zoom', zoom);
+  document.addEventListener('DOMContentLoaded', () => renderFontScalePicker(zoom));
+})();
+
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     const overlay = document.getElementById('setup-overlay');

@@ -58,7 +58,7 @@ Details: siehe `docs/ARCHITECTURE.md` und `README.md`.
 
 - **Controller → Scoreboard:** `BroadcastChannel` (gleicher Browser, gleicher Origin). Die Anzeige läuft über `scoreboard.html?view=scoreboard` bzw. die eingebaute ⧉-Vorschau (PiP).
 - **OBS-Overlay:** nur in Electron. Express auf `127.0.0.1:8080`; Controller POSTet den State an `/api/state`, `stream.html` pollt alle 200 ms. Der `fetch` ist per `location.protocol === 'http:'` abgesichert, damit er unter `file://` nicht stört.
-- **Persistenz:** `localStorage` Key `floorball_state_v2`, inkl. Zeitkorrektur über `_savedAt`. State älter als `STATE_MAX_AGE_MS` (15 min) wird verworfen → Startscreen. Einstellungen liegen unter eigenen Keys (alle in `render.js`, außer wo angegeben): `ct-jersey-vis`, `ct-player-entry-mode`, `ct-ticker-hidden`, `ct-events-tab-on`, `ct-goal-anim-on`; in `ui.js`: `sb-theme`, `ct-tab-area-height`. Für den Startmodus gibt es keinen Key.
+- **Persistenz:** `localStorage` Key `floorball_state_v2`, inkl. Zeitkorrektur über `_savedAt`. State älter als `STATE_MAX_AGE_MS` (15 min) wird verworfen → Startscreen. Einstellungen liegen unter eigenen Keys (alle in `render.js`, außer wo angegeben): `ct-jersey-vis`, `ct-player-entry-mode`, `ct-ticker-hidden`, `ct-events-tab-on`, `ct-goal-anim-on`; in `ui.js`: `sb-theme`, `ct-tab-area-height`, `ct-font-scale` (Zoom der Tabs: 1 / 1.15 / 1.3). Für den Startmodus gibt es keinen Key.
 - **Undo:** patch-basiert (`pushUndo` / `applyUndoPatch`), Tor-Events werden über `eventId` referenziert, nicht über Array-Snapshots.
 - Manche Effekte (Pending-Tor, Toranimation, Auszeit-/Pausen-Overlay) existieren **nur in der Anzeige**, nicht im Controller. Das ist gewollt.
 

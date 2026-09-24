@@ -573,6 +573,7 @@ body.light-mode #view-controller .ct-bar-toggle.start {
   border-bottom: none;
   display: flex; align-items: stretch;
   flex-shrink: 0; height: 44px; padding: 0 4px;
+  zoom: var(--ct-fs-zoom, 1); /* Schriftgröße-Einstellung, siehe setFontScale (ui.js) */
 }
 /* spacer pushes right-group to end */
 .ct-tab-spacer { flex: 1; }
@@ -590,7 +591,8 @@ body.light-mode #view-controller .ct-bar-toggle.start {
 .ct-tab.right { border-left: 1px solid var(--ct-border); }
 
 /* ── TAB CONTENT ── */
-.ct-tab-content { flex: 1; overflow: hidden; min-height: 0; display: none; }
+.ct-tab-content { flex: 1; overflow: hidden; min-height: 0; display: none;
+  zoom: var(--ct-fs-zoom, 1); } /* Schriftgröße-Einstellung, siehe setFontScale (ui.js) */
 /* spiel tab scrolls as one unit */
 .ct-tab-content.active { display: flex; }
 
