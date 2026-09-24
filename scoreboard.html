@@ -317,7 +317,7 @@
   <div class="ct-topbar">
     <div class="ct-logo">
       <img src="img/icon.png" style="height:38px;width:38px;object-fit:contain;flex-shrink:0" alt="Floorball Logo">
-      <span style="font-weight:600;font-style:italic;color:var(--lime)">FLOORBALL</span> <span style="font-weight:600;font-style:italic;color:var(--cyan)">SCOREBOARD</span>
+      <span style="font-weight:600;font-style:italic;color:var(--lime-t)">FLOORBALL</span> <span style="font-weight:600;font-style:italic;color:var(--cyan-t)">SCOREBOARD</span>
     </div>
     <div class="ct-top-right">
       <div class="ct-period-chip" id="ct-period-chip">1. DRITTEL</div>
@@ -338,8 +338,8 @@
       <div class="ct-m-logo ct-m-only" id="ct-m-home-logo"></div>
       <div style="min-width:0">
         <div class="ct-bar-name" id="ct-bar-home-name">HEIMTEAM</div>
-        <div id="ct-home-pen-count" style="font-size:10px;letter-spacing:2px;color:var(--red);margin-top:4px;display:none;font-weight:700">● STRAFE</div>
-        <div id="ct-home-to-running" style="font-size:10px;letter-spacing:2px;color:var(--orange);margin-top:4px;display:none;font-weight:700"><span class="ph-icon" style="vertical-align:middle"><svg style="width:11px;height:11px"><use href="#ph-pause-circle"/></svg></span> AUSZEIT</div>
+        <div id="ct-home-pen-count" style="font-size:10px;letter-spacing:2px;color:var(--red-t);margin-top:4px;display:none;font-weight:700">● STRAFE</div>
+        <div id="ct-home-to-running" style="font-size:10px;letter-spacing:2px;color:var(--orange-t);margin-top:4px;display:none;font-weight:700"><span class="ph-icon" style="vertical-align:middle"><svg style="width:11px;height:11px"><use href="#ph-pause-circle"/></svg></span> AUSZEIT</div>
       </div>
       <div class="ct-bar-scorerow">
         <button class="ct-bar-adj minus" onclick="adjScore('home',-1)"><span>−</span></button>
@@ -354,15 +354,15 @@
       <div id="ct-countdown-bar" style="display:none;flex-direction:column;align-items:center;gap:3px;margin-bottom:4px">
         <div style="font-size:9px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,.3);text-transform:uppercase">Anpfiff in</div>
         <div style="display:flex;align-items:center;gap:8px">
-          <div id="ct-countdown-display" style="font-size:18px;font-weight:900;letter-spacing:2px;color:var(--lime);font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-variant-numeric:tabular-nums">--:--</div>
+          <div id="ct-countdown-display" style="font-size:18px;font-weight:900;letter-spacing:2px;color:var(--lime-t);font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-variant-numeric:tabular-nums">--:--</div>
           <button onclick="stopCountdown()" style="font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 8px;background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.4);cursor:pointer;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase" title="Countdown beenden">✕</button>
         </div>
       </div>
       <!-- Mini secondary clock: shown during pause or timeout -->
       <div id="ct-secondary-clock" style="display:none;flex-direction:column;align-items:center;gap:2px;margin-bottom:2px">
-        <div id="ct-secondary-label" style="font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--orange)">AUSZEIT</div>
+        <div id="ct-secondary-label" style="font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--orange-t)">AUSZEIT</div>
         <div style="display:flex;align-items:center;gap:8px">
-          <div id="ct-secondary-time" style="font-size:28px;font-weight:900;letter-spacing:2px;font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-variant-numeric:tabular-nums;color:var(--orange)">0:30</div>
+          <div id="ct-secondary-time" style="font-size:28px;font-weight:900;letter-spacing:2px;font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-variant-numeric:tabular-nums;color:var(--orange-t)">0:30</div>
           <button id="ct-secondary-end-btn" onclick="endSecondaryTimer()" style="font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 8px;background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.4);cursor:pointer;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase">✕</button>
         </div>
       </div>
@@ -376,8 +376,8 @@
       <div class="ct-m-logo ct-m-only" id="ct-m-away-logo"></div>
       <div style="min-width:0;text-align:right;word-break:break-word;overflow-wrap:break-word">
         <div class="ct-bar-name" id="ct-bar-away-name">GASTTEAM</div>
-        <div id="ct-away-pen-count" style="font-size:10px;letter-spacing:2px;color:var(--red);margin-top:4px;display:none;font-weight:700">STRAFE ●</div>
-        <div id="ct-away-to-running" style="font-size:10px;letter-spacing:2px;color:var(--orange);margin-top:4px;display:none;font-weight:700">AUSZEIT <span class="ph-icon" style="vertical-align:middle"><svg style="width:11px;height:11px"><use href="#ph-pause-circle"/></svg></span></div>
+        <div id="ct-away-pen-count" style="font-size:10px;letter-spacing:2px;color:var(--red-t);margin-top:4px;display:none;font-weight:700">STRAFE ●</div>
+        <div id="ct-away-to-running" style="font-size:10px;letter-spacing:2px;color:var(--orange-t);margin-top:4px;display:none;font-weight:700">AUSZEIT <span class="ph-icon" style="vertical-align:middle"><svg style="width:11px;height:11px"><use href="#ph-pause-circle"/></svg></span></div>
       </div>
       <div class="ct-bar-scorerow">
         <button class="ct-bar-adj minus" onclick="adjScore('away',-1)"><span>−</span></button>
@@ -404,7 +404,7 @@
     <div class="ct-tab"        onclick="switchTab('teams')"    id="tab-btn-teams"><span class="ph-icon ph-sm"><svg><use href="#ph-users"/></svg></span> Teams</div>
     <div class="ct-tab-spacer"></div>
     <div class="ct-tab right"  onclick="switchTab('settings')" id="tab-btn-settings"><span class="ph-icon ph-sm"><svg><use href="#ph-gear"/></svg></span> Einstellungen</div>
-    <div class="ct-tab right"  onclick="switchTab('danger')"   id="tab-btn-danger" style="color:var(--red);opacity:.7"><span class="ph-icon ph-sm"><svg><use href="#ph-skull"/></svg></span> Danger Zone</div>
+    <div class="ct-tab right"  onclick="switchTab('danger')"   id="tab-btn-danger" style="color:var(--red-t);opacity:.7"><span class="ph-icon ph-sm"><svg><use href="#ph-skull"/></svg></span> Danger Zone</div>
   </div>
 
   <!-- PiP SCOREBOARD PREVIEW – real mini scoreboard, no iframe -->
@@ -616,7 +616,7 @@
               <button class="btn btn-ghost btn-sm" style="width:auto" onclick="removeLogo('home')">✕</button>
             </div>
             <div id="ct-home-color-suggestions" style="display:none;margin-top:8px">
-              <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:var(--ct-muted);margin-bottom:5px">FARBEN AUS LOGO</div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:var(--ct-muted-t);margin-bottom:5px">FARBEN AUS LOGO</div>
               <div id="ct-home-swatches" style="display:flex;flex-wrap:wrap;gap:5px"></div>
             </div>
           </div>
@@ -662,7 +662,7 @@
               <button class="btn btn-ghost btn-sm" style="width:auto" onclick="removeLogo('away')">✕</button>
             </div>
             <div id="ct-away-color-suggestions" style="display:none;margin-top:8px">
-              <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:var(--ct-muted);margin-bottom:5px">FARBEN AUS LOGO</div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:var(--ct-muted-t);margin-bottom:5px">FARBEN AUS LOGO</div>
               <div id="ct-away-swatches" style="display:flex;flex-wrap:wrap;gap:5px"></div>
             </div>
           </div>
@@ -741,7 +741,7 @@
                   <div class="ps-score-label" id="ct-ps-home-label">HEIM</div>
                   <div class="ps-score-num" id="ct-ps-home-score" style="color:var(--ct-home,#c8ff00)">0</div>
                 </div>
-                <div style="font-size:20px;color:var(--ct-muted);font-weight:300">:</div>
+                <div style="font-size:20px;color:var(--ct-muted-t);font-weight:300">:</div>
                 <div style="text-align:right">
                   <div class="ps-score-label" id="ct-ps-away-label">GAST</div>
                   <div class="ps-score-num" id="ct-ps-away-score" style="color:var(--ct-away,#22c55e)">0</div>
@@ -771,7 +771,7 @@
       <div class="ct-card collapsible">
         <div class="ct-card-head neutral"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-clock"/></svg></span>Uhranzeige</span></div>
         <div class="ct-card-body">
-          <div style="font-size:11px;color:var(--ct-muted);letter-spacing:1px;line-height:1.5">
+          <div style="font-size:11px;color:var(--ct-muted-t);letter-spacing:1px;line-height:1.5">
             Steuerung und Präsentation separat einstellbar.
           </div>
           <div style="display:flex;flex-direction:column;gap:12px;margin-top:2px">
@@ -847,7 +847,7 @@
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
             <div>
               <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px">Hell-Modus (Controller)</div>
-              <div style="font-size:11px;color:var(--ct-muted);letter-spacing:1px;margin-top:2px">Scoreboard bleibt immer dunkel</div>
+              <div style="font-size:11px;color:var(--ct-muted-t);letter-spacing:1px;margin-top:2px">Scoreboard bleibt immer dunkel</div>
             </div>
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex-shrink:0">
               <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--ct-muted2)" id="ct-theme-label">AUS</div>
@@ -861,7 +861,7 @@
           <div style="height:1px;background:var(--ct-border);margin:10px 0"></div>
           <div>
             <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px">Schriftgröße</div>
-            <div style="font-size:11px;color:var(--ct-muted);letter-spacing:1px;margin-top:2px;margin-bottom:8px">Gilt für Tabs und Tab-Leiste</div>
+            <div style="font-size:11px;color:var(--ct-muted-t);letter-spacing:1px;margin-top:2px;margin-bottom:8px">Gilt für Tabs und Tab-Leiste</div>
             <div id="ct-font-scale-picker" style="display:flex;gap:6px"></div>
           </div>
         </div>
@@ -934,7 +934,7 @@
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
             <div>
               <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px">Beteiligte erfassen als</div>
-              <div style="font-size:11px;color:var(--ct-muted);letter-spacing:1px;margin-top:2px">Nummern im Spiel, Namen im Training</div>
+              <div style="font-size:11px;color:var(--ct-muted-t);letter-spacing:1px;margin-top:2px">Nummern im Spiel, Namen im Training</div>
             </div>
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex-shrink:0">
               <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--ct-muted2)" id="ct-entry-mode-label">NUMMERN</div>
@@ -981,7 +981,7 @@
               Jede Aktion kann einzeln rückgängig gemacht werden — unabhängig von ihrer Position im Verlauf. Spätere Aktionen bleiben dabei unangetastet. <strong style="color:var(--ct-text)">Strg+Z</strong> macht immer den letzten Schritt rückgängig.
             </div>
             <div id="ct-undo-stack-list" style="display:flex;flex-direction:column;gap:3px;max-height:200px;overflow-y:auto">
-              <div style="color:var(--ct-muted);font-size:12px;text-align:center;padding:12px 0;letter-spacing:1px">Keine Aktionen im Stack</div>
+              <div style="color:var(--ct-muted-t);font-size:12px;text-align:center;padding:12px 0;letter-spacing:1px">Keine Aktionen im Stack</div>
             </div>
           </div>
         </div>

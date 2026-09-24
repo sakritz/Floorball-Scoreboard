@@ -93,7 +93,7 @@ function renderUndoStack() {
   if (!list) return;
   const n = _undoStack.length;
   if (!n) {
-    list.innerHTML = '<div style="color:var(--ct-muted);font-size:12px;text-align:center;padding:12px 0;letter-spacing:1px">Keine Aktionen im Stack</div>';
+    list.innerHTML = '<div style="color:var(--ct-muted-t);font-size:12px;text-align:center;padding:12px 0;letter-spacing:1px">Keine Aktionen im Stack</div>';
     return;
   }
   list.innerHTML = '';
@@ -111,7 +111,7 @@ function renderUndoStack() {
 
     const icon = document.createElement('span');
     icon.textContent = '↩';
-    icon.style.cssText = 'font-size:13px;color:var(--ct-muted);flex-shrink:0';
+    icon.style.cssText = 'font-size:13px;color:var(--ct-muted-t);flex-shrink:0';
 
     const lbl = document.createElement('span');
     lbl.textContent = entry.label;
@@ -125,7 +125,7 @@ function renderUndoStack() {
     if (d === 0) {
       const badge = document.createElement('span');
       badge.textContent = 'LETZTER';
-      badge.style.cssText = 'font-size:9px;font-weight:700;letter-spacing:2px;color:var(--orange);' +
+      badge.style.cssText = 'font-size:9px;font-weight:700;letter-spacing:2px;color:var(--orange-t);' +
         'border:1px solid rgba(255,140,0,.35);padding:2px 6px;flex-shrink:0;font-family:Barlow Condensed,sans-serif';
       row.appendChild(badge);
     }

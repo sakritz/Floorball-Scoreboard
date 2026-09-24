@@ -83,7 +83,7 @@
   .ct-bar-clock { font-size: clamp(64px, 21vw, 96px) !important; letter-spacing: 2px; }
   .ct-m-clock-label {
     font-size: 12px; font-weight: 700; letter-spacing: 5px; text-transform: uppercase;
-    color: var(--ct-muted); margin-top: -4px; justify-content: center;
+    color: var(--ct-muted-t); margin-top: -4px; justify-content: center;
   }
   .ct-bar-toggle {
     font-size: 17px !important;
@@ -200,7 +200,7 @@
   .ct-mnav-lbl {
     font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
   }
-  .ct-mnav-item.active { color: var(--lime); }
+  .ct-mnav-item.active { color: var(--lime-t); }
   .ct-mnav-item.active::before {
     content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
     width: 26px; height: 3px; border-radius: 2px; background: var(--lime);
@@ -224,7 +224,7 @@
 .ct-mehr-grip { width: 40px; height: 4px; border-radius: 2px; background: var(--ct-border); margin: 2px auto 10px; }
 .ct-mehr-title {
   font-size: 11px; font-weight: 900; letter-spacing: 4px; text-transform: uppercase;
-  color: var(--ct-muted); margin-bottom: 4px;
+  color: var(--ct-muted-t); margin-bottom: 4px;
 }
 .ct-mehr-row {
   display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
@@ -236,5 +236,5 @@
 .ct-mehr-row:active { filter: brightness(1.15); }
 .ct-mehr-row .ph-icon { color: var(--ct-muted2); }
 .ct-mehr-row .ph-icon svg { width: 20px; height: 20px; }
-.ct-mehr-row.danger { color: var(--red); }
-.ct-mehr-row.danger .ph-icon { color: var(--red); }
+.ct-mehr-row.danger { color: var(--red-t); }
+.ct-mehr-row.danger .ph-icon { color: var(--red-t); }
