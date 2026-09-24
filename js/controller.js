@@ -298,7 +298,7 @@ function adjScore(side, delta) {
         checkGoldenGoal(side);
       } else {
         S.pendingGoal = { side, scorer: null, assist: null };
-        checkPowerPlayPenalty(side, null); // null = no goalType known (not penalty/own)
+        checkPowerPlayPenalty(side, null); // null = normal goal
         pushAndRender();
       }
     }
@@ -318,12 +318,13 @@ function adjScore(side, delta) {
  * After a goal: check if scoring team was in power play and offer to remove
  * the shortest active penalty from the opposing team.
  * Rules:
- *  - Only when goalType is normal (not 'penalty' / 'own')
+ *  - Not for 'penalty' goals (SPRGK 6.3.6); own goals ('own') count like normal goals
  *  - Only when opposing team has strictly more active penalties (true PP)
  *  - Only the shortest non-waiting penalty is offered for removal
  */
 function checkPowerPlayPenalty(scoringSide, goalType) {
-  if (goalType === 'penalty' || goalType === 'own') return;
+  // SPRGK 6.3.6: Strafschuss-Tor hebt die Strafe nicht auf; Eigentor (7.2.1) schon.
+  if (goalType === 'penalty') return;
 
   const oppSide = scoringSide === 'home' ? 'away' : 'home';
   const myPens  = teamStrengthPens(scoringSide).length;
