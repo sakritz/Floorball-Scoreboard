@@ -1,15 +1,14 @@
 // Copyright (c) 2026 sakritz — MIT License
 
-const { app, BrowserWindow, globalShortcut, screen, Menu, dialog } = require('electron');
+const { app, BrowserWindow, screen, Menu, dialog, clipboard, shell } = require('electron');
 const path = require('path');
 const APP_ROOT = path.resolve(__dirname, '..');
 const express = require('express');
 
-// Menüleiste komplett entfernen
-Menu.setApplicationMenu(null);
-
 // ── Lokaler HTTP-Server für OBS ───────────────────────────────────────────────
 const PORT = 8080;
+const ICON = path.join(__dirname, '..', 'img', 'icon.png');
+const GITHUB_URL = 'https://github.com/sakritz/Floorball-Scoreboard';
 let server = null;
 
 function startLocalServer() {
@@ -66,7 +65,7 @@ function createControlWindow() {
     minWidth: 1100,
     minHeight: 700,
     title: 'Floorball Scoreboard – Steuerung',
-    icon: path.join(__dirname, 'assets/icon.png'),
+    icon: ICON,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -75,6 +74,13 @@ function createControlWindow() {
 
   // Über den lokalen Server laden – damit fetch('/api/state') funktioniert
   controlWindow.loadURL(`http://localhost:${PORT}/scoreboard.html`);
+
+  // Esc beendet den Vollbildmodus (nur wenn das Fenster Fokus hat)
+  controlWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.type === 'keyDown' && input.key === 'Escape' && controlWindow.isFullScreen()) {
+      controlWindow.setFullScreen(false);
+    }
+  });
 
   // Entwicklerwerkzeuge nur im Dev-Modus öffnen
   if (process.env.NODE_ENV === 'development') {
@@ -116,7 +122,7 @@ function createDisplayWindow() {
     width: targetDisplay.bounds.width,
     height: targetDisplay.bounds.height,
     title: 'Floorball Scoreboard – Anzeige',
-    icon: path.join(__dirname, 'assets/icon.png'),
+    icon: ICON,
     frame: false,
     alwaysOnTop: true,
     fullscreen: true,
@@ -126,6 +132,11 @@ function createDisplayWindow() {
     },
   });
 
+  displayWindow.removeMenu();
+  displayWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.type === 'keyDown' && input.key === 'F12') toggleDisplayWindow();
+  });
+
   displayWindow.loadURL(`http://localhost:${PORT}/scoreboard.html?view=scoreboard`);
 
   displayWindow.on('closed', () => {
@@ -133,37 +144,79 @@ function createDisplayWindow() {
   });
 }
 
+// Anzeige-Fenster öffnen bzw. schließen (Menü und F12)
+function toggleDisplayWindow() {
+  if (displayWindow) displayWindow.close();
+  else createDisplayWindow();
+}
+
+// ── Anwendungsmenü ────────────────────────────────────────────────────────────
+function buildMenu() {
+  const template = [
+    {
+      label: 'Datei',
+      submenu: [
+        { label: 'Anzeige öffnen/schließen', accelerator: 'F12', click: toggleDisplayWindow },
+        { type: 'separator' },
+        { label: 'Beenden', accelerator: 'CmdOrCtrl+Q', click: () => { if (controlWindow) controlWindow.close(); } },
+      ],
+    },
+    {
+      label: 'Ansicht',
+      submenu: [
+        { label: 'Vollbild', role: 'togglefullscreen' },
+        { type: 'separator' },
+        { label: 'Vergrößern', role: 'zoomIn' },
+        { label: 'Verkleinern', role: 'zoomOut' },
+        { label: 'Zoom zurücksetzen', role: 'resetZoom' },
+        ...(process.env.NODE_ENV === 'development'
+          ? [{ type: 'separator' }, { label: 'Entwicklerwerkzeuge', role: 'toggleDevTools' }]
+          : []),
+      ],
+    },
+    {
+      label: 'Hilfe',
+      submenu: [
+        {
+          label: 'OBS-Overlay-Adresse kopieren',
+          click: () => {
+            clipboard.writeText(`http://localhost:${PORT}/stream.html`);
+            dialog.showMessageBox(controlWindow, {
+              type: 'info',
+              buttons: ['OK'],
+              title: 'Floorball Scoreboard',
+              message: 'Adresse kopiert',
+              detail: `http://localhost:${PORT}/stream.html\n\nAls Browserquelle in OBS einfügen.`,
+            });
+          },
+        },
+        { label: 'Projekt auf GitHub', click: () => shell.openExternal(GITHUB_URL) },
+        { type: 'separator' },
+        {
+          label: 'Über Floorball Scoreboard',
+          click: () => dialog.showMessageBox(controlWindow, {
+            type: 'info',
+            buttons: ['OK'],
+            title: 'Über Floorball Scoreboard',
+            message: `Floorball Scoreboard ${app.getVersion()}`,
+            detail: 'Open Source (MIT-Lizenz)\n© 2026 sakritz\n' + GITHUB_URL,
+          }),
+        },
+      ],
+    },
+  ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
 // ── App-Start ─────────────────────────────────────────────────────────────────
 app.whenReady().then(() => {
   startLocalServer();
+  buildMenu();
 
   // Kurz warten bis der Server bereit ist, dann Fenster öffnen
   setTimeout(() => {
     createControlWindow();
   }, 200);
-
-  // F11 → Steuer-Panel Fullscreen umschalten
-  globalShortcut.register('F11', () => {
-    if (controlWindow) {
-      controlWindow.setFullScreen(!controlWindow.isFullScreen());
-    }
-  });
-
-  // F12 → Display-Fenster auf zweitem Monitor öffnen/schließen
-  globalShortcut.register('F12', () => {
-    if (displayWindow) {
-      displayWindow.close();
-    } else {
-      createDisplayWindow();
-    }
-  });
-
-  // Escape → Fullscreen beenden
-  globalShortcut.register('Escape', () => {
-    if (controlWindow && controlWindow.isFullScreen()) {
-      controlWindow.setFullScreen(false);
-    }
-  });
 });
 
 // ── App beenden wenn alle Fenster geschlossen (außer macOS) ──────────────────
@@ -174,9 +227,4 @@ app.on('window-all-closed', () => {
 
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createControlWindow();
-});
-
-// ── Tastenkürzel freigeben beim Beenden ───────────────────────────────────────
-app.on('will-quit', () => {
-  globalShortcut.unregisterAll();
 });

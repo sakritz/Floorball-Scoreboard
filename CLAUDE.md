@@ -78,7 +78,7 @@ npm run build:win               # Windows-Installer (dist/)
 
 Build-Hinweise (Windows): Scheitert electron-builder beim Entpacken von winCodeSign mit Symlink-Fehler → Windows-Entwicklermodus aktivieren oder als Admin bauen. Kein Code-Signing-Zertifikat vorhanden. Für Releases nur die `Setup *.exe` hochladen.
 
-Electron-Shortcuts: `F12` Anzeige auf zweitem Monitor, `F11` Fullscreen Controller, `Esc` Fullscreen beenden.
+Electron-Menü (Datei / Ansicht / Hilfe, in `electron/main.js` als `buildMenu()`): Shortcuts sind Menü-Accelerators bzw. `before-input-event` und gelten nur bei fokussierter App, **keine** globalen Shortcuts. `F12` Anzeige auf zweitem Monitor, `F11` Fullscreen Controller, `Esc` Fullscreen beenden. Hilfe-Menü: OBS-Adresse kopieren, GitHub, Über.
 App-Shortcuts (bewusst minimal): `Space` Uhr, `H`/`G` Tor Heim/Gast (`Shift` = −1), `1–9` sichtbare Tabs, `Strg+Z` Undo, `?` Shortcut-Overlay, `Esc` schließt Dialoge. Der Listener-Guard `initController._listenersBound` verhindert doppelte Registrierung.
 
 ## Floorball-Regeln (Domäne)
