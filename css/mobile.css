@@ -105,8 +105,10 @@
   #ct-countdown-bar, #ct-secondary-clock { align-self: center; }
 
   /* ── TEAM-LEISTEN ── */
-  .ct-team-bar {
-    width: 100%; gap: 12px; flex-wrap: nowrap;
+  .ct-team-bar,
+  .ct-team-bar.home,
+  .ct-team-bar.away {
+    flex-direction: row; width: 100%; gap: 12px; flex-wrap: nowrap;
     padding: 14px 14px 14px 18px;
     background: var(--ct-card);
     border: 1px solid var(--ct-border);
@@ -132,13 +134,10 @@
   .ct-team-bar .ct-bar-name { font-size: 19px !important; letter-spacing: 1.5px; }
   .ct-team-bar.away .ct-bar-name { text-align: left !important; }
 
-  /* HOME: DOM = logo, –, score, +, name  →  visuell: logo, name … –, score, + */
-  .ct-team-bar.home > div:not(.ct-m-logo):not(.ct-bar-score) { order: 1; }
-  .ct-team-bar.home .ct-bar-adj.minus { order: 2; margin-left: auto; }
-  .ct-team-bar.home .ct-bar-score     { order: 3; }
-  .ct-team-bar.home .ct-bar-adj.plus  { order: 4; }
-  /* AWAY: DOM = logo, name, –, score, +  →  Score-Gruppe nur nach rechts schieben */
-  .ct-team-bar.away .ct-bar-adj.minus { margin-left: auto; }
+  /* HOME: DOM = logo, name, scorerow  →  Score-Gruppe nach rechts schieben */
+  .ct-team-bar.home .ct-bar-scorerow { margin-left: auto; }
+  /* AWAY: DOM = logo, name, scorerow  →  Score-Gruppe nach rechts schieben */
+  .ct-team-bar.away .ct-bar-scorerow { margin-left: auto; }
 
   .ct-team-bar .ct-bar-score {
     font-size: 44px !important; min-width: 46px; line-height: 1;

@@ -333,16 +333,18 @@
   <!-- ALWAYS-VISIBLE CONTROL BAR: scores + clock -->
   <div class="ct-control-bar">
 
-    <!-- HOME: [−] [Score] [+] [Name + indicators] -->
+    <!-- HOME: [Name + indicators] above [−] [Score] [+] -->
     <div class="ct-team-bar home">
       <div class="ct-m-logo ct-m-only" id="ct-m-home-logo"></div>
-      <button class="ct-bar-adj minus" onclick="adjScore('home',-1)"><span>−</span></button>
-      <div class="ct-bar-score" id="ct-home-score">0</div>
-      <button class="ct-bar-adj plus home" onclick="adjScore('home',1)"><span>+</span></button>
       <div style="min-width:0">
         <div class="ct-bar-name" id="ct-bar-home-name">HEIMTEAM</div>
         <div id="ct-home-pen-count" style="font-size:10px;letter-spacing:2px;color:var(--red);margin-top:4px;display:none;font-weight:700">● STRAFE</div>
         <div id="ct-home-to-running" style="font-size:10px;letter-spacing:2px;color:var(--orange);margin-top:4px;display:none;font-weight:700"><span class="ph-icon" style="vertical-align:middle"><svg style="width:11px;height:11px"><use href="#ph-pause-circle"/></svg></span> AUSZEIT</div>
+      </div>
+      <div class="ct-bar-scorerow">
+        <button class="ct-bar-adj minus" onclick="adjScore('home',-1)"><span>−</span></button>
+        <div class="ct-bar-score" id="ct-home-score">0</div>
+        <button class="ct-bar-adj plus home" onclick="adjScore('home',1)"><span>+</span></button>
       </div>
     </div>
 
@@ -369,7 +371,7 @@
       <button class="ct-bar-toggle start" id="ct-toggle-btn" onclick="toggleClock()">▶ STARTEN</button>
     </div>
 
-    <!-- AWAY: [Name + indicators] [−] [Score] [+] -->
+    <!-- AWAY: [Name + indicators] above [−] [Score] [+] -->
     <div class="ct-team-bar away">
       <div class="ct-m-logo ct-m-only" id="ct-m-away-logo"></div>
       <div style="min-width:0;text-align:right;word-break:break-word;overflow-wrap:break-word">
@@ -377,9 +379,11 @@
         <div id="ct-away-pen-count" style="font-size:10px;letter-spacing:2px;color:var(--red);margin-top:4px;display:none;font-weight:700">STRAFE ●</div>
         <div id="ct-away-to-running" style="font-size:10px;letter-spacing:2px;color:var(--orange);margin-top:4px;display:none;font-weight:700">AUSZEIT <span class="ph-icon" style="vertical-align:middle"><svg style="width:11px;height:11px"><use href="#ph-pause-circle"/></svg></span></div>
       </div>
-      <button class="ct-bar-adj minus" onclick="adjScore('away',-1)"><span>−</span></button>
-      <div class="ct-bar-score" id="ct-away-score">0</div>
-      <button class="ct-bar-adj plus away" onclick="adjScore('away',1)"><span>+</span></button>
+      <div class="ct-bar-scorerow">
+        <button class="ct-bar-adj minus" onclick="adjScore('away',-1)"><span>−</span></button>
+        <div class="ct-bar-score" id="ct-away-score">0</div>
+        <button class="ct-bar-adj plus away" onclick="adjScore('away',1)"><span>+</span></button>
+      </div>
     </div>
 
   </div>

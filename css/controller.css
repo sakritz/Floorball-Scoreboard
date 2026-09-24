@@ -191,11 +191,11 @@ body.light-mode #view-controller .ct-bar-toggle.start {
 }
 
 .ct-team-bar {
-  display: flex; align-items: center; gap: 16px;
+  display: flex; flex-direction: column; justify-content: center; gap: 10px;
   padding: 0 32px; position: relative;
 }
-.ct-team-bar.home { justify-content: flex-start; }
-.ct-team-bar.away { justify-content: flex-end; }
+.ct-team-bar.home { align-items: flex-start; }
+.ct-team-bar.away { align-items: flex-end; }
 
 .ct-bar-name {
   font-size: var(--cb-name, 18px); font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
@@ -205,6 +205,10 @@ body.light-mode #view-controller .ct-bar-toggle.start {
 .ct-team-bar.home .ct-bar-name { color: var(--lime); }
 .ct-team-bar.away .ct-bar-name { color: var(--cyan); }
 .ct-team-bar.away .ct-bar-name { text-align: right; }
+
+.ct-bar-scorerow {
+  display: flex; align-items: center; gap: 16px;
+}
 
 .ct-bar-score {
   font-size: var(--cb-score, 100px); font-weight: 900; line-height: 1;
