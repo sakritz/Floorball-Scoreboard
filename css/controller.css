@@ -803,6 +803,18 @@ select option { background: var(--ct-card); }
   color: var(--ct-muted2);
 }
 .btn-ghost:hover { border-color: var(--ct-muted2); color: var(--ct-text); }
+
+/* Segment-Buttons in den Einstellungen (Schriftgröße, Buzzer-Sound) – themefähig */
+.ct-seg-btn {
+  flex: 1; padding: 6px 10px; cursor: pointer;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 900;
+  letter-spacing: 1px; text-transform: uppercase;
+  border: 1px solid var(--ct-border); background: var(--ct-card); color: var(--ct-muted2);
+  transition: border-color .15s, color .15s, background .15s;
+}
+.ct-seg-btn:hover { color: var(--ct-text); border-color: var(--ct-muted2); }
+.ct-seg-btn.on { border-color: var(--lime); background: rgba(200,255,0,.15); color: var(--lime-t); }
+.ct-seg-btn.danger { flex: 0 0 auto; padding: 6px 8px; background: transparent; border-color: rgba(255,45,85,.4); color: var(--red-t); }
 .btn-danger-ghost {
   background: transparent; border: 1px solid rgba(255,45,85,.4); color: var(--red-t);
 }

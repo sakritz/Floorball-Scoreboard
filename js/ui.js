@@ -158,11 +158,7 @@ function renderFontScalePicker(current) {
   if (!el) return;
   el.innerHTML = FONT_SCALES.map(f => {
     const on = f.zoom === current;
-    return `<button onclick="setFontScale(${f.zoom})" style="flex:1;padding:6px 4px;font-size:11px;font-weight:900;letter-spacing:1px;
-      font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;cursor:pointer;
-      border:1px solid ${on ? 'var(--lime)' : 'var(--ct-border)'};
-      background:${on ? 'rgba(200,255,0,.15)' : 'transparent'};
-      color:${on ? 'var(--lime)' : 'var(--ct-muted2)'};">${f.label}</button>`;
+    return `<button class="ct-seg-btn${on ? ' on' : ''}" onclick="setFontScale(${f.zoom})">${f.label}</button>`;
   }).join('');
 }
 

@@ -182,32 +182,18 @@ function renderBuzzerSoundPicker() {
     { id: 'beep',    label: 'Beep'    },
     { id: 'bell',    label: 'Bell'    },
   ];
-  const btnStyle = (id) => `flex:1;padding:6px 4px;font-size:11px;font-weight:900;letter-spacing:1px;
-    font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;cursor:pointer;
-    border:1px solid ${current === id ? 'var(--lime)' : 'rgba(255,255,255,.12)'};
-    background:${current === id ? 'rgba(200,255,0,.15)' : 'rgba(255,255,255,.04)'};
-    color:${current === id ? 'var(--lime)' : 'rgba(240,244,255,.6)'};`;
-
   el.innerHTML = `
     <div style="display:flex;gap:6px;flex-wrap:wrap;">
-      ${sounds.map(s => `<button onclick="setBuzzerSound('${s.id}')" style="${btnStyle(s.id)}">${s.label}</button>`).join('')}
+      ${sounds.map(s => `<button class="ct-seg-btn${current === s.id ? ' on' : ''}" onclick="setBuzzerSound('${s.id}')">${s.label}</button>`).join('')}
     </div>
     <div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;
-        padding:6px 10px;font-size:11px;font-weight:900;letter-spacing:1px;
-        font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;
-        border:1px solid ${current === 'custom' ? 'var(--lime)' : 'rgba(255,255,255,.12)'};
-        background:${current === 'custom' ? 'rgba(200,255,0,.15)' : 'rgba(255,255,255,.04)'};
-        color:${current === 'custom' ? 'var(--lime)' : 'rgba(240,244,255,.6)'};">
+      <label class="ct-seg-btn${current === 'custom' ? ' on' : ''}" style="display:flex;align-items:center;justify-content:center;gap:6px;">
         <span>📁</span>
         <span>${S.buzzerCustomData ? 'Eigene Datei' : 'Eigene Datei…'}</span>
         <input type="file" accept="audio/*" onchange="loadCustomBuzzer(this)"
           style="display:none">
       </label>
-      ${S.buzzerCustomData ? `<button onclick="removeCustomBuzzer()"
-        style="padding:6px 8px;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;
-          font-family:'Barlow Condensed',sans-serif;background:transparent;
-          border:1px solid rgba(255,45,85,.3);color:rgba(255,45,85,.7);">✕</button>` : ''}
+      ${S.buzzerCustomData ? `<button class="ct-seg-btn danger" onclick="removeCustomBuzzer()">✕</button>` : ''}
     </div>`;
 }
 
