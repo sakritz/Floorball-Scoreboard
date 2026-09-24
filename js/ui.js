@@ -172,6 +172,43 @@ function renderFontScalePicker(current) {
   document.addEventListener('DOMContentLoaded', () => renderFontScalePicker(zoom));
 })();
 
+// ── Tastatur-Bedienung / Barrierefreiheit ──
+// Schalter (…-toggle) und Tabs sind <div onclick>. Sie werden hier per JS fokussier-
+// und schaltbar gemacht (Tab-Taste + Enter), ohne das Aussehen zu ändern.
+// Leertaste bleibt bewusst global für die Uhr reserviert (siehe controller.js).
+(function initKeyboardA11y() {
+  function setup() {
+    document.querySelectorAll('[id$="-toggle"][onclick]').forEach(tog => {
+      const knob = document.getElementById(tog.id.replace(/-toggle$/, '-knob'));
+      const row  = tog.closest('div[style*="justify-content:space-between"]');
+      const text = row && row.querySelector('div');
+      tog.setAttribute('role', 'switch');
+      tog.tabIndex = 0;
+      if (text) tog.setAttribute('aria-label', text.textContent.trim().replace(/\s+/g, ' '));
+      const sync = () => tog.setAttribute('aria-checked', knob && knob.style.left === '22px' ? 'true' : 'false');
+      sync();
+      if (knob) new MutationObserver(sync).observe(knob, { attributes: true, attributeFilter: ['style'] });
+    });
+    const bar = document.querySelector('.ct-tabbar');
+    if (bar) bar.setAttribute('role', 'tablist');
+    document.querySelectorAll('.ct-tab[onclick]').forEach(tab => {
+      tab.setAttribute('role', 'tab');
+      tab.tabIndex = 0;
+      const sync = () => tab.setAttribute('aria-selected', tab.classList.contains('active') ? 'true' : 'false');
+      sync();
+      new MutationObserver(sync).observe(tab, { attributes: true, attributeFilter: ['class'] });
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup);
+  else setup();
+
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const el = document.activeElement;
+    if (el && el.matches && el.matches('[role="switch"], [role="tab"]')) { e.preventDefault(); el.click(); }
+  });
+})();
+
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     const overlay = document.getElementById('setup-overlay');

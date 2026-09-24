@@ -804,6 +804,11 @@ select option { background: var(--ct-card); }
 }
 .btn-ghost:hover { border-color: var(--ct-muted2); color: var(--ct-text); }
 
+/* Sichtbarer Fokus nur bei Tastaturbedienung */
+[role="switch"]:focus-visible, .ct-tab:focus-visible, .ct-seg-btn:focus-visible, .btn:focus-visible {
+  outline: 2px solid var(--lime-t); outline-offset: 2px;
+}
+
 /* Segment-Buttons in den Einstellungen (Schriftgröße, Buzzer-Sound) – themefähig */
 .ct-seg-btn {
   flex: 1; padding: 6px 10px; cursor: pointer;
