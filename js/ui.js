@@ -444,6 +444,74 @@ function setupRemoveLogo(side) {
   if (sugg) sugg.style.display = 'none';
 }
 
+// Liest dieselben Formularfelder wie setupStart(), aber rein (kein S-Zugriff,
+// kein Spielstart) – für "Als Vorlage speichern". Der Setup-Dialog kann auch
+// mitten in einem laufenden Spiel geöffnet werden (z.B. um schon mal die
+// nächste Begegnung vorzubereiten); Speichern darf das laufende Spiel nicht
+// verändern.
+function readSetupFormConfig() {
+  const format = document.getElementById('setup-format').value;
+  const fmt = format === 'custom'
+    ? {
+        maxPeriods: parseInt(document.getElementById('setup-custom-periods').value) || 3,
+        periodSecs: (parseInt(document.getElementById('setup-custom-period-min').value) || 20) * 60,
+        pauseSecs:  (parseInt(document.getElementById('setup-custom-pause-min').value) || 10) * 60,
+      }
+    : formatValuesFor(format);
+
+  return {
+    homeName: (document.getElementById('setup-home-name').value || 'HEIMTEAM').toUpperCase(),
+    awayName: (document.getElementById('setup-away-name').value || 'GASTTEAM').toUpperCase(),
+    homeLogo: setupHomeLogo || null,
+    awayLogo: setupAwayLogo || null,
+    homeAccent: document.getElementById('setup-home-accent').value,
+    awayAccent: document.getElementById('setup-away-accent').value,
+    homeJersey: document.getElementById('setup-home-jersey').value,
+    awayJersey: document.getElementById('setup-away-jersey').value,
+    maxPeriods: fmt.maxPeriods,
+    periodSecs: fmt.periodSecs,
+    pauseSecs:  fmt.pauseSecs,
+    leagueName: document.getElementById('setup-league').value.trim() || null,
+    kickoffTime: document.getElementById('setup-kickoff').value
+      ? new Date(document.getElementById('setup-kickoff').value).getTime()
+      : null,
+  };
+}
+
+// Datum + Teamnamen als Vorschlag für den Vorlagennamen – Anpfiffdatum falls
+// gesetzt, sonst heute. Läuft bei jeder Änderung der Team-/Anpfiff-Felder neu.
+function updatePresetNamePlaceholder() {
+  const nameEl = document.getElementById('setup-preset-name');
+  if (!nameEl) return;
+  const home = document.getElementById('setup-home-name').value.trim() || 'Heimteam';
+  const away = document.getElementById('setup-away-name').value.trim() || 'Gastteam';
+  const kickoff = document.getElementById('setup-kickoff').value;
+  const d = kickoff ? new Date(kickoff) : new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const dateStr = `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+  nameEl.placeholder = `${dateStr} – ${home} vs. ${away}`;
+}
+
+function setupSavePreset() {
+  const nameEl = document.getElementById('setup-preset-name');
+  const name = (nameEl.value || '').trim() || nameEl.placeholder;
+  const config = readSetupFormConfig();
+  window.gamePresets.save(name, config).then(() => {
+    nameEl.value = '';
+  });
+}
+
+// Nur in Electron vorhanden (preload.js exposed window.gamePresets) – auf der
+// Web-/GitHub-Pages-Variante bleibt der Vorlagen-Bereich im Setup-Dialog versteckt.
+// Verwalten/Löschen der Vorlagen passiert im eigenen Fenster (Menü Datei →
+// Vorlage laden → Vorlagen verwalten…, presets-manager.html), nicht hier.
+document.addEventListener('DOMContentLoaded', () => {
+  if (!window.gamePresets) return;
+  const footerPreset = document.getElementById('setup-footer-preset');
+  if (footerPreset) footerPreset.style.display = 'flex';
+  window.gamePresets.onLoad(loadGamePresetWithConfirm);
+});
+
 function setupStart() {
   // Collect values from the dialog
   const homeName = (document.getElementById('setup-home-name').value || 'HEIMTEAM').toUpperCase();
@@ -595,6 +663,7 @@ function setupOpen() {
   }
   document.getElementById('setup-overlay').classList.remove('hidden');
   initSetupNeonPalettes();
+  if (window.gamePresets) updatePresetNamePlaceholder();
 }
 
 /* ─── COUNTDOWN (Scoreboard side) ───────────────────────────────── */

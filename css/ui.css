@@ -87,6 +87,23 @@
 .setup-sm-name { font-size: 13px; font-weight: 800; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .setup-sm-meta { font-size: 11px; color: rgba(255,255,255,.4); letter-spacing: 1px; }
 
+/* Spieltag-Vorlagen (Setup-Dialog) */
+.setup-preset-list { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.setup-preset-row {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1);
+  padding: 8px 10px;
+}
+.setup-preset-name { flex: 1; font-size: 13px; font-weight: 700; letter-spacing: .5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.setup-preset-date { font-size: 11px; color: rgba(255,255,255,.4); letter-spacing: 1px; flex-shrink: 0; }
+.setup-preset-del {
+  width: 26px; height: 26px; flex-shrink: 0;
+  background: rgba(255,45,85,.2); border: 1px solid rgba(255,45,85,.4);
+  color: #ff5c7a; cursor: pointer; font-size: 13px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center; transition: background .15s;
+}
+.setup-preset-del:hover { background: rgba(255,45,85,.45); }
+
 /* Logo upload in setup */
 /* ── Neon palette swatches ── */
 .neon-palette {

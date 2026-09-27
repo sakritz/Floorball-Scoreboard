@@ -607,6 +607,55 @@ function endGame() {
   });
 }
 
+// Lädt eine gespeicherte Spieltag-Vorlage (Electron-Menü "Datei → Vorlage
+// laden", electron/preload.js window.gamePresets.onLoad) und startet damit
+// sofort ein neues Spiel. Live-Felder wie bei endGame() zurückgesetzt, aber
+// ohne zum Startbildschirm zurückzukehren – die Vorlage liefert bereits eine
+// vollständige Konfiguration.
+function loadGamePreset(config) {
+  if (ctCountdownTimer) { clearInterval(ctCountdownTimer); ctCountdownTimer = null; }
+  stopClock();
+  clearInterval(toTimer);   toTimer   = null;
+  clearInterval(pauseTimer); pauseTimer = null;
+
+  S.homeScore = 0;          S.awayScore = 0;
+  S.running = false;
+  S.period = 1;
+  S.homePenalties = [];     S.awayPenalties = [];
+  S.homeToUsed = false;     S.awayToUsed = false;
+  S.activeTimeout = null;   S.pause = null;
+  S.gameStarted = false;    S.pendingGoal = null;
+  S.events = [];            S.penaltyShootout = null;
+  S.shootoutReady = false;  S.otSecs = null;
+  _undoStack = [];
+
+  Object.assign(S, config); // homeName/awayName/Logos/Farben/Format/Liga/Anpfiff aus der Vorlage
+  S.clock = S.periodSecs;
+  clockMs = S.clock * 1000;
+
+  hideStartScreen();
+  initController(true);
+  applyControllerColors();
+  buildPeriodPills();
+  pushAndRender();
+}
+
+// Sicherheitsabfrage, falls gerade schon ein Spiel läuft (§ nicht regelbezogen,
+// nur UI-Schutz vor versehentlichem Überschreiben).
+function loadGamePresetWithConfirm(config) {
+  if (S.gameStarted) {
+    ctConfirm({
+      icon: '⚠',
+      title: 'Laufendes Spiel überschreiben?',
+      body: 'Eine gespeicherte Vorlage wird geladen, das aktuelle Spiel geht verloren.',
+      okLabel: 'Überschreiben',
+      onOk: () => loadGamePreset(config),
+    });
+  } else {
+    loadGamePreset(config);
+  }
+}
+
 // ── PiP Preview ──
 let pipOpen = false;
 

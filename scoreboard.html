@@ -1283,7 +1283,7 @@
           </div>
           <div class="setup-field">
             <label class="setup-label">Anpfiff <span style="opacity:.5">(optional – für Countdown)</span></label>
-            <input type="datetime-local" id="setup-kickoff">
+            <input type="datetime-local" id="setup-kickoff" oninput="updatePresetNamePlaceholder()">
           </div>
         </div>
       </div>
@@ -1295,7 +1295,7 @@
           <div class="setup-row">
             <div class="setup-field">
               <label class="setup-label">Name</label>
-              <input type="text" id="setup-home-name" value="HEIMTEAM">
+              <input type="text" id="setup-home-name" value="HEIMTEAM" oninput="updatePresetNamePlaceholder()">
             </div>
             <div class="setup-field">
               <label class="setup-label">Logo</label>
@@ -1334,7 +1334,7 @@
           <div class="setup-row">
             <div class="setup-field">
               <label class="setup-label">Name</label>
-              <input type="text" id="setup-away-name" value="GASTTEAM">
+              <input type="text" id="setup-away-name" value="GASTTEAM" oninput="updatePresetNamePlaceholder()">
             </div>
             <div class="setup-field">
               <label class="setup-label">Logo</label>
@@ -1369,6 +1369,11 @@
     </div><!-- /setup-body -->
 
     <div class="setup-footer">
+      <div id="setup-footer-preset" style="display:none;align-items:center;gap:8px">
+        <input type="text" id="setup-preset-name" placeholder="Vorlagenname"
+          style="width:190px;font-size:12px;padding:9px 10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);color:var(--ct-text,#fff)">
+        <button class="btn btn-ghost btn-sm" onclick="setupSavePreset()" style="flex-shrink:0;white-space:nowrap;margin-bottom:0;height:38px">💾 Als Vorlage speichern</button>
+      </div>
       <button class="btn btn-lime" onclick="setupStart()" style="flex:1;font-size:16px;font-weight:900;letter-spacing:3px">
         ▶ SPIEL STARTEN
       </button>
