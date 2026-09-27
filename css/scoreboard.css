@@ -152,7 +152,7 @@
 .sb-logo.show { display: flex; }
 
 .sb-team-name {
-  font-size: clamp(18px, 5.2vw, 88px);
+  font-size: clamp(18px, 5.2vw, 100px);
   font-weight: 900; letter-spacing: 2px; text-transform: uppercase; line-height: 1.0;
   word-break: break-word; overflow-wrap: break-word;
 }
@@ -167,7 +167,7 @@
 .sb-team.away .sb-team-sub { text-align: right; }
 
 .sb-score {
-  font-size: clamp(80px, min(24vw, 28vh), 360px);
+  font-size: clamp(80px, min(24vw, 28vh), 400px);
   font-weight: 900; line-height: .85; letter-spacing: -4px;
   font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
   font-variant-numeric: tabular-nums;
@@ -212,7 +212,7 @@
   flex-shrink: 0;
 }
 .sb-clock {
-  font-size: clamp(48px, min(14vw, 20vh), 210px);
+  font-size: clamp(48px, min(20vw, 40vh), 800px);
   font-weight: 900; letter-spacing: 4px; text-align: center;
   font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
   font-variant-numeric: tabular-nums; transition: color .3s;
