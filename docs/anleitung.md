@@ -160,13 +160,13 @@ Am Ende jeder Periode ertönt automatisch ein **elektronischer Buzzer-Ton** (sof
 
 | Feld | Beschreibung |
 |---|---|
-| **Tortyp-Buttons** | **Strafstoß** oder **Eigentor** (optional; kein Tortyp = normales Tor) |
+| **Tortyp-Buttons** | **Penalty** oder **Eigentor** (optional; kein Tortyp = normales Tor) |
 | **Schütze (Nummer)** | Rückennummer des Torschützen (optional) |
-| **Vorlage (Nummer)** | Rückennummer des Assistenten (optional; entfällt bei Strafstoß/Eigentor) |
+| **Vorlage (Nummer)** | Rückennummer des Assistenten (optional; entfällt bei Penalty/Eigentor) |
 
 3. Klick auf **„Bestätigen"** speichert das Tor
 
-> Bei einem **Eigentor** werden Schützen- und Vorlagenfeld ausgeblendet. Bei einem **Strafstoß** entfällt nur das Vorlagenfeld.
+> Bei einem **Eigentor** werden Schützen- und Vorlagenfeld ausgeblendet. Bei einem **Penalty** entfällt nur das Vorlagenfeld.
 
 ### Tor rückgängig machen
 
@@ -203,11 +203,11 @@ Die Animation kann in den **Einstellungen** deaktiviert werden.
 
 | Typ | Beschreibung |
 |---|---|
-| **2 Min (einfach)** | Standard-Zeitstrafe. Erlischt bei Überzahltor automatisch. |
+| **2 Min (einfach)** | Standard-Bankstrafe. Erlischt bei Überzahltor automatisch. |
 | **2+2 Min (doppelt)** | Zwei aufeinanderfolgende 2-Min-Strafen. Die erste erlischt bei Überzahltor; die zweite läuft danach automatisch an. |
-| **10 Min (pers.) + 2 Min** | Persönliche 10-Min-Strafe (zählt nicht für Unter-/Überzahl) plus eine normale 2-Min-Zeitstrafe (erlischt bei Überzahltor). |
-| **Techn. Matchstrafe + 2+2 Min** | Technische Matchstrafe mit zwei 2-Min-Zeitstrafen. |
-| **Matchstrafe + 2+2 Min** | Matchstrafe mit zwei 2-Min-Zeitstrafen. |
+| **10 Min (pers.) + 2 Min** | Persönliche 10-Min-Strafe (zählt nicht für Unter-/Überzahl) plus eine normale 2-Min-Bankstrafe (erlischt bei Überzahltor). |
+| **Techn. Matchstrafe + 2+2 Min** | Technische Matchstrafe mit zwei 2-Min-Bankstrafen. |
+| **Matchstrafe + 2+2 Min** | Matchstrafe mit zwei 2-Min-Bankstrafen. |
 
 ### Strafuhr
 

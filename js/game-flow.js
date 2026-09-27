@@ -158,7 +158,7 @@ function prevPeriod() { if (S.period > 1) setPeriod(S.period - 1); }
 
 // ── Penalties ──
 
-// §6.3.3: Maximal gleichzeitig GEMESSENE Zeitstrafen je Team.
+// §603.3: Maximal gleichzeitig GEMESSENE Bankstrafen je Team.
 // Großfeld (5 gegen 5): 2 · Kleinfeld (2×20, 3 gegen 3): 1.
 // Liest aus einem State-Objekt, damit es auch auf dem Scoreboard
 // (das aus dem per BroadcastChannel empfangenen State rendert) stimmt.
@@ -167,24 +167,26 @@ function maxPensFor(state) {
   return (st.maxPeriods === 2 && st.periodSecs === 1200) ? 1 : 2;
 }
 
-// ids der aktuell GEMESSENEN (laufenden) Zeitstrafen eines Teams,
-// unter Beachtung des Team-Limits (§6.3.3): Es laufen nur die ersten
-// `maxActive` Strafen in Reihenfolge der Aussprache (id aufsteigend);
-// jede weitere wartet, bis eine laufende endet.
-// Persönliche Strafen (§6.8.1) und noch wartende 2+2-Zweitteile belegen
-// keinen Slot und tauchen daher hier nicht auf.
+// ids der aktuell GEMESSENEN (laufenden) Bankstrafen eines Teams,
+// unter Beachtung des Team-Limits (§603.3): Es laufen nur die `maxActive`
+// Strafen mit der kürzesten Restzeit (§603.7); jede weitere wartet
+// (Restzeit eingefroren), bis eine laufende endet. Bei Gleichstand
+// entscheidet die Reihenfolge der Aussprache (id aufsteigend).
+// Persönliche Strafen (§608.1) und noch wartende 2+2-Zweitteile belegen
+// keinen Slot und tauchen daher hier nicht auf – eine Große Bankstrafe
+// (2+2) zählt damit stets als eine einzige Strafe (§603.7 Satz 2).
 function runningPenIds(pens, maxActive) {
   return new Set(
     (pens || [])
       .filter(p => !p.personal && !p.waiting)   // belegen einen Slot
-      .sort((a, b) => a.id - b.id)              // Reihenfolge der Aussprache
+      .sort((a, b) => a.remaining - b.remaining || a.id - b.id) // kürzeste Restzeit zuerst
       .slice(0, maxActive)
       .map(p => p.id)
   );
 }
 
-// True, wenn die Strafe wegen des Team-Limits (§6.3.3) noch wartet –
-// also eine reguläre Zeitstrafe ist, die (noch) nicht gemessen wird.
+// True, wenn die Strafe wegen des Team-Limits (§603.3) noch wartet –
+// also eine reguläre Bankstrafe ist, die (noch) nicht gemessen wird.
 // Wird nur fürs Anzeigen/„– –“ gebraucht; 2+2-Zweitteile haben weiterhin
 // ihr eigenes `waiting`-Flag.
 function isQueuedByCap(p, runningIds) {
@@ -192,7 +194,7 @@ function isQueuedByCap(p, runningIds) {
 }
 
 // Returns only penalties that affect team strength (not personal 10-min),
-// gedeckelt auf die je Team gleichzeitig messbaren Strafen (§6.3.3).
+// gedeckelt auf die je Team gleichzeitig messbaren Strafen (§603.3).
 function teamStrengthPens(side) {
   const pens = S[side + 'Penalties'] || [];
   const running = runningPenIds(pens, maxPensFor(S));
@@ -204,26 +206,25 @@ function teamStrengthPensS(pens, state) {
   return (pens || []).filter(p => running.has(p.id));
 }
 
-/* ─── STRAFCODES (Spielberichtsbogen SPRGK 2022) ──────────────────────── */
+/* ─── STRAFCODES (Spielberichtsbogen SPRGK 2026) ──────────────────────── */
 const PENALTY_CODES = [
-  { code: '901', name: 'Stockschlag' },
-  { code: '902', name: 'Blockieren des Stocks' },
-  { code: '903', name: 'Anheben des Stocks' },
-  { code: '904', name: 'Hoher Stock' },
-  { code: '906', name: 'Haken' },
-  { code: '907', name: 'Stoßen' },
-  { code: '909', name: 'Überharter Körpereinsatz' },
-  { code: '910', name: 'Halten' },
-  { code: '911', name: 'Sperren' },
-  { code: '913', name: 'Hoher Fuß' },
-  { code: '915', name: 'Unkorrekter Abstand' },
-  { code: '919', name: 'Bodenspiel' },
-  { code: '920', name: 'Handspiel' },
-  { code: '922', name: 'Wechselfehler' },
-  { code: '923', name: 'Wiederholte Vergehen' },
-  { code: '924', name: 'Spielverzögerung' },
-  { code: '925', name: 'Reklamieren' },
-  { code: '950', name: 'Unsportliches Verhalten' },
+  { code: '901', name: 'Stockschlag' },              // 605.1
+  { code: '902', name: 'Hoher Stock' },               // 605.3
+  { code: '904', name: 'Haken' },                     // 607.2 (Große Bankstrafe)
+  { code: '905', name: 'Stoßen' },                    // 605.5
+  { code: '907', name: 'Unvorsichtiger Körpereinsatz' }, // 605.6
+  { code: '907', name: 'Auseinandersetzung provozieren' }, // 605.27
+  { code: '908', name: 'Halten' },                    // 605.2
+  { code: '909', name: 'Behinderung' },                // 605.10
+  { code: '911', name: 'Hoher Fuß' },                 // 605.3
+  { code: '913', name: 'Unkorrekter Abstand' },       // 605.12
+  { code: '917', name: 'Bodenspiel' },                // 605.13
+  { code: '918', name: 'Handspiel' },                 // 605.14
+  { code: '920', name: 'Wechselfehler' },             // 605.15
+  { code: '922', name: 'Spielverzögerung' },          // 605.19/20
+  { code: '923', name: 'Wiederholte Vergehen' },      // 605.17
+  { code: '923', name: 'Reklamieren' },               // 605.21
+  { code: '923', name: 'Unsportliches Verhalten' },   // 610.1
   { code: '999', name: 'Sonstige Vergehen' },
 ];
 
@@ -247,7 +248,7 @@ function addPenalty(side) {
   let penTypeLabel = '';
 
   if (raw === 'double' || raw === 'techMatch' || raw === 'match') {
-    // Doppelte Zeitstrafe: 2 × 2 Min nacheinander
+    // Große Bankstrafe (§606/607): 2 × 2 Min nacheinander
     // Für techMatch/match: Spieler rausgeflogenen, aber jemand sitzt die 2+2
     const id1 = now;
     const id2 = now + 1;
@@ -266,8 +267,8 @@ function addPenalty(side) {
     penTypeLabel = isRed ? `2+2 MIN (${redLabel})` : '2+2 MIN';
 
   } else if (raw === 'personal10') {
-    // Persönliche 10-Min-Strafe (§6.9):
-    // Begleitet von einer einfachen 2-Min-Zeitstrafe.
+    // Persönliche 10-Min-Strafe (§609):
+    // Begleitet von einer einfachen 2-Min-Bankstrafe.
     // Die 2-Min → Unterzahl (normal, erlischt bei Überzahltor).
     // Die 10-Min → persönlich, KEIN Unterzahl (personal=true).
     const id2min  = now;
@@ -283,7 +284,7 @@ function addPenalty(side) {
     penTypeLabel = '10 MIN (PERS.)';
 
   } else {
-    // Einfache Zeitstrafe (2 Min)
+    // Einfache Bankstrafe (2 Min)
     const secs = parseInt(raw);
     S[side + 'Penalties'].push({ id: now, number: num, secs, remaining: secs });
     penTypeLabel = '2 MIN';
@@ -331,14 +332,14 @@ function tickPenalties() {
   const maxActive = maxPensFor(S);
   ['home','away'].forEach(side => {
     const pens = S[side + 'Penalties'];
-    // §6.3.3: Nur die ersten `maxActive` Zeitstrafen werden gemessen.
+    // §603.3/§603.7: Nur die `maxActive` Bankstrafen mit der kürzesten Restzeit werden gemessen.
     const running = runningPenIds(pens, maxActive);
     // Find which double-first penalties just expired this tick
     const expiredDoubleFirstIds = new Set();
 
     const ticked = pens.map(p => {
       if (p.waiting) return p;                 // 2+2-Zweitteil: wartet auf ersten Teil
-      // Persönliche Strafen laufen immer (§6.8.1); reguläre nur, wenn sie
+      // Persönliche Strafen laufen immer (§608.1); reguläre nur, wenn sie
       // gemessen werden – über dem Team-Limit warten sie und ticken nicht.
       if (!p.personal && !running.has(p.id)) return p;
       return { ...p, remaining: p.remaining - 1 };
@@ -903,7 +904,7 @@ function renderPenList(side, pens, fmt) {
   const c = document.getElementById('ct-' + side + '-pen-list');
   const typeLabel = (secs, p) => { if (p&&p.redCardLabel) return p.redCardLabel+' 2+2'; if (p&&p.doubleFirst) return '2+2 MIN (1)'; if (p&&p.doubleSecond) return '2+2 MIN (2)'; if (p&&p.waiting) return '2+2 MIN (2)'; if (p&&p.personal) return '10 MIN PERS.'; return secs<=120?'2 MIN':'10 MIN'; };
 
-  // §6.3.3: Welche Strafen werden tatsächlich gemessen? Der Rest wartet.
+  // §603.3/§603.7: Welche Strafen werden tatsächlich gemessen? Der Rest wartet.
   const running = runningPenIds(pens, maxPensFor(S));
   const isWaiting = p => p.waiting || isQueuedByCap(p, running);
   const timeText = p => isWaiting(p) ? '– –' : fmt(p.remaining);
@@ -971,7 +972,7 @@ function startPenaltyShootoutWithDialog() {
   ctConfirm({
     icon: '🥊',
     title: 'Penaltyschießen starten?',
-    body: 'Startet das Penaltyschießen im Presentation Mode. Je 5 Schüsse abwechselnd.',
+    body: 'Startet das Penaltyschießen im Presentation Mode. Erste Runde: 5 verschiedene Feldspieler. Bei Gleichstand danach: beliebiger Feldspieler, auch mehrfach.',
     okLabel: '▶ Starten',
     okClass: 'btn-orange',
     onOk: () => startPenaltyShootout(),

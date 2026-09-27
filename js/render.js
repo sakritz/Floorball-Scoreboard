@@ -195,12 +195,12 @@ function renderScoreboard(s) {
 
   // Penalty chips under scores
   const typeLabel = (secs, p) => { if (p&&p.redCardLabel) return p.redCardLabel+' 2+2'; if (p&&p.doubleFirst) return '2+2 MIN (1)'; if (p&&p.doubleSecond) return '2+2 MIN (2)'; if (p&&p.waiting) return '2+2 MIN (2)'; if (p&&p.personal) return '10 MIN PERS.'; return secs<=120?'2 MIN':'10 MIN'; };
-  const sbMaxActive = maxPensFor(s);   // §6.3.3: 2 (Großfeld) / 1 (Kleinfeld)
+  const sbMaxActive = maxPensFor(s);   // §603.3: 2 (Großfeld) / 1 (Kleinfeld)
   ['home','away'].forEach(side => {
     const c = document.getElementById('sb-' + side + '-pen-chips');
     if (!c) return;
     const pens = s[side + 'Penalties'] || [];
-    // §6.3.3: wegen des Team-Limits wartende Strafen werden wie wartende
+    // §603.3/§603.7: wegen des Team-Limits wartende Strafen werden wie wartende
     // 2+2-Zweitteile mit „– –“ angezeigt (laufen noch nicht).
     const running = runningPenIds(pens, sbMaxActive);
     const isWaitingDisp = p => p.waiting || isQueuedByCap(p, running);
@@ -243,7 +243,7 @@ function renderScoreboard(s) {
       return secs <= 120 ? '2 MIN' : '10 MIN';
     };
 
-    // §6.3.3: nur tatsächlich gemessene Strafen sind „aktiv“.
+    // §603.3: nur tatsächlich gemessene Strafen sind „aktiv“.
     const homeRunning = runningPenIds(s.homePenalties || [], sbMaxActive);
     const awayRunning = runningPenIds(s.awayPenalties || [], sbMaxActive);
     const isWaitingDisp = (p, running) => p.waiting || isQueuedByCap(p, running);
@@ -317,7 +317,7 @@ function renderScoreboard(s) {
         if (ev.type === 'goal') {
           const isOwn = ev.data.goalType === 'own';
           const isPen = ev.data.goalType === 'penalty';
-          evLabel = isOwn ? `EIGENTOR · ${teamName}` : isPen ? `STRAFSTOSS · ${teamName}` : `TOR · ${teamName}`;
+          evLabel = isOwn ? `EIGENTOR · ${teamName}` : isPen ? `PENALTY · ${teamName}` : `TOR · ${teamName}`;
           evSub   = isOwn ? 'ET' : [ev.data.scorer ? `#${ev.data.scorer}` : '', !isPen && ev.data.assist ? `▶ #${ev.data.assist}` : ''].filter(Boolean).join('  ') || '–';
         } else if (ev.type === 'penalty') {
           evLabel = `STRAFE · ${teamName}`;
@@ -482,7 +482,7 @@ function triggerGoal(side, el, teamName, s) {
         scorerNum.style.color = color;
         assistRow.style.display = 'none';
       } else {
-        scorerLbl.textContent = isPenalty ? `STRAFSTOSS · ${teamName}` : `TOR · ${teamName}`;
+        scorerLbl.textContent = isPenalty ? `PENALTY · ${teamName}` : `TOR · ${teamName}`;
         scorerLbl.style.color = color;
         scorerNum.textContent = goalData.scorer ? `#${goalData.scorer}` : '–';
         scorerNum.style.color = color;
@@ -718,7 +718,7 @@ function renderEvents() {
         sub  = 'ET';
       } else {
         main = `TOR · ${teamName}`;
-        if (ev.data.goalType === 'penalty') main += ' <span style="font-size:10px;opacity:.5;letter-spacing:1px">· STRAFSTOSS</span>';
+        if (ev.data.goalType === 'penalty') main += ' <span style="font-size:10px;opacity:.5;letter-spacing:1px">· PENALTY</span>';
         const parts = [];
         if (ev.data.scorer) parts.push(`#${ev.data.scorer}`);
         if (ev.data.assist) parts.push(`Vorlage: #${ev.data.assist}`);
@@ -803,7 +803,7 @@ function confirmGoal() {
     scorer = null; assist = null; goalTypeLabel = 'ET';
   } else if (_goalType === 'penalty') {
     scorer = document.getElementById('ct-goal-scorer').value.trim();
-    assist = null; goalTypeLabel = 'Strafstoß';
+    assist = null; goalTypeLabel = 'Penalty';
   } else {
     scorer = document.getElementById('ct-goal-scorer').value.trim();
     assist = document.getElementById('ct-goal-assist').value.trim();
@@ -861,7 +861,7 @@ function renderTickerEvents(ticker, s) {
     if (ev.type === 'goal') {
       const isOwn     = ev.data.goalType === 'own';
       const isPenalty = ev.data.goalType === 'penalty';
-      const label     = isOwn ? `EIGENTOR · ${teamName}` : isPenalty ? `STRAFSTOSS · ${teamName}` : `TOR · ${teamName}`;
+      const label     = isOwn ? `EIGENTOR · ${teamName}` : isPenalty ? `PENALTY · ${teamName}` : `TOR · ${teamName}`;
       const sub       = isOwn ? 'ET'
                       : [ev.data.scorer ? `#${ev.data.scorer}` : '', !isPenalty && ev.data.assist ? `▶ #${ev.data.assist}` : ''].filter(Boolean).join(' ');
       return `<div class="sb-ticker-cell cell-${ev.side}">
@@ -900,7 +900,6 @@ function startPenaltyShootout() {
     shots: Array.from({length: PS_SHOTS}, () => ({ home: null, away: null, homeNum: '', awayNum: '' })),
     round: 1,
   };
-  document.getElementById('ct-ps-start-wrap').style.display = 'none';
   document.getElementById('ct-ps-active-wrap').style.display = '';
   document.getElementById('ct-ps-overlay').classList.add('open');
   renderPenaltyShootoutCtrl();
@@ -935,7 +934,6 @@ function endPenaltyShootout() {
     onOk: () => {
       S.penaltyShootout = null;
       document.getElementById('ct-ps-overlay').classList.remove('open');
-      document.getElementById('ct-ps-start-wrap').style.display = '';
       document.getElementById('ct-ps-active-wrap').style.display = 'none';
       pushAndRender();
     },

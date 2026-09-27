@@ -141,7 +141,7 @@
         d.timeline.filter(t => t.period === p).forEach(t => {
           let ereignis = '', details = '–', stand = '';
           if (t.type === 'goal') {
-            ereignis = t.kind === 'own' ? 'Tor (Eigentor)' : t.kind === 'penalty' ? 'Tor (Strafschuss)' : 'Tor';
+            ereignis = t.kind === 'own' ? 'Tor (Eigentor)' : t.kind === 'penalty' ? 'Tor (Penalty)' : 'Tor';
             const dt = []; if (t.scorer) dt.push('#' + t.scorer); if (t.assist) dt.push('Vorlage #' + t.assist);
             details = dt.join(', ') || '–';
             stand = `${t.scoreHome}:${t.scoreAway}`;
@@ -191,7 +191,7 @@
       const main = `${t.scorer ? `<span class="tl-name">#${esc(t.scorer)}</span> ` : ''}<span class="tl-score">${t.scoreHome}:${t.scoreAway}</span> <span class="tl-type">Tor</span>`;
       const subs = [];
       if (t.kind === 'own')     subs.push('Eigentor');
-      if (t.kind === 'penalty') subs.push('Strafschuss');
+      if (t.kind === 'penalty') subs.push('Penalty');
       if (t.assist)             subs.push(`Vorl. #${esc(t.assist)}`);
       return { main, sub: subs.join(' · ') };
     }

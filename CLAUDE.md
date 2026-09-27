@@ -83,7 +83,7 @@ App-Shortcuts (bewusst minimal): `Space` Uhr, `H`/`G` Tor Heim/Gast (`Shift` = �
 
 ## Floorball-Regeln (Domäne)
 
-Grundlage bisher: **Floorball Spielregeln Großfeld/Kleinfeld (SPRGK) 2022**, Floorball Deutschland. Die **Regelversion 2026** kommt – Umstellung läuft (siehe unten).
+Grundlage: **Floorball Spielregeln Großfeld/Kleinfeld (SPRGK) 2026**, Floorball Deutschland (gültig ab 1.7.2026). Regeldokumente inkl. Synopse 2022↔2026 liegen in `documents/`. Nummernschema 2026 ist flach (`603.7` statt `6.3.7`): altes Kapitel `6.Y` → neu `60Y`, `7.Y` → `70Y`, `2.Y` → `20Y` usw.
 
 | Format | Spielzeit | Pause | Auszeit |
 |---|---|---|---|
@@ -94,16 +94,18 @@ Grundlage bisher: **Floorball Spielregeln Großfeld/Kleinfeld (SPRGK) 2022**, Fl
 Wichtige, bereits umgesetzte Regeln:
 - **Strafenlimit:** max. 2 gleichzeitig laufende Strafen pro Team (Großfeld), 1 im Kleinfeld; weitere warten („WARTET", Zeit `– –`) und ticken nicht. Custom-Formate fallen mangels Feldgrößen-Flag aufs Großfeld-Limit zurück.
 - **Powerplay-Basis** feldgrößenabhängig (GF 5, KF 3).
-- **Erlöschen (SPRGK 6.3.6):** Tor des Teams in Überzahl hebt eine laufende Strafe auf – auch **Eigentor**; **Strafschuss-Tor nicht**. Persönliche Strafen und wartende Strafen begründen kein Powerplay (bei 2+10 zählt nur die Begleit-2).
-- **Strafcodes** (`PENALTY_CODES` in `game-flow.js`) = Liste vom Spielberichtsbogen, 901–999. **806 ist kein Strafcode**, sondern der Torprotokoll-Code für Tor per Strafschuss.
+- **Erlöschen (SPRGK 603.6):** Tor des Teams in Überzahl hebt eine laufende Strafe auf – auch **Eigentor** (702.1); **Penalty-Tor nicht**. Persönliche Strafen und wartende Strafen begründen kein Powerplay (bei 2+10 zählt nur die Begleit-2).
+- **Aktivierungsreihenfolge wartender Strafen (§603.7):** `runningPenIds` wählt die `maxActive` Strafen mit der **kürzesten Restzeit** aus (nicht mehr nach Aussprache-Reihenfolge). Große Bankstrafe (2+2) zählt als eine Strafe – die zweite Hälfte (`waiting:true`) belegt nie einen eigenen Slot.
+- **Strafcodes** (`PENALTY_CODES` in `game-flow.js`) = Liste vom Spielberichtsbogen nach 2026er §605/§607/§609/§610, 901–999. Codes sind Statistik-Kategorien, kein Eindeutigkeits-Schlüssel – mehrere Zeilen können denselben Code tragen (z. B. 907 für drei verschiedene Vergehen). **806 ist kein Strafcode**, sondern der Torprotokoll-Code für Tor per Penalty.
+- **Penaltyschießen (§204):** Erste Runde = 5 verschiedene Feldspieler, danach beliebiger Feldspieler (auch mehrfach) – `checkPsExtraRound()` in `render.js` erzwingt keine Schützen-Einschränkung und passt damit bereits zur Regel.
 - Spielbericht nutzt Rückennummern oder Namen (Einstellung „Beteiligte erfassen als").
 
-### Offene Punkte Regelwerk 2026 (Stand der Analyse Juni 2026 – vor Umsetzung Code prüfen, ob schon erledigt)
-- **603.7** Wartende Strafen in Reihenfolge der kürzesten Restzeit aktivieren (aktuell nach ID/Aussprache, `runningPenIds`). Doppelstrafe zählt als eine Strafe.
-- **603.9** Gleichzeitige gleichwertige Strafen beider Teams werden gepaart: beeinflussen Spielerzahl nicht, erlöschen nicht durch Tore, stehen aber im Bericht. Braucht `paired`-Flag, Anpassung von `teamStrengthPens` / `findPowerPlayPenalty`, UI.
-- **204** Penaltyschießen: nach den ersten 5 verschiedenen Schützen darf jeder Feldspieler (auch mehrfach) schießen; Dialogtext anpassen. `checkPsExtraRound()` passt bereits.
-- Labels: „STRAFSTOSS" → „PENALTY" (`render.js`), „Zeitstrafe" → „Bankstrafe", Strafcodes auf 2026er Nummern umstellen (u. a. 909→907, 910→908, 919→917, 922→920, 925→923, neu „Auseinandersetzung provozieren").
-- Optional **701.3** technisches Tor als neuer Tortyp.
+### Offene Punkte Regelwerk 2026 (Stand: nach Umsetzung Runde 1, Code prüfen ob noch aktuell)
+
+Runde 1 (Terminologie, Strafcode-Tabelle, §603.7-Sortierung, §204-Dialogtext, Regelzitate) ist umgesetzt. Noch offen – zwei echte Neu-Features, Design bereits entschieden:
+- **§603.9** Gleichzeitige gleichwertige Bankstrafen beider Teams werden paarweise zugeordnet: wie persönliche Strafen behandelt (keine Unterzahl, erlöschen nicht durch Tor), stehen aber im Bericht. Entscheidung: manuelle Bestätigung per Dialog (analog `checkPowerPlayPenalty`). Braucht `paired`-Flag am Strafenobjekt, Ausschluss aus `teamStrengthPens`/Erlöschen-Logik, UI in Strafenliste/Bericht.
+- **§701.3** Technisches Tor: Tor statt Penalty, wenn bei gepulltem Torhüter ein Penalty-würdiges Foul der Verteidigung passiert. Entscheidung: wie Penalty-Tor behandeln (erlischt keine Strafe). Braucht dritten Torart-Button/`_goalType`-Zweig im Tor-Dialog, `report.js`-Handling, dritten Ausschlussfall in `checkPowerPlayPenalty`.
+- Nicht software-seitig erzwungen (bewusst, Schiedsrichter-Verantwortung): ein während des Penaltyschießens bestrafter Feldspieler darf laut §204 nicht mehr schießen – dafür gibt es keine Spieler-Tracking-Struktur im Shootout.
 
 ## Features, die leicht übersehen werden
 

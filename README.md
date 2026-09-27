@@ -21,7 +21,7 @@ Eine Scoreboard-App für Floorball – verfügbar als HTML-Datei (z.B. via GitHu
 - Pausentimer (10 / 7 / 5 Min je nach Format)
 
 **Strafzeiten & Auszeiten**
-- Einfache Zeitstrafe (2 Min), Doppelte Zeitstrafe (2+2 Min), Persönliche 10-Min-Strafe
+- Einfache Bankstrafe (2 Min), Große Bankstrafe (2+2 Min), Persönliche 10-Min-Strafe
 - Strafzeiten laufen synchron mit der Spieluhr
 - 1 Auszeit pro Team (30 Sek), unabhängig von der Spieluhr
 - Laufende Strafen sichtbar in Steuerung und Präsentation

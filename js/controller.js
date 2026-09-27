@@ -318,12 +318,12 @@ function adjScore(side, delta) {
  * After a goal: check if scoring team was in power play and offer to remove
  * the shortest active penalty from the opposing team.
  * Rules:
- *  - Not for 'penalty' goals (SPRGK 6.3.6); own goals ('own') count like normal goals
+ *  - Not for 'penalty' goals (SPRGK 603.6); own goals ('own') count like normal goals
  *  - Only when opposing team has strictly more active penalties (true PP)
  *  - Only the shortest non-waiting penalty is offered for removal
  */
 function checkPowerPlayPenalty(scoringSide, goalType) {
-  // SPRGK 6.3.6: Strafschuss-Tor hebt die Strafe nicht auf; Eigentor (7.2.1) schon.
+  // SPRGK 603.6: Penalty-Tor hebt die Strafe nicht auf; Eigentor (702.1) schon.
   if (goalType === 'penalty') return;
 
   const oppSide = scoringSide === 'home' ? 'away' : 'home';
@@ -334,7 +334,7 @@ function checkPowerPlayPenalty(scoringSide, goalType) {
   if (oppPens <= myPens) return;
 
   // Find the shortest currently MEASURED penalty on opposing team.
-  // §6.3.3: nur laufende Strafen zählen – eine wegen des Team-Limits
+  // §603.3: nur laufende Strafen zählen – eine wegen des Team-Limits
   // wartende Strafe wird nicht aufgehoben.
   const oppPensArr = S[oppSide + 'Penalties'] || [];
   const running = runningPenIds(oppPensArr, maxPensFor(S));
