@@ -48,3 +48,22 @@ body {
   margin: 0;
 }
 
+/* ─── SCROLLBARS ───────────────────────────────────────────────────────
+   Dunkles App-Design statt nativer (heller) System-Scrollbar, v.a. in
+   Electron sichtbar (Tab-Bereich, Setup-Dialog). Nutzt die theme-fähigen
+   --ct-*-Variablen falls verfügbar (Controller-Ansicht, hell/dunkel je nach
+   body.light-mode), sonst die statischen Farben hier (Scoreboard-Anzeige,
+   eigenständige Fenster wie presets-manager.html ohne controller.css). ─── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ct-border, var(--border2)) var(--ct-bg, var(--black));
+}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--ct-bg, var(--black)); }
+::-webkit-scrollbar-thumb {
+  background: var(--ct-card, var(--panel));
+  border: 2px solid var(--ct-bg, var(--black));
+}
+::-webkit-scrollbar-thumb:hover { background: var(--ct-border, var(--border2)); }
+::-webkit-scrollbar-corner { background: var(--ct-bg, var(--black)); }
+

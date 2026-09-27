@@ -20,8 +20,10 @@
     },
     "files": [
       "electron/main.js",
+      "electron/preload.js",
       "scoreboard.html",
       "stream.html",
+      "presets-manager.html",
       "css/**/*",
       "js/**/*",
       "img/**/*",

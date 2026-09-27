@@ -1,7 +1,8 @@
 // Copyright (c) 2026 sakritz — MIT License
 
-const { app, BrowserWindow, screen, Menu, dialog, clipboard, shell } = require('electron');
+const { app, BrowserWindow, screen, Menu, dialog, clipboard, shell, ipcMain } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const APP_ROOT = path.resolve(__dirname, '..');
 const express = require('express');
 
@@ -53,6 +54,43 @@ function stopLocalServer() {
   }
 }
 
+// ── Spieltag-Vorlagen (gespeicherte Spiel-Konfigurationen) ───────────────────
+// Eine Datei im Electron-Nutzerverzeichnis statt localStorage: Logos werden
+// unkomprimiert als Data-URL gespeichert, mehrere Vorlagen könnten das
+// localStorage-Quota sprengen. Array von { id, name, savedAt, config }.
+const PRESETS_FILE = path.join(app.getPath('userData'), 'game-presets.json');
+
+function loadPresets() {
+  try {
+    return JSON.parse(fs.readFileSync(PRESETS_FILE, 'utf8'));
+  } catch (e) {
+    return [];
+  }
+}
+
+function savePresets(presets) {
+  fs.writeFileSync(PRESETS_FILE, JSON.stringify(presets, null, 2), 'utf8');
+}
+
+ipcMain.handle('presets:save', (event, { name, config }) => {
+  const presets = loadPresets();
+  presets.push({ id: Date.now(), name, savedAt: Date.now(), config });
+  savePresets(presets);
+  buildMenu();
+  return presets.map(({ id, name, savedAt }) => ({ id, name, savedAt }));
+});
+
+ipcMain.handle('presets:list', () => {
+  return loadPresets().map(({ id, name, savedAt }) => ({ id, name, savedAt }));
+});
+
+ipcMain.handle('presets:delete', (event, id) => {
+  const presets = loadPresets().filter(p => p.id !== id);
+  savePresets(presets);
+  buildMenu();
+  return presets.map(({ id, name, savedAt }) => ({ id, name, savedAt }));
+});
+
 // ── Fenster-Referenzen ────────────────────────────────────────────────────────
 let controlWindow = null;   // Steuer-Panel (auf dem Laptop)
 let displayWindow = null;   // Scoreboard-Anzeige (auf dem zweiten Monitor / TV)
@@ -69,6 +107,7 @@ function createControlWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
     },
   });
 
@@ -150,13 +189,51 @@ function toggleDisplayWindow() {
   else createDisplayWindow();
 }
 
+// ── Hilfsfunktion: Vorlagen-Verwalten-Fenster erstellen ──────────────────────
+let presetsManagerWindow = null;
+function openPresetsManagerWindow() {
+  if (presetsManagerWindow) { presetsManagerWindow.focus(); return; }
+  presetsManagerWindow = new BrowserWindow({
+    width: 480,
+    height: 560,
+    minWidth: 360,
+    minHeight: 360,
+    title: 'Vorlagen verwalten',
+    icon: ICON,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'), // gleiche window.gamePresets-API wie im Setup-Dialog
+    },
+  });
+  presetsManagerWindow.setMenuBarVisibility(false);
+  presetsManagerWindow.loadURL(`http://localhost:${PORT}/presets-manager.html`);
+  presetsManagerWindow.on('closed', () => { presetsManagerWindow = null; });
+}
+
 // ── Anwendungsmenü ────────────────────────────────────────────────────────────
 function buildMenu() {
+  const presets = loadPresets();
+  const loadPresetSubmenu = [
+    ...(presets.length
+      ? presets.map(p => ({
+          label: p.name,
+          click: () => {
+            if (controlWindow) controlWindow.webContents.send('presets:load', p.config);
+          },
+        }))
+      : [{ label: 'Keine Vorlagen gespeichert', enabled: false }]),
+    { type: 'separator' },
+    { label: 'Vorlagen verwalten…', click: openPresetsManagerWindow },
+  ];
+
   const template = [
     {
       label: 'Datei',
       submenu: [
         { label: 'Anzeige öffnen/schließen', accelerator: 'F12', click: toggleDisplayWindow },
+        { type: 'separator' },
+        { label: 'Vorlage laden', submenu: loadPresetSubmenu },
         { type: 'separator' },
         { label: 'Beenden', accelerator: 'CmdOrCtrl+Q', click: () => { if (controlWindow) controlWindow.close(); } },
       ],

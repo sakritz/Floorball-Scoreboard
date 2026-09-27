@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<!-- Copyright (c) 2026 sakritz — MIT License
+     Eigenes, schlankes Fenster zum Verwalten gespeicherter Spieltag-Vorlagen
+     (Menü Datei → Vorlage laden → Vorlagen verwalten…). Nutzt dieselbe
+     window.gamePresets-API wie der Setup-Dialog (electron/preload.js). -->
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vorlagen verwalten</title>
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/ui.css">
+<style>
+  body { padding: 20px 22px; overflow-y: auto; }
+  h1 {
+    font-size: 13px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--lime); margin-bottom: 16px; font-family: var(--font-display);
+  }
+  .pm-empty { font-size: 12px; color: rgba(255,255,255,.4); letter-spacing: 1px; text-align: center; padding: 40px 0; }
+</style>
+</head>
+<body>
+  <h1>Spieltag-Vorlagen</h1>
+  <div id="pm-list" class="setup-preset-list"></div>
+
+  <script>
+    function fmtSaved(ts) {
+      const d = new Date(ts);
+      const pad = n => String(n).padStart(2, '0');
+      return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    function render() {
+      window.gamePresets.list().then(presets => {
+        const list = document.getElementById('pm-list');
+        if (!presets.length) {
+          list.innerHTML = '<div class="pm-empty">Noch keine Vorlagen gespeichert</div>';
+          return;
+        }
+        list.innerHTML = presets.slice().reverse().map(p => `
+          <div class="setup-preset-row">
+            <span class="setup-preset-name">${p.name}</span>
+            <span class="setup-preset-date">${fmtSaved(p.savedAt)}</span>
+            <span class="setup-preset-del" data-id="${p.id}" title="Löschen">✕</span>
+          </div>`).join('');
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      const del = e.target.closest('.setup-preset-del');
+      if (!del) return;
+      const row = del.closest('.setup-preset-row');
+      const name = row.querySelector('.setup-preset-name').textContent;
+      if (confirm(`„${name}“ wirklich löschen?`)) {
+        window.gamePresets.delete(Number(del.dataset.id)).then(render);
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>

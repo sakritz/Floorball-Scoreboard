@@ -216,21 +216,24 @@ function detectFormatFromLeague(leagueName, gameOperationName) {
   return '3';
 }
 
-function applyFormat(val) {
+// Reine Zuordnung Format-Select-Wert → {maxPeriods, periodSecs, pauseSecs},
+// ohne S anzufassen. Wird von applyFormat() (wendet auf S an) und von
+// readSetupFormConfig() (js/ui.js, für Vorlagen speichern) genutzt.
+function formatValuesFor(val) {
   if (val === '3s') {
-    S.maxPeriods = 3;
-    S.periodSecs = 900;
-    S.pauseSecs  = 420;
+    return { maxPeriods: 3, periodSecs: 900, pauseSecs: 420 };
   } else if (val === '2') {
-    S.maxPeriods = 2;
-    S.periodSecs = 1200;
-    S.pauseSecs  = 300;
-  } else {
-    // '3' and 'custom' both handled here; custom overrides below in setupStart
-    S.maxPeriods = 3;
-    S.periodSecs = 1200;
-    S.pauseSecs  = 600;
+    return { maxPeriods: 2, periodSecs: 1200, pauseSecs: 300 };
   }
+  // '3' and 'custom' both handled here; custom overrides below in setupStart
+  return { maxPeriods: 3, periodSecs: 1200, pauseSecs: 600 };
+}
+
+function applyFormat(val) {
+  const f = formatValuesFor(val);
+  S.maxPeriods = f.maxPeriods;
+  S.periodSecs = f.periodSecs;
+  S.pauseSecs  = f.pauseSecs;
   S.period = 1;
   S.clock  = S.periodSecs;
   clockMs = S.clock * 1000;
