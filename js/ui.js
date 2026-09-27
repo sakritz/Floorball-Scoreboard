@@ -655,12 +655,13 @@ function updateCountdown(state) {
 
 (function initTabDragHandle() {
   const MIN_H = 100;
-  const MAX_H = 400;
+  // Maximal 50% der Fensterhöhe, aber nie unter MIN_H (sehr kleine Fenster).
+  const maxH = () => Math.max(MIN_H, Math.round(window.innerHeight * 0.5));
   const STORED_KEY = 'ct-tab-area-height';
   const DEFAULT_H = 160;
 
   function applyHeight(h) {
-    h = Math.min(MAX_H, Math.max(MIN_H, h));
+    h = Math.min(maxH(), Math.max(MIN_H, h));
     const ta = document.getElementById('ct-tab-area');
     if (!ta) return;
     ta.style.flexBasis = h + 'px';
@@ -676,7 +677,7 @@ function updateCountdown(state) {
     let savedH = DEFAULT_H;
     try {
       const s = parseInt(localStorage.getItem(STORED_KEY));
-      if (s >= MIN_H && s <= MAX_H) savedH = s;
+      if (s >= MIN_H && s <= maxH()) savedH = s;
     } catch(e) {}
 
     // Patch switchTab to apply saved height when opening
@@ -695,7 +696,7 @@ function updateCountdown(state) {
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       // dragging up = increasing height (handle is at top of tab-area)
       const newH = startH - (clientY - startY);
-      savedH = Math.min(MAX_H, Math.max(MIN_H, newH));
+      savedH = Math.min(maxH(), Math.max(MIN_H, newH));
       applyHeight(savedH);
     }
 

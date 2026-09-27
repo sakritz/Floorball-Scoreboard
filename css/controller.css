@@ -12,8 +12,10 @@
   --ct-surface:  #13161e;
   --ct-card:     #1a1e28;
   --ct-border:   #262b38;
-  --ct-muted:    #5b6172;
-  --ct-muted2:   #7d8290;
+  /*--ct-muted:    #5b6172;
+  --ct-muted2:   #7d8290;*/
+  --ct-muted: #707070;
+  --ct-muted2: #ADADAD;
   --ct-text:     #f0f4ff;
   --lime:        #c8ff00;
   --cyan:        #22c55e;
@@ -671,7 +673,7 @@ body.light-mode #view-controller .ct-bar-toggle.start {
   transition: flex-basis 0.2s ease;
 }
 .ct-tab-area.tab-open {
-  flex: 0 0 160px;
+  flex: 0 0 300px;
 }
 .ct-tab-area.dragging {
   transition: none;

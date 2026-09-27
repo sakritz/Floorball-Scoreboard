@@ -19,8 +19,10 @@ html, body { height: 100%; }
   --orange:  #ff8c00;
   --purple:  #b44fff;
   --white:   #f2f5ff;
-  --muted:   #4a5170;
-  --muted2:  #6a7190;
+  /*--muted:   #4a5170;
+  --muted2:  #6a7190;*/
+  --muted: #707070;
+  --muted2: #ADADAD;
   /* dynamic team colors – set by JS */
   --sb-home: #c8ff00;
   --sb-away: #22c55e;
