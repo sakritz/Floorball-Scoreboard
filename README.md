@@ -11,6 +11,25 @@ Eine Scoreboard-App für Floorball – verfügbar als HTML-Datei (z.B. via GitHu
 
 ---
 
+## Screenshots
+
+<table>
+<tr>
+<td width="33%"><img src="img/screenshots/startscreen.png" alt="Startscreen"><br><sub>Startscreen</sub></td>
+<td width="33%"><img src="img/screenshots/controller.png" alt="Controller-Ansicht"><br><sub>Controller</sub></td>
+<td width="33%"><img src="img/screenshots/scoreboard.png" alt="Scoreboard-Präsentation"><br><sub>Scoreboard-Präsentation</sub></td>
+</tr>
+<tr>
+<td><img src="img/screenshots/controller-strafen.png" alt="Strafen-Tab mit aktiver Strafe"><br><sub>Strafen-Tab</sub></td>
+<td><img src="img/screenshots/scoreboard-penaltyschiessen.png" alt="Penaltyschießen-Ansicht"><br><sub>Penaltyschießen</sub></td>
+<td><img src="img/screenshots/mobile-controller.png" alt="Mobile Controller-Ansicht" height="240"><br><sub>Mobile-Ansicht</sub></td>
+</tr>
+</table>
+
+Screenshots aktualisieren: `npm run screenshots` ([scripts/screenshots.js](scripts/screenshots.js), Playwright – einmalig vorher `npx playwright install chromium`).
+
+---
+
 ## Features
 
 **Spielsteuerung**
@@ -130,6 +149,9 @@ electron/
   assets/icon.png
 
 package.json          Root: electron, express, electron-builder (Build-Config)
+scripts/
+  screenshots.js      Screenshots für README aktualisieren (Playwright, devDependency)
+img/screenshots/      Generierte Screenshots (siehe oben)
 docs/                 ARCHITECTURE.md, Anleitung, ROADMAP.md
 documents/            Regelwerke (SPRGK 2022/2026, Synopse), Spielberichtsbogen
 legacy/               Alte Single-File-Version (nicht mehr gepflegt)
