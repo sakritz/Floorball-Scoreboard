@@ -19,8 +19,12 @@
 11. [Einstellungen](#einstellungen)
 12. [Danger Zone](#danger-zone)
 13. [Scoreboard-Präsentation](#scoreboard-präsentation)
-14. [Tastenkürzel](#tastenkürzel)
-15. [Tipps & Troubleshooting](#tipps--troubleshooting)
+14. [Spielbericht](#spielbericht)
+15. [Musiksteuerung (Proof of Concept)](#musiksteuerung-proof-of-concept)
+16. [Spieltag-Vorlagen](#spieltag-vorlagen)
+17. [Mobile-Ansicht](#mobile-ansicht)
+18. [Tastenkürzel](#tastenkürzel)
+19. [Tipps & Troubleshooting](#tipps--troubleshooting)
 
 ---
 
@@ -53,11 +57,12 @@ Laptop (Controller)  ──BroadcastChannel──  Beamer-Tab (Scoreboard)
 
 Beim ersten Start erscheint automatisch der **Setup-Dialog**. Er kann jederzeit über den Tab **Spiel** → Karte **„Spiel einrichten"** → Button **„⚙ Setup öffnen"** wieder aufgerufen werden.
 
+> **Hinweis:** Der Saisonmanager-Import im Setup-Dialog ist aktuell temporär deaktiviert. Spielkonfigurationen lassen sich stattdessen über **Spieltag-Vorlagen** speichern und wiederverwenden (nur Desktop-App, siehe [Spieltag-Vorlagen](#spieltag-vorlagen)).
+
 ### Felder im Setup
 
 | Feld | Beschreibung |
 |---|---|
-| **Saisonmanager-Import** | Spieldaten automatisch aus Saisonmanager-URL oder Spiel-ID laden |
 | **Spielformat** | Großfeld 3 × 20 Min · Großfeld-Spieltag 3 × 15 Min · Kleinfeld 2 × 20 Min · Benutzerdefiniert |
 | **Liga / Turnier** | Wird in der Topbar des Scoreboards angezeigt (optional) |
 | **Anpfiff** | Datum & Uhrzeit; startet optional einen Countdown auf dem Scoreboard |
@@ -113,8 +118,10 @@ Die **Control Bar** ist immer sichtbar und enthält die wichtigsten Steuerelemen
 | **Strafen** | Strafen erfassen und verwalten |
 | **Auszeiten** | Auszeit starten und zurücksetzen |
 | **Teams** | Teamnamen, Farben, Logos bearbeiten |
-| **⚙ Einstellungen** | Uhr, Buzzer, Präsentations-Optionen |
+| **⚙ Einstellungen** | Uhr, Buzzer, Präsentations-, Spielbericht- und Musik-Optionen |
 | **⚠ Danger Zone** | Uhr überschreiben, Spiel zurücksetzen / beenden |
+| **Events** *(optional)* | Spielprotokoll, Spielbericht-Export – nur sichtbar wenn in den Einstellungen aktiviert |
+| **Musik** *(optional, nur Electron)* | Playlist & Tor-Hymnen – nur sichtbar wenn in den Einstellungen aktiviert |
 
 > **Tipp:** Tabs können auch per Tastatur aufgerufen werden – die Ziffern `1` bis `9` wählen die sichtbaren Tabs von links nach rechts aus.
 
@@ -160,13 +167,18 @@ Am Ende jeder Periode ertönt automatisch ein **elektronischer Buzzer-Ton** (sof
 
 | Feld | Beschreibung |
 |---|---|
-| **Tortyp-Buttons** | **Penalty** oder **Eigentor** (optional; kein Tortyp = normales Tor) |
+| **Tortyp-Buttons** | **Penalty**, **Eigentor** oder **Techn. Tor** (optional; kein Tortyp = normales Tor) |
 | **Schütze (Nummer)** | Rückennummer des Torschützen (optional) |
-| **Vorlage (Nummer)** | Rückennummer des Assistenten (optional; entfällt bei Penalty/Eigentor) |
+| **Vorlage (Nummer)** | Rückennummer des Assistenten (optional; entfällt bei Penalty/Eigentor/Techn. Tor) |
 
 3. Klick auf **„Bestätigen"** speichert das Tor
 
-> Bei einem **Eigentor** werden Schützen- und Vorlagenfeld ausgeblendet. Bei einem **Penalty** entfällt nur das Vorlagenfeld.
+> Bei **Eigentor** und **Technischem Tor** werden Schützen- und Vorlagenfeld ausgeblendet. Bei einem **Penalty** entfällt nur das Vorlagenfeld.
+
+### Sonderfälle bei Strafen
+
+- **Eigentor** und normale Tore heben eine laufende Strafe des Teams in Unterzahl auf (Powerplay endet)
+- Ein **Penalty-Tor** oder ein **Technisches Tor** hebt keine laufende Strafe auf
 
 ### Tor rückgängig machen
 
@@ -218,7 +230,15 @@ Die Animation kann in den **Einstellungen** deaktiviert werden.
 
 ### Strafe löschen
 
-In der Strafenliste erscheint bei jeder aktiven Strafe ein **✕-Button** zum manuellen Entfernen. Wird der erste Teil einer Doppelstrafe gelöscht, wird der wartende zweite Teil sofort aktiviert.
+In der Strafenliste erscheint bei jeder aktiven Strafe ein **✕-Button** zum manuellen Entfernen. Wird der erste Teil einer Doppelstrafe gelöscht, wird der wartende zweite Teil sofort aktiviert. Wird eine **gepaarte** Strafe gelöscht, wird die Partner-Strafe automatisch entkoppelt.
+
+### Gepaarte Strafen
+
+Wird eine Strafe eingetragen, während das gegnerische Team bereits eine laufende, ungepaarte Strafe gleicher Dauer/Art bei derselben Spieluhr-Stellung hat, fragt die App **„Strafen koppeln?"**. Gepaarte Strafen zählen nicht für die Spielerzahl (Über-/Unterzahl bleibt unverändert), erlöschen nicht durch ein Powerplay-Tor, laufen aber normal weiter und tragen im Controller/Scoreboard das Badge **„GEPAART"**.
+
+### Strafcodes
+
+Beim Eintragen einer Strafe kann zusätzlich ein Strafcode aus der offiziellen Statistik-Kategorien-Liste des Spielberichtsbogens gewählt werden. Die Codes dienen der Auswertung im Spielbericht, sind aber kein Eindeutigkeits-Schlüssel – mehrere Strafen können denselben Code tragen.
 
 ### Über-/Unterzahl-Anzeige
 
@@ -370,6 +390,13 @@ Ein **„▶ Test-Buzzer"**-Button ermöglicht die Vorschau des gewählten Sound
 
 Der **⧉-Button** in der Control Bar öffnet eine skalierte Live-Vorschau des Scoreboards direkt im Controller-Fenster. Das Vorschaufenster ist frei positionierbar (Titelleiste ziehen) und größenveränderbar (Anfasser rechts unten).
 
+### Darstellung
+
+| Option | Beschreibung |
+|---|---|
+| **Hell-/Dunkelmodus** | Theme des Controllers umschalten |
+| **Schriftgröße der Tabs** | Drei Zoomstufen (Standard / groß / sehr groß) für Tab-Leiste und -Inhalte |
+
 ---
 
 ## Danger Zone
@@ -431,6 +458,78 @@ Alle Schriftgrößen und Abstände skalieren über CSS `clamp()` automatisch mit
 
 ---
 
+## Spielbericht
+
+Im Tab **⚙ Einstellungen** → Karte **„Spielbericht"** lässt sich einstellen, ob Beteiligte über **Rückennummern** oder **Namen** erfasst werden ("Nummern im Spiel, Namen im Training").
+
+### Bericht exportieren
+
+1. Tab **Events** (sichtbar, wenn „Events-Tab & Ereignisse" in den Einstellungen aktiviert ist) öffnen
+2. Klick auf **„Export"**
+3. Im Dialog **„Spielbericht exportieren"** eine Ausgabeform wählen:
+
+| Format | Beschreibung |
+|---|---|
+| **PDF (Druck)** | Öffnet den Browser-Druckdialog mit einer aufbereiteten, chronologischen Timeline aller Ereignisse |
+| **Markdown** | Kopiert den Bericht als Markdown-Text in die Zwischenablage |
+| **JSON** | Lädt die vollständigen Berichtsdaten als `.json`-Datei herunter |
+
+---
+
+## Musiksteuerung (Proof of Concept)
+
+> Nur in der Desktop-App (Electron) verfügbar. Bewusst minimal gehalten: keine automatische Auslösung durch Spielereignisse, keine Playlist-Persistenz über Neustarts hinaus.
+
+### Aktivieren
+
+Im Tab **⚙ Einstellungen** → Karte **„Musiksteuerung"** den Schalter **„Aktiv"** einschalten. Dadurch erscheint ein eigener Tab **„Musik"**.
+
+### Bedienen
+
+Im Tab **Musik** wird ein Playlist-Ordner sowie optional Tor-Hymnen pro Team ausgewählt. In der Control Bar erscheint zusätzlich ein Playlist-Button für die schnelle Wiedergabesteuerung.
+
+### Spotify-Fernsteuerung (experimentell)
+
+Alternativ zur lokalen Playlist kann eine Spotify-Playlist per URI als Wiedergabequelle hinterlegt werden. Erfordert eine einmalige Autorisierung; als Proof of Concept nicht für Mehrfach-Verbindungen ausgelegt.
+
+---
+
+## Spieltag-Vorlagen
+
+> Nur in der Desktop-App (Electron) verfügbar.
+
+### Vorlage speichern
+
+Im Setup-Dialog auf **„💾 Als Vorlage speichern"** klicken, um die aktuelle Spielkonfiguration (Format, Teams, Farben, Logos) unter einem Namen abzulegen.
+
+### Vorlage laden
+
+Über das Anwendungsmenü **Datei → Vorlage laden** die gewünschte gespeicherte Vorlage auswählen.
+
+### Vorlagen verwalten
+
+Über das Anwendungsmenü **Datei → Vorlage laden → Vorlagen verwalten…** öffnet sich ein eigenes Fenster mit allen gespeicherten Vorlagen (Name, Speicherdatum) zum Löschen.
+
+---
+
+## Mobile-Ansicht
+
+Auf schmalen Bildschirmen (Smartphone/Tablet) wechselt der Controller automatisch auf ein Bottom-Nav-Layout.
+
+### Bottom-Nav
+
+| Eintrag | Zeigt |
+|---|---|
+| **Spiel** | Control Bar (Score, Uhr, Abschnitt) |
+| **Ereignisse** | Spielprotokoll (sofern aktiviert) |
+| **Strafen** | Strafenliste |
+| **Auszeit** | Auszeit-Steuerung |
+| **Mehr** | Öffnet ein Sheet mit Teams, Einstellungen, Danger Zone und ggf. Musik |
+
+Die Control Bar zeigt zusätzlich Team-Logos, Perioden-Fortschritt als Segmente und die Uhr-Richtung kompakt an. Beim Vergrößern des Fensters über die mobile Breite hinaus schließt ein offenes „Mehr"-Sheet automatisch.
+
+---
+
 ## Tastenkürzel
 
 | Taste | Aktion |
@@ -440,6 +539,7 @@ Alle Schriftgrößen und Abstände skalieren über CSS `clamp()` automatisch mit
 | `G` | Tor-Dialog für Gastteam öffnen |
 | `Shift + H` | Letztes Heimtor rückgängig |
 | `Shift + G` | Letztes Gasttor rückgängig |
+| `Strg + Z` | Letzte Aktion rückgängig (Undo-Stack) |
 | `1` – `9` | Tabs wechseln (links → rechts, nur sichtbare Tabs) |
 | `Esc` | Offene Dialoge schließen |
 | `?` | Tastenkürzel-Übersicht anzeigen |

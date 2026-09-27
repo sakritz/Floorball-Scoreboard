@@ -16,26 +16,42 @@ Eine Scoreboard-App für Floorball – verfügbar als HTML-Datei (z.B. via GitHu
 **Spielsteuerung**
 - Effektive Spielzeitmessung (Großfeld 3 × 20 Min, Großfeld Spieltagsmodus 3 × 15 Min, Kleinfeld 2 × 20 Min)
 - Start/Stop per Button oder **Leertaste**
-- Tore mit +/− Buttons pro Team
+- Tore mit +/− Buttons pro Team, Tortypen Normal / Penalty / Eigentor / Technisches Tor
 - Automatischer Buzzer-Sound bei Ablauf der Spielzeit
 - Pausentimer (10 / 7 / 5 Min je nach Format)
+- Undo-Stack für die letzten Aktionen (**Strg+Z**)
 
 **Strafzeiten & Auszeiten**
-- Einfache Bankstrafe (2 Min), Große Bankstrafe (2+2 Min), Persönliche 10-Min-Strafe
-- Strafzeiten laufen synchron mit der Spieluhr
+- Bankstrafe (2 Min), Große Bankstrafe (2+2 Min), Persönliche 10-Min-Strafe + weitere Strafarten nach SPRGK 2026
+- Strafzeiten laufen synchron mit der Spieluhr, Strafenlimit pro Team (Großfeld 2, Kleinfeld 1 gleichzeitig laufend)
+- Gepaarte Strafen (§603.9): Erkennung passender Gegner-Strafen mit Kopplungs-Dialog
 - 1 Auszeit pro Team (30 Sek), unabhängig von der Spieluhr
 - Laufende Strafen sichtbar in Steuerung und Präsentation
 
+**Penaltyschießen**
+- Eigene Shootout-Ansicht auf dem Scoreboard mit Punkte-Visualisierung
+- Automatische Zusatzrunden und Sieger-Ermittlung nach SPRGK §204
+
 **Teamkonfiguration**
 - Teamname, Logo (Upload), Akzentfarbe und Trikotfarbe pro Team
-- Alle Farben wirken live auf Scoreboard und Vorschau
-- Import von Spieldaten (Liga, Teamnamen, Logos, Spielbeginn) direkt aus dem Saisonmanager
+- Alle Farben wirken live auf Scoreboard und Vorschau, automatische Farbvorschläge aus dem Logo
+- Spieltag-Vorlagen: Spiel-Konfigurationen speichern und über das Electron-Menü wieder laden (nur Desktop-App)
 
 **Präsentation**
 - Separates Scoreboard-Fenster als Hallenanzeige für zweiten Monitor / Beamer
+- Mobile Controller-Ansicht (Bottom-Nav) für Steuerung vom Smartphone/Tablet
+- Hell- und Dunkelmodus, einstellbare Schriftgröße der Steuerungs-Tabs
 - Uhrrichtung (hoch/runter) für Steuerung und Präsentation unabhängig einstellbar
 - Eingebettete Vorschau (PiP) direkt in der Steuerungsansicht
 - Tor-Animation, Auszeit-Overlay, Pausen-Overlay
+
+**Spielbericht**
+- Chronologische Timeline aller Spielereignisse (Tore, Strafen, Auszeiten)
+- Export als Druck/PDF, Markdown (Zwischenablage) oder JSON (Datei)
+
+**Musiksteuerung** *(Proof of Concept, nur Desktop-App)*
+- Playlist-Ordner und Tor-Hymnen manuell über einen eigenen Tab steuern
+- Optionale, experimentelle Spotify-Fernsteuerung als alternative Wiedergabequelle
 
 ---
 
@@ -54,14 +70,13 @@ Kein Server, kein Build-Schritt, keine Abhängigkeiten. Die Dateien funktioniere
 
 ### Option B – Electron Desktop-App
 
-Die Electron-App schaltet zusätzliche Features frei: automatisches Öffnen des Scoreboards auf dem zweiten Monitor und ein OBS-Overlay für Streams.
+Die Electron-App schaltet zusätzliche Features frei: Scoreboard-Fenster auf einem zweiten Monitor, OBS-Overlay für Streams, Spieltag-Vorlagen über das Anwendungsmenü sowie die (experimentelle) Musik-/Spotify-Steuerung.
 
 **Als Endnutzer** einfach den passenden Installer herunterladen und ausführen – keine weiteren Voraussetzungen.
  
-**Für Entwickler** (selbst bauen / starten):
+**Für Entwickler** (selbst bauen / starten, im Repo-Root):
 
 ```bash
-cd electron
 npm install
 npm start
 ```
@@ -72,6 +87,8 @@ npm start
 | `F11` | Controller-Fenster Fullscreen umschalten |
 | `Escape` | Fullscreen beenden |
 
+Shortcuts gelten nur bei fokussierter App (keine globalen System-Shortcuts). Über das Anwendungsmenü (Datei / Ansicht / Hilfe) lassen sich außerdem Spieltag-Vorlagen laden/verwalten und die OBS-Adresse kopieren.
+
 **OBS-Overlay:** Wenn die Electron-App läuft, ist das Overlay unter `http://localhost:8080/stream.html` erreichbar. In OBS als Browser-Quelle hinzufügen.
 
 ---
@@ -79,8 +96,9 @@ npm start
 ## Dateistruktur
 
 ```
-scoreboard.html       Markup-Gerüst (Steuerung + Scoreboard)
+scoreboard.html       Markup-Gerüst (Startscreen, Steuerung + Scoreboard)
 stream.html           OBS-Overlay (Score-Leiste für Streams)
+presets-manager.html  Fenster zum Verwalten gespeicherter Spieltag-Vorlagen (Electron)
 logo.png
 
 css/
@@ -88,6 +106,7 @@ css/
   scoreboard.css      TV-/Monitor-Ansicht
   controller.css      Steuer-Panel
   ui.css              Dialoge & Overlays
+  mobile.css          Mobile Controller-Ansicht (Bottom-Nav)
 
 js/
   state.js            Zentrales State-Objekt
@@ -98,13 +117,22 @@ js/
   game-flow.js        Spielfluss (Strafen, Perioden, Auszeiten)
   logo.js             Logo-Farbextraktion
   buzzer.js           Buzzer-Sounds
+  music.js            Musiksteuerung (Proof of Concept, nur Electron)
   render.js           Scoreboard-Rendering
+  report.js           Spielbericht-Export (PDF/Markdown/JSON)
   ui.js               Dialoge, Startscreen, Setup
+  mobile.js           Mobile Navigation (Bottom-Nav, „Mehr"-Menü)
 
 electron/
-  main.js             Electron-Hauptprozess
-  package.json
+  main.js             Electron-Hauptprozess (Fenster, Express-Server, Menü)
+  preload.js          IPC-Bridge (u.a. Spieltag-Vorlagen)
+  spotify.js          Spotify-Fernsteuerung (Proof of Concept)
   assets/icon.png
+
+package.json          Root: electron, express, electron-builder (Build-Config)
+docs/                 ARCHITECTURE.md, Anleitung, ROADMAP.md
+documents/            Regelwerke (SPRGK 2022/2026, Synopse), Spielberichtsbogen
+legacy/               Alte Single-File-Version (nicht mehr gepflegt)
 ```
 
 ---
@@ -119,15 +147,21 @@ Die App besteht aus einer schlanken `scoreboard.html` (~1400 Zeilen reines Marku
 
 **Buzzer-Sound** wird über die [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API) synthetisiert – kein externes Audio-File.
 
+**Spielbericht** wird clientseitig aus dem Ereignisprotokoll (`S.events`) erzeugt – PDF läuft über den Browser-Druckdialog, Markdown geht in die Zwischenablage, JSON wird als Datei heruntergeladen.
+
+**Musiksteuerung** (nur Electron, Proof of Concept) spielt lokale Dateien aus einem gewählten Playlist-Ordner ab; die optionale Spotify-Fernsteuerung läuft über einen lokalen, einmalig zu autorisierenden OAuth-Flow (`electron/spotify.js`).
+
 **Schriften** werden von Google Fonts geladen (Barlow Condensed, Bebas Neue). Bei fehlendem Internetzugang fallen die Texte auf Systemschriften zurück.
 
-Eine ausführliche Beschreibung der internen Architektur (Datenfluß, State-Objekt, Undo-System) findet sich in [ARCHITECTURE.md](ARCHITECTURE.md).
+Eine ausführliche Beschreibung der internen Architektur (Datenfluß, State-Objekt, Undo-System) findet sich in [ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+Ideen für mögliche nächste Schritte (unverbindlich) gibt es in der [ROADMAP.md](docs/ROADMAP.md), Änderungen pro Version im [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
 ## Regelwerk
 
-Die Spielzeiten, Strafzeiten und Auszeiten entsprechen den **Floorball Spielregeln Großfeld/Kleinfeld (SPRGK) Version 2022** von Floorball Deutschland.
+Die Spielzeiten, Strafzeiten und Auszeiten entsprechen den **Floorball Spielregeln Großfeld/Kleinfeld (SPRGK) 2026** von Floorball Deutschland (gültig ab 1.7.2026). Die Regeldokumente (2022, 2026 und eine Synopse der Änderungen) liegen unter [`documents/`](documents/).
 
 | Format | Spielzeit | Pause | Auszeit |
 |---|---|---|---|

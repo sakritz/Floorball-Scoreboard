@@ -23,14 +23,23 @@ Der Nutzer öffnet `scoreboard.html` lokal per Doppelklick oder über einen Webs
 electron/
   └── main.js startet beim Launch:
         ├── Fenster 1: Controller-Ansicht (Hauptmonitor)
-        ├── Fenster 2: Scoreboard-Anzeige (zweiter Monitor, F12)
+        ├── Anwendungsmenü (Datei / Ansicht / Hilfe, buildMenu())
         └── Express-Server auf http://localhost:8080
               ├── Serviert scoreboard.html + alle Dateien statisch
-              ├── POST /api/state  ← Controller schickt State-Updates
-              └── GET  /api/state  ← stream.html (OBS) pollt State
+              ├── POST /api/state         ← Controller schickt State-Updates
+              ├── GET  /api/state         ← stream.html (OBS) pollt State
+              └── GET  /api/music/tracks  ← Musiksteuerung: Playlist-Ordner auflisten
+
+Fenster 2 (Scoreboard-Anzeige, zweiter Monitor) wird NICHT automatisch geöffnet,
+sondern per F12 / Menü "Datei → Anzeige öffnen/schließen" umgeschaltet
+(toggleDisplayWindow()).
 ```
 
 OBS bindet das Overlay als Browser-Quelle ein: `http://localhost:8080/stream.html`
+
+**Spieltag-Vorlagen** (Spielkonfigurationen speichern/laden) laufen über IPC: `electron/preload.js` exponiert `window.gamePresets` (list/save/delete) im Renderer; das Menü "Datei → Vorlage laden" listet gespeicherte Vorlagen, "Vorlagen verwalten…" öffnet `presets-manager.html` in einem eigenen Fenster (`openPresetsManagerWindow()`).
+
+**Spotify-Fernsteuerung** (Proof of Concept) läuft über `electron/spotify.js` — ein lokaler, einmalig zu autorisierender OAuth-Flow (bewusst Single-Use, kein Multi-Flow-Support fürs PoC), im Renderer über `window.spotifyControl` (`preload.js`) angebunden. Genutzt von `js/music.js` als alternative Wiedergabequelle zur lokalen Playlist.
 
 ---
 
@@ -39,30 +48,41 @@ OBS bindet das Overlay als Browser-Quelle ein: `http://localhost:8080/stream.htm
 ```
 scoreboard.html          Markup-Gerüst; kein inline CSS, kein inline JS
 stream.html              OBS-Overlay (Score-Leiste für Streams)
+presets-manager.html     Fenster zum Verwalten gespeicherter Spieltag-Vorlagen (Electron)
 
 css/
   base.css               CSS Custom Properties, Reset (Fundament für alle anderen)
   scoreboard.css         TV-/Monitor-Ansicht (Topbar, Teams, Uhr, Ticker)
   controller.css         Steuer-Panel (Tabs, Karten, Buttons, Formulare)
   ui.css                 Shared UI (Setup-Dialog, Startscreen, Countdown)
+  mobile.css             Mobile Controller-Ansicht (Bottom-Nav, gestapelte Layouts)
 
 js/
   state.js               Globale Grundvariablen: S (State-Objekt), isScoreboard, BC
   undo.js                Undo-Stack (patch-basiert) + Clock-Hilfsvariablen
   persistence.js         localStorage: saveState / loadState
-  controller.js          initController, push, Spieluhr, Score-Anpassung
+  controller.js          initController, push, Spieluhr, Score-Anpassung, Powerplay-Check
   palette.js             Neon-Farbpalette, setPeriod, buildPeriodPills
-  game-flow.js           renderController, pushAndRender, Strafen, Perioden, Auszeiten
+  game-flow.js           renderController, pushAndRender, Strafen, Perioden, Auszeiten, PENALTY_CODES
   logo.js                Farbextraktion aus Team-Logos (Canvas, standalone)
   buzzer.js              Buzzer-Sounds (Web Audio API)
+  music.js               Musiksteuerung (Proof of Concept): Playlist-Ordner + Tor-Hymnen, nur Electron
   render.js              initScoreboard, renderScoreboard, Penalty-Shootout
+  report.js              Spielbericht (Timeline, Export als PDF/Markdown/JSON)
   ui.js                  Help-Modal, Startscreen, Countdown, Setup-Dialog, Theme
+  mobile.js              Mobile Navigation (Bottom-Nav, „Mehr"-Menü)
 
 electron/
-  main.js                Electron-Hauptprozess (Fenster, Express-Server, Shortcuts)
-  package.json           Dependencies: electron, express
+  main.js                Electron-Hauptprozess (Fenster, Express-Server, Menü, Shortcuts)
+  preload.js             IPC-Bridge (u.a. window.gamePresets, window.spotifyControl)
+  spotify.js             Spotify-Fernsteuerung (Proof of Concept, lokaler OAuth-Flow)
   assets/
     icon.png             App-Icon
+
+package.json             Repo-Root: Dependencies (electron, express), electron-builder-Config
+docs/                     ARCHITECTURE.md (dieses Dokument), Anleitung, ROADMAP.md
+documents/                Regelwerke (SPRGK 2022/2026, Synopse), Spielberichtsbogen
+legacy/                   Alte Single-File-Version (nicht mehr gepflegt)
 ```
 
 ---
@@ -99,6 +119,10 @@ stream.html: setInterval(200ms) → fetch GET /api/state → Score-Leiste aktual
 ```
 
 BroadcastChannel funktioniert nicht zwischen Electron-Chromium und OBS-Chromium (separate Prozesse), daher HTTP-Polling als Brücke über den lokalen Express-Server.
+
+### Musiksteuerung (nur Electron)
+
+`GET /api/music/tracks` listet die Dateien im gewählten Playlist-Ordner auf; Audiodateien werden zusätzlich über `express.static(playlistFolder)` direkt ausgeliefert. `js/music.js` bedient darüber eine manuelle Playlist- und Tor-Hymnen-Steuerung; alternativ kann über `window.spotifyControl` (`preload.js` → `electron/spotify.js`) eine Spotify-Playlist als Wiedergabequelle angesteuert werden (Proof of Concept, Single-Use-OAuth-Flow).
 
 ---
 
@@ -137,17 +161,21 @@ Patch-basiert — jede Aktion speichert nur die **betroffenen Felder** des State
 `electron/main.js` verwaltet:
 
 - **`createControlWindow()`** — Hauptfenster auf dem primären Monitor, lädt `http://localhost:8080/scoreboard.html`
-- **`createDisplayWindow()`** — Rahmenloses Vollbild-Fenster auf dem zweiten Monitor (falls vorhanden), lädt `http://localhost:8080/scoreboard.html` (BroadcastChannel synchronisiert automatisch)
-- **`startLocalServer()`** — Express-Server auf `127.0.0.1:8080`, serviert alle Projektdateien statisch + `/api/state`-Endpoint
+- **`createDisplayWindow()` / `toggleDisplayWindow()`** — Rahmenloses Vollbild-Fenster auf dem zweiten Monitor (falls vorhanden), lädt `http://localhost:8080/scoreboard.html` (BroadcastChannel synchronisiert automatisch); wird nicht automatisch beim Start geöffnet, sondern per `F12`/Menü umgeschaltet
+- **`startLocalServer()`** — Express-Server auf `127.0.0.1:8080`, serviert alle Projektdateien statisch + `/api/state`- und `/api/music/tracks`-Endpoints
 - **`stopLocalServer()`** — Ruft `closeAllConnections()` vor `server.close()` auf, um hängende Prozesse beim Beenden zu vermeiden
+- **`buildMenu()`** — Anwendungsmenü (Datei / Ansicht / Hilfe), inkl. dynamischem Untermenü der gespeicherten Spieltag-Vorlagen
+- **`openPresetsManagerWindow()`** — öffnet `presets-manager.html` in einem eigenen kleinen Fenster
 
-Globale Tastenkürzel:
+Tastenkürzel (nur bei fokussierter App, **keine** globalen System-Shortcuts):
 
 | Shortcut | Aktion |
 |---|---|
 | `F11` | Controller-Fenster Fullscreen umschalten |
 | `F12` | Display-Fenster öffnen / schließen |
 | `Escape` | Fullscreen beenden |
+
+Weitere App-Shortcuts (Leertaste, H/G, Strg+Z, Zifferntasten für Tabs, `?` für die Shortcut-Übersicht) sind reine JS-Event-Listener in `scoreboard.html`/`js/` und funktionieren identisch im Browser- und im Electron-Modus.
 
 ---
 
