@@ -31,6 +31,7 @@ function initController(skipLoad = false) {
   renderController();
   initCtNeonPalettes();
   initMusic();
+  initSpotify();
 
   // Restore countdown bar if kickoff is still in the future
   if (S.kickoffTime && S.kickoffTime > Date.now() && !S.gameStarted) {

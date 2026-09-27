@@ -21,7 +21,24 @@ contextBridge.exposeInMainWorld('musicControl', {
   getConfig: () => ipcRenderer.invoke('music:getConfig'),
   pickPlaylistFolder: () => ipcRenderer.invoke('music:pickPlaylistFolder'),
   clearPlaylistFolder: () => ipcRenderer.invoke('music:clearPlaylistFolder'),
+  setPlaylistSource: (source) => ipcRenderer.invoke('music:setPlaylistSource', source),
+  setPlaylistSpotifyUri: (uri) => ipcRenderer.invoke('music:setPlaylistSpotifyUri', uri),
   pickAnthem: (side) => ipcRenderer.invoke('music:pickAnthem', side),
   clearAnthem: (side) => ipcRenderer.invoke('music:clearAnthem', side),
   setAnthemRange: (side, start, end) => ipcRenderer.invoke('music:setAnthemRange', side, start, end),
+});
+
+// Spotify-Fernsteuerung (EXPERIMENTELLER Proof of Concept, separater Branch):
+// steuert einen bereits laufenden Spotify-Client fern (Spotify Connect),
+// kein eingebettetes Audio. Tokens verlassen den Main-Prozess nie – der
+// Renderer bekommt nur { connected: bool }.
+contextBridge.exposeInMainWorld('spotifyControl', {
+  getConfig: () => ipcRenderer.invoke('spotify:getConfig'),
+  setClientId: (id) => ipcRenderer.invoke('spotify:setClientId', id),
+  connect: () => ipcRenderer.invoke('spotify:connect'),
+  disconnect: () => ipcRenderer.invoke('spotify:disconnect'),
+  getStatus: () => ipcRenderer.invoke('spotify:getStatus'),
+  play: (uri) => ipcRenderer.invoke('spotify:play', uri),
+  pause: () => ipcRenderer.invoke('spotify:pause'),
+  onStatusChange: (cb) => ipcRenderer.on('spotify:status', (_event, s) => cb(s)),
 });

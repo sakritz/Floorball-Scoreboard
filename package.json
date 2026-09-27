@@ -21,6 +21,7 @@
     "files": [
       "electron/main.js",
       "electron/preload.js",
+      "electron/spotify.js",
       "scoreboard.html",
       "stream.html",
       "presets-manager.html",

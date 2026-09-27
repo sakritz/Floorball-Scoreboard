@@ -1046,13 +1046,32 @@
       <div class="ct-card collapsible">
         <div class="ct-card-head neutral"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-music-notes"/></svg></span>Playlist</span></div>
         <div class="ct-card-body">
-          <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;margin-bottom:6px">Ordner</div>
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <span id="ct-music-playlist-name" style="font-size:12px;color:var(--ct-text)">Kein Ordner gewählt</span>
-            <button class="ct-seg-btn" onclick="pickPlaylistFolder()">Wählen…</button>
-            <button class="ct-seg-btn danger" id="ct-music-playlist-clear" style="display:none" onclick="clearPlaylistFolder()">✕</button>
+          <div style="margin-bottom:10px">
+            <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;margin-bottom:6px">Quelle</div>
+            <div style="display:flex;gap:6px">
+              <button class="ct-seg-btn" id="ct-music-playlist-src-local" onclick="setPlaylistSource('local')">Lokaler Ordner</button>
+              <button class="ct-seg-btn" id="ct-music-playlist-src-spotify" onclick="setPlaylistSource('spotify')">Spotify</button>
+            </div>
           </div>
-          <div id="ct-music-track-count" style="font-size:11px;color:var(--ct-muted-t);margin-top:4px"></div>
+
+          <div id="ct-music-playlist-local-block">
+            <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;margin-bottom:6px">Ordner</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span id="ct-music-playlist-name" style="font-size:12px;color:var(--ct-text)">Kein Ordner gewählt</span>
+              <button class="ct-seg-btn" onclick="pickPlaylistFolder()">Wählen…</button>
+              <button class="ct-seg-btn danger" id="ct-music-playlist-clear" style="display:none" onclick="clearPlaylistFolder()">✕</button>
+            </div>
+            <div id="ct-music-track-count" style="font-size:11px;color:var(--ct-muted-t);margin-top:4px"></div>
+          </div>
+
+          <div id="ct-music-playlist-spotify-block" style="display:none">
+            <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;margin-bottom:6px">Spotify-Playlist-URI</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <input type="text" id="ct-music-playlist-spotify-uri" placeholder="spotify:playlist:..." style="flex:1;min-width:160px">
+              <button class="ct-seg-btn" onclick="saveMusicPlaylistSpotifyUri()">Speichern</button>
+            </div>
+            <div style="font-size:11px;color:var(--ct-muted-t);margin-top:4px">Verbindung dafür unten in der Karte „Spotify (Experiment)" herstellen.</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1074,6 +1093,41 @@
             <input type="number" min="0" step="0.5" placeholder="Ende" id="ct-music-anthem-away-end" style="width:64px" onchange="setAnthemRange('away')">
             <span style="font-size:11px;color:var(--ct-muted-t)">Sek. · leer = ganze Datei</span>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spotify-Fernsteuerung (EXPERIMENTELLER Proof of Concept, separater Branch).
+         Steuert einen bereits laufenden Spotify-Client fern, kein eingebettetes
+         Audio. Bewusst optisch abgesetzt (gestrichelter Rand), damit sie nicht mit
+         den drei fertigen lokalen Quellen oben verwechselt wird. -->
+    <div id="ct-spotify-card" style="display:none;grid-column:1 / -1">
+      <div class="ct-card collapsible" style="border-style:dashed">
+        <div class="ct-card-head neutral"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-music-notes"/></svg></span>Spotify (Experiment)</span></div>
+        <div class="ct-card-body">
+          <div style="font-size:11px;color:var(--ct-muted-t);letter-spacing:.5px;line-height:1.6;margin-bottom:4px">
+            Fernsteuerung eines bereits laufenden Spotify-Clients (Spotify Connect). Erfordert Spotify Premium und eine eigene, selbst registrierte Spotify-Developer-App (Client-ID) – siehe <code>docs/</code> bzw. Plan-Notizen für den Einrichtungs-Schritt.
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;flex-shrink:0">Client-ID</span>
+            <input type="text" id="ct-spotify-client-id" placeholder="Spotify Client-ID" style="flex:1;min-width:200px">
+            <button class="ct-seg-btn" onclick="saveSpotifyClientId()">Speichern</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <button class="btn btn-ghost" style="width:auto;font-size:12px" onclick="connectSpotify()">Mit Spotify verbinden</button>
+            <button class="ct-seg-btn danger" onclick="disconnectSpotify()">Trennen</button>
+            <span id="ct-spotify-status" style="font-size:12px;font-weight:700;letter-spacing:1px;color:var(--ct-muted-t)">Nicht verbunden</span>
+          </div>
+          <div style="height:1px;background:var(--ct-border);margin:10px 0"></div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;flex-shrink:0">Spotify-URI</span>
+            <input type="text" id="ct-spotify-uri" placeholder="spotify:track:... oder spotify:playlist:..." style="flex:1;min-width:220px">
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+            <button class="btn btn-lime" style="width:auto;font-size:12px" onclick="playSpotifyUri()">▶ Play</button>
+            <button class="btn btn-ghost" style="width:auto;font-size:12px" onclick="pauseSpotify()">⏸ Pause</button>
+          </div>
+          <div id="ct-spotify-error" style="display:none;font-size:11px;color:var(--red-t);letter-spacing:.5px;margin-top:8px"></div>
         </div>
       </div>
     </div>
@@ -1210,6 +1264,7 @@
 <script src="js/logo.js"></script>
 <script src="js/buzzer.js"></script>
 <script src="js/music.js"></script>
+<script src="js/spotify.js"></script>
 <script src="js/render.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/report.js"></script>

@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const APP_ROOT = path.resolve(__dirname, '..');
 const express = require('express');
+const { registerSpotify } = require('./spotify');
 
 // ── Lokaler HTTP-Server für OBS ───────────────────────────────────────────────
 const PORT = 8080;
@@ -60,6 +61,9 @@ function startLocalServer() {
       res.sendFile(anthemPath, err => { if (err && !res.headersSent) res.status(404).end(); });
     });
   });
+
+  // ── Spotify-Fernsteuerung (EXPERIMENTELLER Proof of Concept) ──────────────
+  registerSpotify({ app, ipcMain, expressApp, shell, getControlWindow: () => controlWindow, port: PORT });
 
   // scoreboard.html, stream.html und alle Dateien aus dem Projekt-Root ausliefern
   expressApp.use(express.static(APP_ROOT));
@@ -134,6 +138,8 @@ function loadMusicConfig() {
   } catch (e) {
     return {
       playlistFolder: null,
+      playlistSource: 'local', // 'local' | 'spotify'
+      playlistSpotifyUri: null,
       homeAnthem: null, homeAnthemStart: null, homeAnthemEnd: null,
       awayAnthem: null, awayAnthemStart: null, awayAnthemEnd: null,
     };
@@ -159,6 +165,20 @@ ipcMain.handle('music:pickPlaylistFolder', async () => {
 ipcMain.handle('music:clearPlaylistFolder', () => {
   const config = loadMusicConfig();
   config.playlistFolder = null;
+  saveMusicConfig(config);
+  return config;
+});
+
+ipcMain.handle('music:setPlaylistSource', (event, source) => {
+  const config = loadMusicConfig();
+  config.playlistSource = (source === 'spotify') ? 'spotify' : 'local';
+  saveMusicConfig(config);
+  return config;
+});
+
+ipcMain.handle('music:setPlaylistSpotifyUri', (event, uri) => {
+  const config = loadMusicConfig();
+  config.playlistSpotifyUri = (uri || '').trim() || null;
   saveMusicConfig(config);
   return config;
 });

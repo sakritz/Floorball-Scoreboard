@@ -11,7 +11,8 @@
 let _musicTracks = [];      // [{file, url}] – aktueller Playlist-Ordner
 let _musicQueue = [];       // gemischte Reihenfolge der URLs
 let _musicQueuePtr = 0;
-let _playlistAudio = null;  // Audio-Objekt, solange die Playlist läuft
+let _playlistAudio = null;  // Audio-Objekt, solange die lokale Playlist läuft
+let _spotifyPlaylistActive = false; // true, solange die Playlist über Spotify läuft
 let _anthemAudio = { home: null, away: null };
 let _musicConfig = {};      // letzter bekannter Stand aus window.musicControl.getConfig()
 
@@ -61,6 +62,7 @@ function toggleMusicControl() {
     refreshMusicConfig();
   } else {
     stopPlaylist(); stopAnthem('home'); stopAnthem('away');
+    if (_spotifyPlaylistActive) stopSpotifyPlaylist();
     // Falls der Musik-Tab gerade offen ist, schließen – der Button ist jetzt weg
     const tabBtn = document.getElementById('tab-btn-musik');
     if (tabBtn && tabBtn.classList.contains('active')) switchTab('musik');
@@ -77,6 +79,18 @@ function refreshMusicConfig() {
 
 function renderMusicFolderInfo(config) {
   _musicConfig = config || {};
+
+  const source = config.playlistSource === 'spotify' ? 'spotify' : 'local';
+  const localBtn = document.getElementById('ct-music-playlist-src-local');
+  const spotifyBtn = document.getElementById('ct-music-playlist-src-spotify');
+  if (localBtn) localBtn.classList.toggle('on', source === 'local');
+  if (spotifyBtn) spotifyBtn.classList.toggle('on', source === 'spotify');
+  const localBlock = document.getElementById('ct-music-playlist-local-block');
+  const spotifyBlock = document.getElementById('ct-music-playlist-spotify-block');
+  if (localBlock) localBlock.style.display = source === 'local' ? '' : 'none';
+  if (spotifyBlock) spotifyBlock.style.display = source === 'spotify' ? '' : 'none';
+  const spotifyUriEl = document.getElementById('ct-music-playlist-spotify-uri');
+  if (spotifyUriEl && document.activeElement !== spotifyUriEl) spotifyUriEl.value = config.playlistSpotifyUri || '';
 
   const folderName = config.playlistFolder ? config.playlistFolder.split(/[\\/]/).pop() : 'Kein Ordner gewählt';
   const folderEl = document.getElementById('ct-music-playlist-name');
@@ -142,6 +156,19 @@ function clearPlaylistFolder() {
   });
 }
 
+function setPlaylistSource(source) {
+  if (!musicAvailable()) return;
+  if (_playlistAudio) stopPlaylist();
+  if (_spotifyPlaylistActive) stopSpotifyPlaylist();
+  window.musicControl.setPlaylistSource(source).then(renderMusicFolderInfo);
+}
+
+function saveMusicPlaylistSpotifyUri() {
+  if (!musicAvailable()) return;
+  const el = document.getElementById('ct-music-playlist-spotify-uri');
+  window.musicControl.setPlaylistSpotifyUri(el ? el.value.trim() : '').then(config => { _musicConfig = config; });
+}
+
 function pickAnthem(side) {
   if (!musicAvailable()) return;
   window.musicControl.pickAnthem(side).then(renderMusicFolderInfo);
@@ -191,8 +218,35 @@ function stopAnthem(side) {
 }
 
 function togglePlaylist() {
+  if (_musicConfig.playlistSource === 'spotify') {
+    if (_spotifyPlaylistActive) stopSpotifyPlaylist();
+    else startSpotifyPlaylist();
+    return;
+  }
   if (_playlistAudio) stopPlaylist();
   else startPlaylist();
+}
+
+function startSpotifyPlaylist() {
+  if (typeof spotifyAvailable !== 'function' || !spotifyAvailable()) return;
+  if (!_musicConfig.playlistSpotifyUri) { _setSpotifyError('NO_URI'); return; }
+  window.spotifyControl.play(_musicConfig.playlistSpotifyUri).then(res => {
+    if (res.ok) {
+      _spotifyPlaylistActive = true;
+      _setMusicButtonActive('ct-music-tb-playlist', true);
+      _setSpotifyError(null);
+    } else {
+      _setSpotifyError(res.error);
+    }
+  });
+}
+
+function stopSpotifyPlaylist() {
+  if (typeof spotifyAvailable !== 'function' || !spotifyAvailable()) return;
+  window.spotifyControl.pause().then(() => {
+    _spotifyPlaylistActive = false;
+    _setMusicButtonActive('ct-music-tb-playlist', false);
+  });
 }
 
 function startPlaylist() {
