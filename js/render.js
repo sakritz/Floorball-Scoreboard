@@ -194,7 +194,10 @@ function renderScoreboard(s) {
   }
 
   // Penalty chips under scores
-  const typeLabel = (secs, p) => { if (p&&p.redCardLabel) return p.redCardLabel+' 2+2'; if (p&&p.doubleFirst) return '2+2 MIN (1)'; if (p&&p.doubleSecond) return '2+2 MIN (2)'; if (p&&p.waiting) return '2+2 MIN (2)'; if (p&&p.personal) return '10 MIN PERS.'; return secs<=120?'2 MIN':'10 MIN'; };
+  const typeLabel = (secs, p) => {
+    const base = p&&p.redCardLabel ? p.redCardLabel+' 2+2' : p&&p.doubleFirst ? '2+2 MIN (1)' : p&&p.doubleSecond ? '2+2 MIN (2)' : p&&p.waiting ? '2+2 MIN (2)' : p&&p.personal ? '10 MIN PERS.' : secs<=120?'2 MIN':'10 MIN';
+    return base + (p && p.paired ? ' GEK.' : ''); // §603.9: gepaarte Strafe
+  };
   const sbMaxActive = maxPensFor(s);   // §603.3: 2 (Großfeld) / 1 (Kleinfeld)
   ['home','away'].forEach(side => {
     const c = document.getElementById('sb-' + side + '-pen-chips');
@@ -214,6 +217,8 @@ function renderScoreboard(s) {
       const idStr = String(p.id);
       if (existingMap[idStr]) {
         existingMap[idStr].querySelector('.sb-pen-chip-time').textContent = isWaitingDisp(p) ? '– –' : fmt(p.remaining);
+        const typeEl = existingMap[idStr].querySelector('.sb-pen-chip-type');
+        if (typeEl) typeEl.textContent = typeLabel(p.secs, p);
       } else {
         const el = document.createElement('div');
         el.className = 'sb-pen-chip' + (side==='away'?' away':'');
@@ -317,8 +322,9 @@ function renderScoreboard(s) {
         if (ev.type === 'goal') {
           const isOwn = ev.data.goalType === 'own';
           const isPen = ev.data.goalType === 'penalty';
-          evLabel = isOwn ? `EIGENTOR · ${teamName}` : isPen ? `PENALTY · ${teamName}` : `TOR · ${teamName}`;
-          evSub   = isOwn ? 'ET' : [ev.data.scorer ? `#${ev.data.scorer}` : '', !isPen && ev.data.assist ? `▶ #${ev.data.assist}` : ''].filter(Boolean).join('  ') || '–';
+          const isTech = ev.data.goalType === 'technical';
+          evLabel = isOwn ? `EIGENTOR · ${teamName}` : isPen ? `PENALTY · ${teamName}` : isTech ? `TECHN. TOR · ${teamName}` : `TOR · ${teamName}`;
+          evSub   = isOwn ? 'ET' : [ev.data.scorer ? `#${ev.data.scorer}` : '', !isPen && !isTech && ev.data.assist ? `▶ #${ev.data.assist}` : ''].filter(Boolean).join('  ') || '–';
         } else if (ev.type === 'penalty') {
           evLabel = `STRAFE · ${teamName}`;
           evSub   = ev.data.penReason ? `#${ev.data.number} · ${ev.data.penReason}` : `#${ev.data.number} · ${ev.data.penType}`;
@@ -467,7 +473,8 @@ function triggerGoal(side, el, teamName, s) {
 
     const isOwn     = goalData && goalData.goalType === 'own';
     const isPenalty = goalData && goalData.goalType === 'penalty';
-    const hasSlide  = s.showEventsTab && goalData && (isOwn || isPenalty || goalData.scorer || goalData.assist);
+    const isTech    = goalData && goalData.goalType === 'technical';
+    const hasSlide  = s.showEventsTab && goalData && (isOwn || isPenalty || isTech || goalData.scorer || goalData.assist);
 
     if (hasSlide) {
       const scorerNum = document.getElementById('sb-goal-scorer-num');
@@ -475,10 +482,10 @@ function triggerGoal(side, el, teamName, s) {
       const assistNum = document.getElementById('sb-goal-assist-num');
       const scorerLbl = document.getElementById('sb-goal-scorer-label');
 
-      if (isOwn) {
-        scorerLbl.textContent = `EIGENTOR · ${teamName}`;
+      if (isOwn || isTech) {
+        scorerLbl.textContent = isTech ? `TECHN. TOR · ${teamName}` : `EIGENTOR · ${teamName}`;
         scorerLbl.style.color = color;
-        scorerNum.textContent = 'ET';
+        scorerNum.textContent = isTech ? '–' : 'ET';
         scorerNum.style.color = color;
         assistRow.style.display = 'none';
       } else {
@@ -691,8 +698,20 @@ function clearEvents() {
 }
 
 function deleteEvent(id) {
-  S.events = S.events.filter(e => e.id !== id);
-  renderEvents();
+  ctConfirm({
+    icon: '🗑',
+    title: 'Eintrag löschen?',
+    body: 'Der Eintrag wird aus dem Event-Log entfernt (Spielstand, Strafen und Uhr sind davon nicht betroffen).',
+    okLabel: 'Löschen',
+    onOk: () => {
+      pushUndo('Event gelöscht', {
+        type: 'events',
+        prevEvents: JSON.parse(JSON.stringify(S.events)),
+      });
+      S.events = S.events.filter(e => e.id !== id);
+      renderEvents();
+    },
+  });
 }
 
 function renderEvents() {
@@ -716,6 +735,9 @@ function renderEvents() {
       if (ev.data.goalType === 'own') {
         main = `EIGENTOR · ${teamName}`;
         sub  = 'ET';
+      } else if (ev.data.goalType === 'technical') {
+        main = `TECHN. TOR · ${teamName}`;
+        sub  = '–';
       } else {
         main = `TOR · ${teamName}`;
         if (ev.data.goalType === 'penalty') main += ' <span style="font-size:10px;opacity:.5;letter-spacing:1px">· PENALTY</span>';
@@ -747,19 +769,21 @@ function renderEvents() {
 // ── Goal Dialog ──
 let _goalDialogSide = null;
 let _pendingGoalSide = null;
-let _goalType = null; // null | 'penalty' | 'own'
+let _goalType = null; // null | 'penalty' | 'own' | 'technical'
 
 function setGoalType(type) {
   _goalType = _goalType === type ? null : type; // toggle off if same clicked again
   const btnP = document.getElementById('ct-goal-btn-penalty');
   const btnO = document.getElementById('ct-goal-btn-own');
+  const btnT = document.getElementById('ct-goal-btn-technical');
   const scorerWrap = document.getElementById('ct-goal-scorer-wrap');
   const assistWrap = document.getElementById('ct-goal-assist-wrap');
 
   btnP.classList.toggle('active', _goalType === 'penalty');
   btnO.classList.toggle('active', _goalType === 'own');
+  btnT.classList.toggle('active', _goalType === 'technical');
 
-  if (_goalType === 'own') {
+  if (_goalType === 'own' || _goalType === 'technical') {
     scorerWrap.style.display = 'none';
     assistWrap.style.display = 'none';
   } else if (_goalType === 'penalty') {
@@ -781,6 +805,7 @@ function openGoalDialog(side) {
   document.getElementById('ct-goal-assist').value = '';
   document.getElementById('ct-goal-btn-penalty').classList.remove('active');
   document.getElementById('ct-goal-btn-own').classList.remove('active');
+  document.getElementById('ct-goal-btn-technical').classList.remove('active');
   document.getElementById('ct-goal-scorer-wrap').style.display = '';
   document.getElementById('ct-goal-assist-wrap').style.display = '';
   document.getElementById('ct-goal-dialog').classList.add('open');
@@ -801,6 +826,9 @@ function confirmGoal() {
   let scorer, assist, goalTypeLabel;
   if (_goalType === 'own') {
     scorer = null; assist = null; goalTypeLabel = 'ET';
+  } else if (_goalType === 'technical') {
+    // §701.3: Tor bei gezogenem Torhüter statt Penalty – kein Schütze im engeren Sinn
+    scorer = null; assist = null; goalTypeLabel = 'Technisches Tor';
   } else if (_goalType === 'penalty') {
     scorer = document.getElementById('ct-goal-scorer').value.trim();
     assist = null; goalTypeLabel = 'Penalty';
@@ -861,8 +889,10 @@ function renderTickerEvents(ticker, s) {
     if (ev.type === 'goal') {
       const isOwn     = ev.data.goalType === 'own';
       const isPenalty = ev.data.goalType === 'penalty';
-      const label     = isOwn ? `EIGENTOR · ${teamName}` : isPenalty ? `PENALTY · ${teamName}` : `TOR · ${teamName}`;
+      const isTech    = ev.data.goalType === 'technical';
+      const label     = isOwn ? `EIGENTOR · ${teamName}` : isPenalty ? `PENALTY · ${teamName}` : isTech ? `TECHN. TOR · ${teamName}` : `TOR · ${teamName}`;
       const sub       = isOwn ? 'ET'
+                      : isTech ? '–'
                       : [ev.data.scorer ? `#${ev.data.scorer}` : '', !isPenalty && ev.data.assist ? `▶ #${ev.data.assist}` : ''].filter(Boolean).join(' ');
       return `<div class="sb-ticker-cell cell-${ev.side}">
         <div><div class="sb-ticker-label">${label}</div>

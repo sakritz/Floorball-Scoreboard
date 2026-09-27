@@ -265,16 +265,27 @@ function stopClock() {
 }
 
 function setClock() {
-  pushUndo('Uhr gesetzt', {
-    type: 'clock',
-    prevClock:  S.clock,
-    prevClockMs: clockMs ?? S.clock * 1000,
-  });
   const m = parseInt(document.getElementById('ct-set-min').value) || 0;
   const s = parseInt(document.getElementById('ct-set-sec').value) || 0;
-  S.clock = m * 60 + s;
-  clockMs = S.clock * 1000; // reset precise tracker too
-  pushAndRender();
+  const newClock = m * 60 + s;
+  const mm = String(m).padStart(2, '0'), ss = String(s).padStart(2, '0');
+  ctConfirm({
+    icon: '⏱',
+    title: 'Uhr überschreiben?',
+    body: `Die Spieluhr wird auf ${mm}:${ss} gesetzt.`,
+    okLabel: 'Übernehmen',
+    okClass: 'btn-orange',
+    onOk: () => {
+      pushUndo('Uhr gesetzt', {
+        type: 'clock',
+        prevClock:  S.clock,
+        prevClockMs: clockMs ?? S.clock * 1000,
+      });
+      S.clock = newClock;
+      clockMs = S.clock * 1000; // reset precise tracker too
+      pushAndRender();
+    },
+  });
 }
 
 // ── Score ──
@@ -303,14 +314,25 @@ function adjScore(side, delta) {
       }
     }
   } else {
-    pushUndo(`Tor entfernt ${side === 'home' ? S.homeName : S.awayName}`, {
-      type: 'goal', side,
-      prevScore: side === 'home' ? S.homeScore : S.awayScore,
-      prevPendingGoal: S.pendingGoal,
+    const teamName = side === 'home' ? S.homeName : S.awayName;
+    const newScore = Math.max(0, (side === 'home' ? S.homeScore : S.awayScore) + delta);
+    ctConfirm({
+      icon: '↩',
+      title: 'Tor abziehen?',
+      body: `${teamName}: Stand wird auf ${newScore} korrigiert.`,
+      okLabel: 'Abziehen',
+      okClass: 'btn-orange',
+      onOk: () => {
+        pushUndo(`Tor entfernt ${teamName}`, {
+          type: 'goal', side,
+          prevScore: side === 'home' ? S.homeScore : S.awayScore,
+          prevPendingGoal: S.pendingGoal,
+        });
+        if (side === 'home') S.homeScore = Math.max(0, S.homeScore + delta);
+        else                 S.awayScore = Math.max(0, S.awayScore + delta);
+        pushAndRender();
+      },
     });
-    if (side === 'home') S.homeScore = Math.max(0, S.homeScore + delta);
-    else                 S.awayScore = Math.max(0, S.awayScore + delta);
-    pushAndRender();
   }
 }
 
@@ -318,13 +340,14 @@ function adjScore(side, delta) {
  * After a goal: check if scoring team was in power play and offer to remove
  * the shortest active penalty from the opposing team.
  * Rules:
- *  - Not for 'penalty' goals (SPRGK 603.6); own goals ('own') count like normal goals
+ *  - Not for 'penalty' or 'technical' goals (SPRGK 603.6/701.3); own goals ('own') count like normal goals
  *  - Only when opposing team has strictly more active penalties (true PP)
  *  - Only the shortest non-waiting penalty is offered for removal
  */
 function checkPowerPlayPenalty(scoringSide, goalType) {
   // SPRGK 603.6: Penalty-Tor hebt die Strafe nicht auf; Eigentor (702.1) schon.
-  if (goalType === 'penalty') return;
+  // §701.3: Technisches Tor ersetzt den Penalty – gilt für die Erlöschen-Logik wie ein Penalty-Tor.
+  if (goalType === 'penalty' || goalType === 'technical') return;
 
   const oppSide = scoringSide === 'home' ? 'away' : 'home';
   const myPens  = teamStrengthPens(scoringSide).length;

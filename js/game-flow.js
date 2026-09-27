@@ -172,13 +172,13 @@ function maxPensFor(state) {
 // Strafen mit der kürzesten Restzeit (§603.7); jede weitere wartet
 // (Restzeit eingefroren), bis eine laufende endet. Bei Gleichstand
 // entscheidet die Reihenfolge der Aussprache (id aufsteigend).
-// Persönliche Strafen (§608.1) und noch wartende 2+2-Zweitteile belegen
-// keinen Slot und tauchen daher hier nicht auf – eine Große Bankstrafe
-// (2+2) zählt damit stets als eine einzige Strafe (§603.7 Satz 2).
+// Persönliche Strafen (§608.1), gepaarte Strafen (§603.9) und noch wartende
+// 2+2-Zweitteile belegen keinen Slot und tauchen daher hier nicht auf – eine
+// Große Bankstrafe (2+2) zählt damit stets als eine einzige Strafe (§603.7 Satz 2).
 function runningPenIds(pens, maxActive) {
   return new Set(
     (pens || [])
-      .filter(p => !p.personal && !p.waiting)   // belegen einen Slot
+      .filter(p => !p.personal && !p.paired && !p.waiting)   // belegen einen Slot
       .sort((a, b) => a.remaining - b.remaining || a.id - b.id) // kürzeste Restzeit zuerst
       .slice(0, maxActive)
       .map(p => p.id)
@@ -188,9 +188,9 @@ function runningPenIds(pens, maxActive) {
 // True, wenn die Strafe wegen des Team-Limits (§603.3) noch wartet –
 // also eine reguläre Bankstrafe ist, die (noch) nicht gemessen wird.
 // Wird nur fürs Anzeigen/„– –“ gebraucht; 2+2-Zweitteile haben weiterhin
-// ihr eigenes `waiting`-Flag.
+// ihr eigenes `waiting`-Flag; gepaarte Strafen (§603.9) warten nie.
 function isQueuedByCap(p, runningIds) {
-  return !p.personal && !p.waiting && !runningIds.has(p.id);
+  return !p.personal && !p.paired && !p.waiting && !runningIds.has(p.id);
 }
 
 // Returns only penalties that affect team strength (not personal 10-min),
@@ -246,6 +246,7 @@ function addPenalty(side) {
     prevPenalties: JSON.parse(JSON.stringify(S[side + 'Penalties'])),
   });
   let penTypeLabel = '';
+  let newPen; // die primäre, spielerzahl-relevante Strafe – Kandidat für §603.9-Paarung
 
   if (raw === 'double' || raw === 'techMatch' || raw === 'match') {
     // Große Bankstrafe (§606/607): 2 × 2 Min nacheinander
@@ -254,15 +255,18 @@ function addPenalty(side) {
     const id2 = now + 1;
     const isRed = raw === 'techMatch' || raw === 'match';
     const redLabel = raw === 'techMatch' ? 'TECHN.MATCH' : 'MATCH';
-    S[side + 'Penalties'].push({
+    newPen = {
       id: id1, number: num, secs: 120, remaining: 120,
       doubleFirst: true, doubleId: id2,
       redCard: isRed, redCardLabel: isRed ? redLabel : undefined,
-    });
+      clock: S.clock, period: S.period,
+    };
+    S[side + 'Penalties'].push(newPen);
     S[side + 'Penalties'].push({
       id: id2, number: num, secs: 120, remaining: 120,
       doubleSecond: true, doubleId: id1, waiting: true,
       redCard: isRed, redCardLabel: isRed ? redLabel : undefined,
+      clock: S.clock, period: S.period,
     });
     penTypeLabel = isRed ? `2+2 MIN (${redLabel})` : '2+2 MIN';
 
@@ -273,20 +277,24 @@ function addPenalty(side) {
     // Die 10-Min → persönlich, KEIN Unterzahl (personal=true).
     const id2min  = now;
     const id10min = now + 1;
-    S[side + 'Penalties'].push({
+    newPen = {
       id: id2min, number: num, secs: 120, remaining: 120,
+      clock: S.clock, period: S.period,
       // normal 2-min companion — counts for team strength
-    });
+    };
+    S[side + 'Penalties'].push(newPen);
     S[side + 'Penalties'].push({
       id: id10min, number: num, secs: 600, remaining: 600,
       personal: true,  // personal = does NOT count for power play
+      clock: S.clock, period: S.period,
     });
     penTypeLabel = '10 MIN (PERS.)';
 
   } else {
     // Einfache Bankstrafe (2 Min)
     const secs = parseInt(raw);
-    S[side + 'Penalties'].push({ id: now, number: num, secs, remaining: secs });
+    newPen = { id: now, number: num, secs, remaining: secs, clock: S.clock, period: S.period };
+    S[side + 'Penalties'].push(newPen);
     penTypeLabel = '2 MIN';
   }
 
@@ -305,15 +313,74 @@ function addPenalty(side) {
   }
   logEvent('penalty', side, { number: num, penType: penTypeLabel, penReason });
   pushAndRender();
+  offerPenaltyPairing(side, newPen);
+}
+
+// §603.9: Sucht beim Gegner eine laufende, noch ungepaarte Strafe gleicher Art
+// (Dauer + große/kleine Bankstrafe) beim selben Stand der Spieluhr – das ist die
+// Definition von „gleiche Unterbrechung", die die App fassen kann. Persönliche
+// und wartende Strafen (inkl. 2+2-Zweitteil) sind nie Kandidaten.
+function findPairCandidate(side, pen) {
+  const oppSide = side === 'home' ? 'away' : 'home';
+  const oppPens = S[oppSide + 'Penalties'] || [];
+  return oppPens.find(p =>
+    !p.personal && !p.paired && !p.waiting &&
+    p.secs === pen.secs && !!p.doubleFirst === !!pen.doubleFirst &&
+    p.clock === pen.clock && p.period === pen.period
+  );
+}
+
+// §603.9: Gleichzeitige, gleichwertige Bankstrafen beider Teams (selber
+// Stand der Spieluhr) werden auf Wunsch gepaart – sie zählen dann wie
+// persönliche Strafen (keine Unterzahl, erlöschen nicht durch Tor), stehen
+// aber weiterhin im Spielbericht. Manuelle Bestätigung, damit Grenzfälle
+// (z.B. zufällig gleiche Sekunde, aber keine echte gemeinsame Unterbrechung)
+// nicht automatisch falsch gekoppelt werden.
+function offerPenaltyPairing(side, newPen) {
+  const oppSide = side === 'home' ? 'away' : 'home';
+  const candidate = findPairCandidate(side, newPen);
+  if (!candidate) return;
+  const oppName = oppSide === 'home' ? S.homeName : S.awayName;
+  ctConfirm({
+    icon: '⚭',
+    title: 'Strafen koppeln?',
+    body: `${oppName} hat eine gleichwertige Strafe beim selben Stand der Spieluhr (§603.9). Als gepaarte Strafen behandeln – keine Unterzahl, kein Erlöschen bei Tor?`,
+    okLabel: 'Koppeln',
+    okClass: 'btn-orange',
+    onOk: () => {
+      pushUndo('Strafen gekoppelt', {
+        type: 'pairPenalties',
+        prevHomePenalties: JSON.parse(JSON.stringify(S.homePenalties)),
+        prevAwayPenalties: JSON.parse(JSON.stringify(S.awayPenalties)),
+      });
+      newPen.paired = true; newPen.pairedWith = candidate.id;
+      candidate.paired = true; candidate.pairedWith = newPen.id;
+      pushAndRender();
+    },
+  });
 }
 
 function removePenalty(side, id) {
-  pushUndo(`Strafe entfernt ${side === 'home' ? S.homeName : S.awayName}`, {
+  const pens = S[side + 'Penalties'];
+  const removed = pens.find(p => p.id === id);
+  const oppSide = side === 'home' ? 'away' : 'home';
+  // Wird eine gepaarte Strafe entfernt, muss die Partner-Strafe (anderes Team)
+  // wieder entkoppelt werden – dafür braucht der Undo-Patch beide Teams.
+  const affectsOpp = !!(removed && removed.paired && removed.pairedWith != null);
+
+  pushUndo(`Strafe entfernt ${side === 'home' ? S.homeName : S.awayName}`, affectsOpp ? {
+    type: 'pairPenalties',
+    prevHomePenalties: JSON.parse(JSON.stringify(S.homePenalties)),
+    prevAwayPenalties: JSON.parse(JSON.stringify(S.awayPenalties)),
+  } : {
     type: 'penalty', side,
     prevPenalties: JSON.parse(JSON.stringify(S[side + 'Penalties'])),
   });
-  const pens = S[side + 'Penalties'];
-  const removed = pens.find(p => p.id === id);
+
+  if (affectsOpp) {
+    S[oppSide + 'Penalties'] = S[oppSide + 'Penalties'].map(p =>
+      p.id === removed.pairedWith ? { ...p, paired: false, pairedWith: undefined } : p);
+  }
 
   // If removing a doubleFirst, activate its waiting second part immediately
   if (removed && removed.doubleFirst) {
@@ -328,6 +395,23 @@ function removePenalty(side, id) {
   pushAndRender();
 }
 
+// Bestätigungsdialog vor dem manuellen Löschen einer Strafe (✕ in der Strafenliste).
+// checkPowerPlayPenalty() ruft removePenalty() weiterhin direkt auf – dort gibt es
+// schon einen eigenen Bestätigungsdialog, ein zweiter wäre doppelt gemoppelt.
+function removePenaltyWithDialog(side, id) {
+  const pens = S[side + 'Penalties'] || [];
+  const p = pens.find(x => x.id === id);
+  const teamName = side === 'home' ? S.homeName : S.awayName;
+  const label = p ? `#${p.number} · ${teamName}` : teamName;
+  ctConfirm({
+    icon: '✕',
+    title: 'Strafe entfernen?',
+    body: `${label} wird aus der Strafenliste entfernt.`,
+    okLabel: 'Entfernen',
+    onOk: () => removePenalty(side, id),
+  });
+}
+
 function tickPenalties() {
   const maxActive = maxPensFor(S);
   ['home','away'].forEach(side => {
@@ -339,9 +423,9 @@ function tickPenalties() {
 
     const ticked = pens.map(p => {
       if (p.waiting) return p;                 // 2+2-Zweitteil: wartet auf ersten Teil
-      // Persönliche Strafen laufen immer (§608.1); reguläre nur, wenn sie
-      // gemessen werden – über dem Team-Limit warten sie und ticken nicht.
-      if (!p.personal && !running.has(p.id)) return p;
+      // Persönliche und gepaarte Strafen (§608.1/§603.9) laufen immer; reguläre
+      // nur, wenn sie gemessen werden – über dem Team-Limit warten sie und ticken nicht.
+      if (!p.personal && !p.paired && !running.has(p.id)) return p;
       return { ...p, remaining: p.remaining - 1 };
     });
 
@@ -434,8 +518,18 @@ function endPause() {
 }
 
 function resetTO(side) {
-  S[side + 'ToUsed'] = false;
-  pushAndRender();
+  const teamName = side === 'home' ? S.homeName : S.awayName;
+  ctConfirm({
+    icon: '↺',
+    title: 'Auszeit zurücksetzen?',
+    body: `${teamName} bekommt die verbrauchte Auszeit wieder freigegeben.`,
+    okLabel: 'Zurücksetzen',
+    okClass: 'btn-orange',
+    onOk: () => {
+      S[side + 'ToUsed'] = false;
+      pushAndRender();
+    },
+  });
 }
 
 // no longer called from clock tick but kept for safety
@@ -908,7 +1002,7 @@ function renderPenList(side, pens, fmt) {
   const running = runningPenIds(pens, maxPensFor(S));
   const isWaiting = p => p.waiting || isQueuedByCap(p, running);
   const timeText = p => isWaiting(p) ? '– –' : fmt(p.remaining);
-  const badgeText = p => typeLabel(p.secs, p) + (isQueuedByCap(p, running) ? ' · WARTET' : '');
+  const badgeText = p => typeLabel(p.secs, p) + (isQueuedByCap(p, running) ? ' · WARTET' : '') + (p.paired ? ' · GEPAART' : '');
 
   if (!pens.length) {
     c.innerHTML = '<div class="empty-msg">Keine aktiven Strafen</div>';
@@ -947,7 +1041,7 @@ function renderPenList(side, pens, fmt) {
         <div class="pen-num">#${p.number}</div>
         <div class="pen-time">${timeText(p)}</div>
         <div class="pen-badge">${badgeText(p)}</div>
-        <div class="pen-del" onclick="removePenalty('${side}',${p.id})">\u2715</div>
+        <div class="pen-del" onclick="removePenaltyWithDialog('${side}',${p.id})">\u2715</div>
       `;
       c.appendChild(d);
     }

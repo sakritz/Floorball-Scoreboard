@@ -99,13 +99,14 @@ Wichtige, bereits umgesetzte Regeln:
 - **Strafcodes** (`PENALTY_CODES` in `game-flow.js`) = Liste vom Spielberichtsbogen nach 2026er §605/§607/§609/§610, 901–999. Codes sind Statistik-Kategorien, kein Eindeutigkeits-Schlüssel – mehrere Zeilen können denselben Code tragen (z. B. 907 für drei verschiedene Vergehen). **806 ist kein Strafcode**, sondern der Torprotokoll-Code für Tor per Penalty.
 - **Penaltyschießen (§204):** Erste Runde = 5 verschiedene Feldspieler, danach beliebiger Feldspieler (auch mehrfach) – `checkPsExtraRound()` in `render.js` erzwingt keine Schützen-Einschränkung und passt damit bereits zur Regel.
 - Spielbericht nutzt Rückennummern oder Namen (Einstellung „Beteiligte erfassen als").
+- **Gepaarte Strafen (§603.9):** Beim Eintragen prüft `findPairCandidate()` (`game-flow.js`), ob das gegnerische Team eine laufende, ungepaarte Strafe gleicher Dauer/Art beim selben Stand der Spieluhr (`S.clock`/`S.period` – das ist die App-Definition von „gleiche Unterbrechung") hat; falls ja, Bestätigungsdialog „Strafen koppeln?". Gepaarte Strafen (`paired:true`) zählen nicht für die Spielerzahl (`runningPenIds`/`teamStrengthPens`), erlöschen nicht durch Powerplay-Tor, ticken aber normal weiter (wie persönliche Strafen) und stehen im Bericht. Badge „GEPAART"/„GEK." in Strafenliste/Scoreboard-Chip. Wird eine gepaarte Strafe gelöscht, entkoppelt `removePenalty()` automatisch die Partner-Strafe.
+- **Technisches Tor (§701.3):** Dritter Torart-Button im Tor-Dialog (`_goalType = 'technical'`), ohne Schütze/Vorlage (wie Eigentor). Erlischt keine laufende Strafe (`checkPowerPlayPenalty` behandelt es wie ein Penalty-Tor). Label „TECHN. TOR" in Ticker/Events/Spielbericht.
 
-### Offene Punkte Regelwerk 2026 (Stand: nach Umsetzung Runde 1, Code prüfen ob noch aktuell)
+### Offene Punkte Regelwerk 2026 (Stand: nach Umsetzung Runde 1+2, Code prüfen ob noch aktuell)
 
-Runde 1 (Terminologie, Strafcode-Tabelle, §603.7-Sortierung, §204-Dialogtext, Regelzitate) ist umgesetzt. Noch offen – zwei echte Neu-Features, Design bereits entschieden:
-- **§603.9** Gleichzeitige gleichwertige Bankstrafen beider Teams werden paarweise zugeordnet: wie persönliche Strafen behandelt (keine Unterzahl, erlöschen nicht durch Tor), stehen aber im Bericht. Entscheidung: manuelle Bestätigung per Dialog (analog `checkPowerPlayPenalty`). Braucht `paired`-Flag am Strafenobjekt, Ausschluss aus `teamStrengthPens`/Erlöschen-Logik, UI in Strafenliste/Bericht.
-- **§701.3** Technisches Tor: Tor statt Penalty, wenn bei gepulltem Torhüter ein Penalty-würdiges Foul der Verteidigung passiert. Entscheidung: wie Penalty-Tor behandeln (erlischt keine Strafe). Braucht dritten Torart-Button/`_goalType`-Zweig im Tor-Dialog, `report.js`-Handling, dritten Ausschlussfall in `checkPowerPlayPenalty`.
+Terminologie, Strafcode-Tabelle, §603.7-Sortierung, §204-Dialogtext, Regelzitate, §603.9 (paarige Strafen) und §701.3 (technisches Tor) sind umgesetzt. Noch offen:
 - Nicht software-seitig erzwungen (bewusst, Schiedsrichter-Verantwortung): ein während des Penaltyschießens bestrafter Feldspieler darf laut §204 nicht mehr schießen – dafür gibt es keine Spieler-Tracking-Struktur im Shootout.
+- §603.9-Priorisierung „große vor kleine Bankstrafe" bei mehreren gleichzeitigen Paarungs-Kandidaten ist nicht modelliert (`findPairCandidate()` nimmt den ersten Treffer) – in der Praxis selten relevant (Doppelstrafe gegen Doppelstrafe gleichzeitig).
 
 ## Features, die leicht übersehen werden
 

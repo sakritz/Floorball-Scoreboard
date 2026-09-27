@@ -53,7 +53,7 @@
     const goals = evs.filter(e => e.type === 'goal').map(e => Object.assign(base(e), {
       scorer: (e.data && e.data.scorer) || null,
       assist: (e.data && e.data.assist) || null,
-      kind:   (e.data && e.data.goalType) || null,   // 'penalty' | 'own' | null
+      kind:   (e.data && e.data.goalType) || null,   // 'penalty' | 'own' | 'technical' | null
     }));
     const penalties = evs.filter(e => e.type === 'penalty').map(e => Object.assign(base(e), {
       number:  (e.data && e.data.number)  || '?',
@@ -141,7 +141,7 @@
         d.timeline.filter(t => t.period === p).forEach(t => {
           let ereignis = '', details = '–', stand = '';
           if (t.type === 'goal') {
-            ereignis = t.kind === 'own' ? 'Tor (Eigentor)' : t.kind === 'penalty' ? 'Tor (Penalty)' : 'Tor';
+            ereignis = t.kind === 'own' ? 'Tor (Eigentor)' : t.kind === 'penalty' ? 'Tor (Penalty)' : t.kind === 'technical' ? 'Tor (Technisches Tor)' : 'Tor';
             const dt = []; if (t.scorer) dt.push('#' + t.scorer); if (t.assist) dt.push('Vorlage #' + t.assist);
             details = dt.join(', ') || '–';
             stand = `${t.scoreHome}:${t.scoreAway}`;
@@ -190,8 +190,9 @@
     if (t.type === 'goal') {
       const main = `${t.scorer ? `<span class="tl-name">#${esc(t.scorer)}</span> ` : ''}<span class="tl-score">${t.scoreHome}:${t.scoreAway}</span> <span class="tl-type">Tor</span>`;
       const subs = [];
-      if (t.kind === 'own')     subs.push('Eigentor');
-      if (t.kind === 'penalty') subs.push('Penalty');
+      if (t.kind === 'own')       subs.push('Eigentor');
+      if (t.kind === 'penalty')   subs.push('Penalty');
+      if (t.kind === 'technical') subs.push('Technisches Tor');
       if (t.assist)             subs.push(`Vorl. #${esc(t.assist)}`);
       return { main, sub: subs.join(' · ') };
     }

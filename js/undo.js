@@ -31,6 +31,14 @@ function applyUndoPatch(patch) {
     case 'penalty':
       S[patch.side + 'Penalties'] = JSON.parse(JSON.stringify(patch.prevPenalties));
       break;
+    case 'pairPenalties':
+      S.homePenalties = JSON.parse(JSON.stringify(patch.prevHomePenalties));
+      S.awayPenalties = JSON.parse(JSON.stringify(patch.prevAwayPenalties));
+      break;
+    case 'events':
+      S.events = JSON.parse(JSON.stringify(patch.prevEvents));
+      renderEvents();
+      break;
     case 'timeout':
       S[patch.side + 'ToUsed'] = patch.prevToUsed;
       S.activeTimeout = patch.prevActiveTimeout;
