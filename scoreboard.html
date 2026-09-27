@@ -67,6 +67,16 @@
   <symbol id="ph-bell" viewBox="0 0 256 256">
     <path fill="currentColor" d="M221.8 175.94C216.25 166.38 208 139.33 208 104a80 80 0 1 0-160 0c0 35.34-8.26 62.38-13.81 71.94A16 16 0 0 0 48 200h40.81a40 40 0 0 0 78.38 0H208a16 16 0 0 0 13.8-24.06ZM128 216a24 24 0 0 1-22.62-16h45.24A24 24 0 0 1 128 216ZM48 184c7.7-13.24 16-43.92 16-80a64 64 0 1 1 128 0c0 36.05 8.28 66.73 16 80Z"/>
   </symbol>
+  <!-- Musiksteuerung -->
+  <symbol id="ph-music-notes" viewBox="0 0 256 256">
+    <g fill="currentColor">
+      <circle cx="70" cy="200" r="26"/>
+      <circle cx="178" cy="172" r="26"/>
+      <rect x="90" y="54" width="12" height="146"/>
+      <rect x="198" y="30" width="12" height="142"/>
+      <path d="M90,54 L208,30 L208,54 L90,78 Z"/>
+    </g>
+  </symbol>
   <!-- Darstellung -->
   <symbol id="ph-sun" viewBox="0 0 256 256">
     <path fill="currentColor" d="M120 40V16a8 8 0 0 1 16 0v24a8 8 0 0 1-16 0Zm72 88a64 64 0 1 1-64-64 64.07 64.07 0 0 1 64 64Zm-16 0a48 48 0 1 0-48 48 48.05 48.05 0 0 0 48-48ZM58.34 69.66a8 8 0 0 0 11.32-11.32l-16-16a8 8 0 0 0-11.32 11.32Zm0 116.68-16 16a8 8 0 0 0 11.32 11.32l16-16a8 8 0 0 0-11.32-11.32ZM192 72a8 8 0 0 0 5.66-2.34l16-16a8 8 0 0 0-11.32-11.32l-16 16A8 8 0 0 0 192 72Zm5.66 114.34a8 8 0 0 0-11.32 11.32l16 16a8 8 0 0 0 11.32-11.32ZM48 128a8 8 0 0 0-8-8H16a8 8 0 0 0 0 16h24a8 8 0 0 0 8-8Zm80 80a8 8 0 0 0-8 8v24a8 8 0 0 0 16 0v-24a8 8 0 0 0-8-8Zm112-88h-24a8 8 0 0 0 0 16h24a8 8 0 0 0 0-16Z"/>
@@ -333,14 +343,21 @@
   <!-- ALWAYS-VISIBLE CONTROL BAR: scores + clock -->
   <div class="ct-control-bar">
 
-    <!-- HOME: [Name + indicators] above [−] [Score] [+] -->
+    <!-- HOME: [Name + indicators] above [Tor-Hymne Button] above [−] [Score] [+] -->
     <div class="ct-team-bar home">
+      <!-- Musiksteuerung (POC): nur sichtbar wenn S.musicControlEnabled, siehe
+           js/music.js syncMusicToggleUI(). Kurz über der Score-Reihe. -->
+      <button class="ct-music-tb-btn home" id="ct-music-tb-home" onclick="toggleAnthem('home')" title="Tor-Hymne Heim">
+        <span class="ph-icon"><svg><use href="#ph-music-notes"/></svg></span>
+        <span>Tor Heim</span>
+      </button>
       <div class="ct-m-logo ct-m-only" id="ct-m-home-logo"></div>
       <div style="min-width:0">
         <div class="ct-bar-name" id="ct-bar-home-name">HEIMTEAM</div>
         <div id="ct-home-pen-count" style="font-size:10px;letter-spacing:2px;color:var(--red-t);margin-top:4px;display:none;font-weight:700">● STRAFE</div>
         <div id="ct-home-to-running" style="font-size:10px;letter-spacing:2px;color:var(--orange-t);margin-top:4px;display:none;font-weight:700"><span class="ph-icon" style="vertical-align:middle"><svg style="width:11px;height:11px"><use href="#ph-pause-circle"/></svg></span> AUSZEIT</div>
       </div>
+      
       <div class="ct-bar-scorerow">
         <button class="ct-bar-adj minus" onclick="adjScore('home',-1)"><span>−</span></button>
         <div class="ct-bar-score" id="ct-home-score">0</div>
@@ -366,13 +383,23 @@
           <button id="ct-secondary-end-btn" onclick="endSecondaryTimer()" style="font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 8px;background:transparent;border:1px solid var(--ct-border);color:var(--ct-muted-t);cursor:pointer;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase">✕</button>
         </div>
       </div>
+      <!-- Musiksteuerung (POC): Playlist-Button, kurz über der Uhr -->
+      <button class="ct-music-tb-btn playlist" id="ct-music-tb-playlist" onclick="togglePlaylist()" title="Playlist">
+        <span class="ph-icon"><svg><use href="#ph-music-notes"/></svg></span>
+        <span>Playlist</span>
+      </button>
       <div class="ct-bar-clock stopped" id="ct-bar-clock">20:00</div>
       <div class="ct-m-clock-label ct-m-only" id="ct-m-clock-label">VERBLEIBEND</div>
       <button class="ct-bar-toggle start" id="ct-toggle-btn" onclick="toggleClock()">▶ STARTEN</button>
     </div>
 
-    <!-- AWAY: [Name + indicators] above [−] [Score] [+] -->
+    <!-- AWAY: [Name + indicators] above [Tor-Hymne Button] above [−] [Score] [+] -->
     <div class="ct-team-bar away">
+      <!-- Musiksteuerung (POC): nur sichtbar wenn S.musicControlEnabled -->
+      <button class="ct-music-tb-btn away" id="ct-music-tb-away" onclick="toggleAnthem('away')" title="Tor-Hymne Gast">
+        <span class="ph-icon"><svg><use href="#ph-music-notes"/></svg></span>
+        <span>Tor Gast</span>
+      </button>
       <div class="ct-m-logo ct-m-only" id="ct-m-away-logo"></div>
       <div style="min-width:0;text-align:right;word-break:break-word;overflow-wrap:break-word">
         <div class="ct-bar-name" id="ct-bar-away-name">GASTTEAM</div>
@@ -402,6 +429,7 @@
     <div class="ct-tab"        onclick="switchTab('strafen')"  id="tab-btn-strafen"><span class="ph-icon ph-sm"><svg><use href="#ph-flag-pennant"/></svg></span> Strafen</div>
     <div class="ct-tab"        onclick="switchTab('auszeiten')" id="tab-btn-auszeiten"><span class="ph-icon ph-sm"><svg><use href="#ph-pause-circle"/></svg></span> Auszeiten</div>
     <div class="ct-tab"        onclick="switchTab('teams')"    id="tab-btn-teams"><span class="ph-icon ph-sm"><svg><use href="#ph-users"/></svg></span> Teams</div>
+    <div class="ct-tab"        onclick="switchTab('musik')"    id="tab-btn-musik" style="display:none"><span class="ph-icon ph-sm"><svg><use href="#ph-music-notes"/></svg></span> Musik</div>
     <div class="ct-tab-spacer"></div>
     <div class="ct-tab right"  onclick="switchTab('settings')" id="tab-btn-settings"><span class="ph-icon ph-sm"><svg><use href="#ph-gear"/></svg></span> Einstellungen</div>
     <div class="ct-tab right"  onclick="switchTab('danger')"   id="tab-btn-danger" style="color:var(--red-t);opacity:.7"><span class="ph-icon ph-sm"><svg><use href="#ph-skull"/></svg></span> Danger Zone</div>
@@ -916,6 +944,24 @@
         </div>
       </div>
 
+      <div class="ct-card collapsible" id="ct-music-card" style="display:none">
+        <div class="ct-card-head neutral"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-music-notes"/></svg></span>Musiksteuerung</span></div>
+        <div class="ct-card-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px">Aktiv</div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex-shrink:0">
+              <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--ct-muted2)" id="ct-music-enabled-label">AUS</div>
+              <div id="ct-music-enabled-toggle" onclick="toggleMusicControl()"
+                style="width:44px;height:24px;border-radius:4px;background:var(--ct-muted);cursor:pointer;position:relative;transition:background .2s;border:1px solid rgba(255,255,255,.15)">
+                <div id="ct-music-enabled-knob"
+                  style="position:absolute;top:2px;left:2px;width:18px;height:18px;background:#000;transition:left .2s"></div>
+              </div>
+            </label>
+          </div>
+          <div style="font-size:11px;color:var(--ct-muted-t);margin-top:8px;letter-spacing:.5px">Playlist-Ordner und Tor-Hymnen wählt man im eigenen „Musik"-Tab, sobald aktiviert.</div>
+        </div>
+      </div>
+
       <div class="ct-card collapsible">
         <div class="ct-card-head neutral"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-clipboard-text"/></svg></span>Spielbericht</span></div>
         <div class="ct-card-body">
@@ -966,6 +1012,72 @@
         <div style="color:var(--ct-muted2);font-size:12px;text-align:center;margin-top:24px">Noch keine Ereignisse</div>
       </div>
     </div>
+  </div>
+
+  <!-- ── TAB: MUSIK (POC) ── -->
+  <!-- Nur eingeblendet wenn S.musicControlEnabled (Toggle in Einstellungen) – siehe
+       toggleMusicControl() in js/music.js. Der Master-Schalter selbst bleibt in den
+       Einstellungen, hier nur Ordner-/Hymnen-Auswahl. -->
+  <div class="ct-tab-content tab-musik" id="tab-musik">
+
+    <!-- LEFT: Tor-Hymne Heim -->
+    <div class="ct-musik-col">
+      <div class="ct-card collapsible">
+        <div class="ct-card-head neutral"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-net"/></svg></span>Tor-Hymne Heim</span></div>
+        <div class="ct-card-body">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span id="ct-music-anthem-home-name" style="font-size:12px;color:var(--ct-text)">Keine Datei gewählt</span>
+            <button class="ct-seg-btn" onclick="pickAnthem('home')">Wählen…</button>
+            <button class="ct-seg-btn danger" id="ct-music-anthem-home-clear" style="display:none" onclick="clearAnthem('home')">✕</button>
+          </div>
+          <div id="ct-music-anthem-home-range" style="display:none;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap">
+            <label style="font-size:11px;color:var(--ct-muted-t)">Ausschnitt · Start</label>
+            <input type="number" min="0" step="0.5" placeholder="0" id="ct-music-anthem-home-start" style="width:64px" onchange="setAnthemRange('home')">
+            <label style="font-size:11px;color:var(--ct-muted-t)">Ende</label>
+            <input type="number" min="0" step="0.5" placeholder="Ende" id="ct-music-anthem-home-end" style="width:64px" onchange="setAnthemRange('home')">
+            <span style="font-size:11px;color:var(--ct-muted-t)">Sek. · leer = ganze Datei</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MIDDLE: Playlist -->
+    <div class="ct-musik-col">
+      <div class="ct-card collapsible">
+        <div class="ct-card-head neutral"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-music-notes"/></svg></span>Playlist</span></div>
+        <div class="ct-card-body">
+          <div style="font-size:12px;color:var(--ct-muted2);letter-spacing:1px;margin-bottom:6px">Ordner</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span id="ct-music-playlist-name" style="font-size:12px;color:var(--ct-text)">Kein Ordner gewählt</span>
+            <button class="ct-seg-btn" onclick="pickPlaylistFolder()">Wählen…</button>
+            <button class="ct-seg-btn danger" id="ct-music-playlist-clear" style="display:none" onclick="clearPlaylistFolder()">✕</button>
+          </div>
+          <div id="ct-music-track-count" style="font-size:11px;color:var(--ct-muted-t);margin-top:4px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Tor-Hymne Gast -->
+    <div class="ct-musik-col">
+      <div class="ct-card collapsible">
+        <div class="ct-card-head neutral"><span style="display:flex;align-items:center;gap:8px"><span class="ph-icon ph-sm"><svg><use href="#ph-net"/></svg></span>Tor-Hymne Gast</span></div>
+        <div class="ct-card-body">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span id="ct-music-anthem-away-name" style="font-size:12px;color:var(--ct-text)">Keine Datei gewählt</span>
+            <button class="ct-seg-btn" onclick="pickAnthem('away')">Wählen…</button>
+            <button class="ct-seg-btn danger" id="ct-music-anthem-away-clear" style="display:none" onclick="clearAnthem('away')">✕</button>
+          </div>
+          <div id="ct-music-anthem-away-range" style="display:none;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap">
+            <label style="font-size:11px;color:var(--ct-muted-t)">Ausschnitt · Start</label>
+            <input type="number" min="0" step="0.5" placeholder="0" id="ct-music-anthem-away-start" style="width:64px" onchange="setAnthemRange('away')">
+            <label style="font-size:11px;color:var(--ct-muted-t)">Ende</label>
+            <input type="number" min="0" step="0.5" placeholder="Ende" id="ct-music-anthem-away-end" style="width:64px" onchange="setAnthemRange('away')">
+            <span style="font-size:11px;color:var(--ct-muted-t)">Sek. · leer = ganze Datei</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ── TAB: DANGER ZONE ── -->
@@ -1069,6 +1181,9 @@
     <button class="ct-mehr-row" onclick="mehrSelect('teams')">
       <span class="ph-icon"><svg viewBox="0 0 256 256"><use href="#ph-users"/></svg></span> Teams
     </button>
+    <button class="ct-mehr-row" id="mehr-row-musik" style="display:none" onclick="mehrSelect('musik')">
+      <span class="ph-icon"><svg viewBox="0 0 256 256"><use href="#ph-music-notes"/></svg></span> Musik
+    </button>
     <button class="ct-mehr-row" onclick="mehrSelect('settings')">
       <span class="ph-icon"><svg viewBox="0 0 256 256"><use href="#ph-gear"/></svg></span> Einstellungen
     </button>
@@ -1094,6 +1209,7 @@
 <script src="js/game-flow.js"></script>
 <script src="js/logo.js"></script>
 <script src="js/buzzer.js"></script>
+<script src="js/music.js"></script>
 <script src="js/render.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/report.js"></script>

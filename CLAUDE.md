@@ -14,7 +14,7 @@ Scoreboard-App für Floorball (Großfeld/Kleinfeld) mit Steuerungsansicht, Anzei
 
 - **Kein Framework, kein Build-Schritt.** Vanilla HTML/CSS/JS. Die App muss per Doppelklick (`file://`) und auf GitHub Pages laufen.
 - **Klassische `<script src>`-Tags, keine ES-Module** (ES-Module brechen `file://`). Module teilen sich globale Variablen/Funktionen.
-- **Ladereihenfolge in `scoreboard.html` ist relevant.** Aktuell: state → undo → persistence → controller → palette → game-flow → logo → buzzer → render → ui → report → mobile. Module teilen sich globale Funktionen/Variablen, neue Skripte nur mit Bedacht einordnen.
+- **Ladereihenfolge in `scoreboard.html` ist relevant.** Aktuell: state → undo → persistence → controller → palette → game-flow → logo → buzzer → music → render → ui → report → mobile. Module teilen sich globale Funktionen/Variablen, neue Skripte nur mit Bedacht einordnen.
 - Keine Runtime-Dependencies im Web-Teil. Node wird nur für Electron (und Syntax-Checks) gebraucht.
 - `scoreboard.html` enthält kein inline CSS/JS (außer historischen Resten); neue Logik gehört in die passende Datei unter `js/`.
 - Icons: **Phosphor-Icons als inline SVG-Sprite** in `scoreboard.html` (`<symbol id="ph-...">`), verwendet über `<span class="ph-icon ph-sm"><svg><use href="#ph-..."/></svg></span>`. Keine Emojis in der UI. Neue Icons als Symbol ins Sprite aufnehmen.
@@ -40,6 +40,7 @@ js/
   game-flow.js         renderController, Strafen, Perioden, Auszeiten, PENALTY_CODES
   logo.js              Farbextraktion aus Team-Logos
   buzzer.js            Buzzer (Web Audio API, kein Audiofile)
+  music.js             Musiksteuerung (POC): Playlist-Ordner + Tor-Hymnen, manuelle Toolbar-Buttons, nur Electron
   render.js            initScoreboard, renderScoreboard, Ticker, Toranimation, Penaltyschießen
   report.js            Spielbericht (chronologische Timeline; PDF/Druck, Markdown, JSON)
   ui.js                Hilfe, Startscreen + Startmodus, Countdown, Setup-Dialog, Theme
@@ -58,7 +59,7 @@ Details: siehe `docs/ARCHITECTURE.md` und `README.md`.
 
 - **Controller → Scoreboard:** `BroadcastChannel` (gleicher Browser, gleicher Origin). Die Anzeige läuft über `scoreboard.html?view=scoreboard` bzw. die eingebaute ⧉-Vorschau (PiP).
 - **OBS-Overlay:** nur in Electron. Express auf `127.0.0.1:8080`; Controller POSTet den State an `/api/state`, `stream.html` pollt alle 200 ms. Der `fetch` ist per `location.protocol === 'http:'` abgesichert, damit er unter `file://` nicht stört.
-- **Persistenz:** `localStorage` Key `floorball_state_v2`, inkl. Zeitkorrektur über `_savedAt`. State älter als `STATE_MAX_AGE_MS` (15 min) wird verworfen → Startscreen. Einstellungen liegen unter eigenen Keys (alle in `render.js`, außer wo angegeben): `ct-jersey-vis`, `ct-player-entry-mode`, `ct-ticker-hidden`, `ct-events-tab-on`, `ct-goal-anim-on`; in `ui.js`: `sb-theme`, `ct-tab-area-height`, `ct-font-scale` (Zoom der Tabs: 1 / 1.15 / 1.3). Für den Startmodus gibt es keinen Key.
+- **Persistenz:** `localStorage` Key `floorball_state_v2`, inkl. Zeitkorrektur über `_savedAt`. State älter als `STATE_MAX_AGE_MS` (15 min) wird verworfen → Startscreen. Einstellungen liegen unter eigenen Keys (alle in `render.js`, außer wo angegeben): `ct-jersey-vis`, `ct-player-entry-mode`, `ct-ticker-hidden`, `ct-events-tab-on`, `ct-goal-anim-on`; in `ui.js`: `sb-theme`, `ct-tab-area-height`, `ct-font-scale` (Zoom der Tabs: 1 / 1.15 / 1.3); in `music.js`: `ct-music-tab-on` (Musiksteuerung-Toggle, gleiches Muster wie `ct-events-tab-on` – blendet Tab „Musik" ein). Für den Startmodus gibt es keinen Key.
 - **Undo:** patch-basiert (`pushUndo` / `applyUndoPatch`), Tor-Events werden über `eventId` referenziert, nicht über Array-Snapshots.
 - Manche Effekte (Pending-Tor, Toranimation, Auszeit-/Pausen-Overlay) existieren **nur in der Anzeige**, nicht im Controller. Das ist gewollt.
 

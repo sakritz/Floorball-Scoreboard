@@ -32,6 +32,35 @@ function startLocalServer() {
     res.json(currentState || {});
   });
 
+  // ── Musiksteuerung: Audio-Auslieferung (Ordner-/Dateiauswahl läuft über IPC,
+  // siehe ipcMain.handle('music:...') oben; hier nur das Ausliefern der Bytes) ──
+  expressApp.get('/api/music/tracks', (req, res) => {
+    const { playlistFolder } = loadMusicConfig();
+    if (!playlistFolder) return res.json([]);
+    try {
+      const files = fs.readdirSync(playlistFolder, { withFileTypes: true })
+        .filter(f => f.isFile() && MUSIC_EXTENSIONS.includes(path.extname(f.name).toLowerCase()))
+        .map(f => ({ file: f.name, url: '/music/' + encodeURIComponent(f.name) }));
+      res.json(files);
+    } catch (e) {
+      res.json([]);
+    }
+  });
+
+  expressApp.use('/music', (req, res, next) => {
+    const { playlistFolder } = loadMusicConfig();
+    if (!playlistFolder) return res.status(404).end();
+    express.static(playlistFolder)(req, res, next);
+  });
+
+  ['home', 'away'].forEach(side => {
+    expressApp.get(`/api/music/anthem/${side}/file`, (req, res) => {
+      const anthemPath = loadMusicConfig()[side + 'Anthem'];
+      if (!anthemPath) return res.status(404).end();
+      res.sendFile(anthemPath, err => { if (err && !res.headersSent) res.status(404).end(); });
+    });
+  });
+
   // scoreboard.html, stream.html und alle Dateien aus dem Projekt-Root ausliefern
   expressApp.use(express.static(APP_ROOT));
 
@@ -89,6 +118,85 @@ ipcMain.handle('presets:delete', (event, id) => {
   savePresets(presets);
   buildMenu();
   return presets.map(({ id, name, savedAt }) => ({ id, name, savedAt }));
+});
+
+// ── Musiksteuerung (Proof of Concept) ─────────────────────────────────────────
+// Ordner-/Dateipfade liegen im Main-Prozess (nicht localStorage), da native
+// Dialoge nur hier verfügbar sind. Die eigentliche Wiedergabe läuft über den
+// lokalen HTTP-Server weiter unten, da das Controller-Fenster über
+// http://localhost lädt und file://-Audioquellen dort blockiert würden.
+const MUSIC_CONFIG_FILE = path.join(app.getPath('userData'), 'music-config.json');
+const MUSIC_EXTENSIONS = ['.mp3', '.wav', '.ogg', '.m4a', '.flac', '.aac'];
+
+function loadMusicConfig() {
+  try {
+    return JSON.parse(fs.readFileSync(MUSIC_CONFIG_FILE, 'utf8'));
+  } catch (e) {
+    return {
+      playlistFolder: null,
+      homeAnthem: null, homeAnthemStart: null, homeAnthemEnd: null,
+      awayAnthem: null, awayAnthemStart: null, awayAnthemEnd: null,
+    };
+  }
+}
+
+function saveMusicConfig(config) {
+  fs.writeFileSync(MUSIC_CONFIG_FILE, JSON.stringify(config, null, 2), 'utf8');
+}
+
+ipcMain.handle('music:getConfig', () => loadMusicConfig());
+
+ipcMain.handle('music:pickPlaylistFolder', async () => {
+  const { filePaths } = await dialog.showOpenDialog(controlWindow, { properties: ['openDirectory'] });
+  if (filePaths[0]) {
+    const config = loadMusicConfig();
+    config.playlistFolder = filePaths[0];
+    saveMusicConfig(config);
+  }
+  return loadMusicConfig();
+});
+
+ipcMain.handle('music:clearPlaylistFolder', () => {
+  const config = loadMusicConfig();
+  config.playlistFolder = null;
+  saveMusicConfig(config);
+  return config;
+});
+
+ipcMain.handle('music:pickAnthem', async (event, side) => {
+  if (side !== 'home' && side !== 'away') return loadMusicConfig();
+  const { filePaths } = await dialog.showOpenDialog(controlWindow, {
+    properties: ['openFile'],
+    filters: [{ name: 'Audio', extensions: MUSIC_EXTENSIONS.map(e => e.slice(1)) }],
+  });
+  if (filePaths[0]) {
+    const config = loadMusicConfig();
+    config[side + 'Anthem'] = filePaths[0];
+    // Neue Datei → alter Ausschnitt (Sekundenwerte) passt nicht mehr
+    config[side + 'AnthemStart'] = null;
+    config[side + 'AnthemEnd'] = null;
+    saveMusicConfig(config);
+  }
+  return loadMusicConfig();
+});
+
+ipcMain.handle('music:clearAnthem', (event, side) => {
+  if (side !== 'home' && side !== 'away') return loadMusicConfig();
+  const config = loadMusicConfig();
+  config[side + 'Anthem'] = null;
+  config[side + 'AnthemStart'] = null;
+  config[side + 'AnthemEnd'] = null;
+  saveMusicConfig(config);
+  return config;
+});
+
+ipcMain.handle('music:setAnthemRange', (event, side, start, end) => {
+  if (side !== 'home' && side !== 'away') return loadMusicConfig();
+  const config = loadMusicConfig();
+  config[side + 'AnthemStart'] = (typeof start === 'number' && start >= 0) ? start : null;
+  config[side + 'AnthemEnd']   = (typeof end === 'number' && end > 0) ? end : null;
+  saveMusicConfig(config);
+  return config;
 });
 
 // ── Fenster-Referenzen ────────────────────────────────────────────────────────

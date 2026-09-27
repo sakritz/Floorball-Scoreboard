@@ -128,6 +128,25 @@ body.light-mode #view-controller .ct-bar-toggle.start {
 }
 #ct-undo-toast.visible { opacity: 1; }
 
+/* ── MUSIKSTEUERUNG BUTTONS (POC) ── */
+/* Jeder Button sitzt direkt in seiner Spalte (.ct-team-bar.home / .ct-clock-bar /
+   .ct-team-bar.away), zwischen Teamname und Score-Reihe bzw. kurz über der Uhr –
+   kein eigenes Raster mehr nötig, die Spalten übernehmen die Ausrichtung. */
+.ct-music-tb-btn {
+  display: none; /* JS setzt 'inline-flex', wenn S.musicControlEnabled */
+  align-items: center; gap: 6px;
+  padding: 20px 14px;
+  background: var(--ct-surface); border: 1px solid var(--ct-border);
+  color: var(--ct-muted2); cursor: pointer;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.ct-music-tb-btn:hover { border-color: var(--ct-muted2); color: var(--ct-text); }
+.ct-music-tb-btn .ph-icon { font-size: 16px; }
+.ct-music-tb-btn.active      { background: var(--lime); border-color: var(--lime); color: #0a0a0a; }
+/*.ct-music-tb-btn.away.active { background: var(--cyan); border-color: var(--cyan); color: #0a0a0a; }*/
+
 /* ── SHORTCUTS OVERLAY ── */
 #ct-shortcuts-overlay {
   display: none;
@@ -709,6 +728,14 @@ body.light-mode #view-controller .ct-bar-toggle.start {
   flex: 1; min-height: 0;
 }
 .ct-danger-inner { flex: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+.ct-tab-content.tab-musik { display: none; }
+.ct-tab-content.tab-musik.active {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  overflow-y: auto; align-content: start;
+  flex: 1; min-height: 0; padding: 14px; gap: 14px;
+}
+.ct-musik-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 
 /* ── CARDS ── */
 .ct-card {

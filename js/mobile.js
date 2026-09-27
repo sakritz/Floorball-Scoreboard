@@ -13,8 +13,8 @@
   const VIEW_TO_TAB = { events: 'events', strafen: 'strafen', auszeit: 'auszeiten' };
   // Panel-Tab → zu markierender Bottom-Nav-Eintrag
   const TAB_TO_NAV  = { events: 'events', strafen: 'strafen', auszeiten: 'auszeit',
-                        teams: 'mehr', settings: 'mehr', danger: 'mehr' };
-  const ALL_TABS = ['admin', 'teams', 'strafen', 'auszeiten', 'settings', 'danger', 'events'];
+                        teams: 'mehr', settings: 'mehr', danger: 'mehr', musik: 'mehr' };
+  const ALL_TABS = ['admin', 'teams', 'strafen', 'auszeiten', 'settings', 'danger', 'events', 'musik'];
 
   function activeTabName() {
     return ALL_TABS.find(t => {

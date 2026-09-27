@@ -816,7 +816,7 @@ function addPenaltyAndClose(side) {
 }
 
 function switchTab(tab) {
-  const allTabs = ['admin','teams','strafen','auszeiten','settings','danger','events'];
+  const allTabs = ['admin','teams','strafen','auszeiten','settings','danger','events','musik'];
   const tabArea = document.getElementById('ct-tab-area');
 
   // Find currently active tab
@@ -960,6 +960,7 @@ function renderController() {
   _updateBuzzerToggleUI('ct-pause-buzzer',   s.pauseBuzzerEnabled   !== false);
   _updateBuzzerToggleUI('ct-timeout-buzzer', s.timeoutBuzzerEnabled !== false);
   renderBuzzerSoundPicker();
+  syncMusicToggleUI();
 
   // Penalty lists + count badges in header
   renderPenList('home', s.homePenalties, fmt);

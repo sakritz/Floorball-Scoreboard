@@ -25,6 +25,11 @@
   .ct-resize-handle,
   .ct-tab-drag-handle { display: none !important; }
 
+  /* Die Musik-Buttons sitzen in .ct-team-bar/.ct-clock-bar, die auf Mobile per
+     order: umsortiert/gestapelt werden – dort wäre kein Platz mehr. Auf Mobile
+     aus; Ordner-/Hymnen-Auswahl bleibt über Bottom-Nav → Mehr → Musik erreichbar. */
+  .ct-music-tb-btn { display: none !important; }
+
   /* ════════════════════════════════════════════════════════════════
      TOPBAR
   ════════════════════════════════════════════════════════════════ */
@@ -169,7 +174,7 @@
      flex: 0 0 auto verhindert, dass Karten in die Höhe wachsen (schlägt auch
      das Inline flex-basis:100% der ersten Danger-Karte). */
   .ct-spiel-col, .ct-admin-col, .ct-teams-col,
-  .ct-settings-col, .ct-danger-inner {
+  .ct-settings-col, .ct-danger-inner, .ct-musik-col {
     flex: 0 0 auto !important;
     min-width: 0 !important; width: 100% !important;
     border-right: none !important; padding-right: 0 !important;

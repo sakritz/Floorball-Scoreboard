@@ -30,6 +30,7 @@ function initController(skipLoad = false) {
   switchTab('spiel');
   renderController();
   initCtNeonPalettes();
+  initMusic();
 
   // Restore countdown bar if kickoff is still in the future
   if (S.kickoffTime && S.kickoffTime > Date.now() && !S.gameStarted) {

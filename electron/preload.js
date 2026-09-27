@@ -13,3 +13,15 @@ contextBridge.exposeInMainWorld('gamePresets', {
   delete: (id) => ipcRenderer.invoke('presets:delete', id),
   onLoad: (callback) => ipcRenderer.on('presets:load', (_event, config) => callback(config)),
 });
+
+// Musiksteuerung (Proof of Concept): Ordner-/Datei-Auswahl läuft über native
+// Dialoge im Main-Prozess, die eigentliche Audio-Wiedergabe läuft im Renderer
+// über den lokalen HTTP-Server (siehe electron/main.js), nicht über IPC.
+contextBridge.exposeInMainWorld('musicControl', {
+  getConfig: () => ipcRenderer.invoke('music:getConfig'),
+  pickPlaylistFolder: () => ipcRenderer.invoke('music:pickPlaylistFolder'),
+  clearPlaylistFolder: () => ipcRenderer.invoke('music:clearPlaylistFolder'),
+  pickAnthem: (side) => ipcRenderer.invoke('music:pickAnthem', side),
+  clearAnthem: (side) => ipcRenderer.invoke('music:clearAnthem', side),
+  setAnthemRange: (side, start, end) => ipcRenderer.invoke('music:setAnthemRange', side, start, end),
+});

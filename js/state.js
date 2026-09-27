@@ -34,6 +34,7 @@ let S = {
   timeoutBuzzerEnabled: true,
   buzzerSound: 'classic',
   buzzerCustomData: null, // base64 data URL of uploaded audio file
+  musicControlEnabled: false, // Musiksteuerung (POC): Ordner/Hymnen liegen in electron-config, nicht hier
   gameStarted: false,    // true once clock has run for the first time
   ctrlCountUp: false,   // controller shows count-up
   sbCountUp: false,     // scoreboard shows count-up
