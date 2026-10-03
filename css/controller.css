@@ -309,6 +309,11 @@ body.light-mode #view-controller .ct-bar-toggle.start {
 .ct-bar-toggle:active { filter: brightness(.85); }
 .ct-bar-toggle.start { background: var(--green); color: #062815; }
 .ct-bar-toggle.stop  { background: var(--red);   color: #fff; }
+.ct-toggle-hint {
+  display: block; margin-top: 2px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: none; opacity: .7;
+}
 
 /* ── Inline SVG Icons ── */
 .ph-icon { display: inline-flex; align-items: center; vertical-align: middle; }

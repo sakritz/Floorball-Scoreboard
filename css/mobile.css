@@ -95,6 +95,8 @@
     padding: 16px 24px !important;
     margin-top: 8px; letter-spacing: 5px;
   }
+  /* Tastatur-Hinweis ergibt auf dem Touch-Controller keinen Sinn */
+  .ct-toggle-hint { display: none; }
 
   /* Perioden-Segmente in der Uhr-Karte */
   #ct-m-period-pills { display: flex; gap: 6px; width: 100%; margin-bottom: 2px; }

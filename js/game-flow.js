@@ -858,7 +858,7 @@ function renderController() {
 
   // Toggle btn
   const tb = document.getElementById('ct-toggle-btn');
-  tb.textContent = s.running ? '◼ STOPPEN' : '▶ STARTEN';
+  tb.innerHTML = (s.running ? '◼ STOPPEN' : '▶ STARTEN') + '<span class="ct-toggle-hint">(Leertaste)</span>';
   tb.className = 'ct-bar-toggle ' + (s.running ? 'stop' : 'start');
 
   // Period chip
