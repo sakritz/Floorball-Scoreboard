@@ -12,6 +12,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 // Wird nur mitgeschrieben, nicht automatisch beim Start gelesen (siehe js/persistence.js).
 contextBridge.exposeInMainWorld('gameStateBackup', {
   save: (serialized) => ipcRenderer.invoke('state:saveBackup', serialized),
+  onRestore: (callback) => ipcRenderer.on('state:restoreBackup', (_event, serialized) => callback(serialized)),
 });
 
 contextBridge.exposeInMainWorld('gamePresets', {

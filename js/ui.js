@@ -516,6 +516,14 @@ document.addEventListener('DOMContentLoaded', () => {
   window.gamePresets.onLoad(loadGamePresetWithConfirm);
 });
 
+// Nur in Electron vorhanden – manuelle Notfall-Wiederherstellung über das
+// Menü "Datei → Spielstand aus Sicherung wiederherstellen" (siehe
+// js/persistence.js und js/game-flow.js restoreStateFromBackupWithConfirm).
+document.addEventListener('DOMContentLoaded', () => {
+  if (!window.gameStateBackup) return;
+  window.gameStateBackup.onRestore(restoreStateFromBackupWithConfirm);
+});
+
 function setupStart() {
   // Collect values from the dialog
   const homeName = (document.getElementById('setup-home-name').value || 'HEIMTEAM').toUpperCase();

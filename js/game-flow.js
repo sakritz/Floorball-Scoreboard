@@ -656,6 +656,34 @@ function loadGamePresetWithConfirm(config) {
   }
 }
 
+// Stellt die automatische Hintergrund-Sicherung wieder her (Electron-Menü
+// "Datei → Spielstand aus Sicherung wiederherstellen", electron/preload.js
+// window.gameStateBackup.onRestore) – Notfall-Weg, falls die normale
+// localStorage-Persistenz versagt hat (siehe js/persistence.js).
+function restoreStateFromBackupWithConfirm(serialized) {
+  let saved;
+  try { saved = JSON.parse(serialized); } catch(e) { return; }
+  const minAgo  = saved._savedAt ? Math.round((Date.now() - saved._savedAt) / 60000) : null;
+  const ageText = minAgo != null ? `vor ${minAgo} Min. gesichert` : 'Zeitpunkt unbekannt';
+  ctConfirm({
+    icon: '🛟',
+    title: 'Spielstand aus Sicherung wiederherstellen?',
+    body: `Stand ${saved.homeScore ?? 0}:${saved.awayScore ?? 0} · ${ageText}. Der aktuelle Spielstand geht dabei verloren.`,
+    okLabel: 'Wiederherstellen',
+    okClass: 'btn-orange',
+    onOk: () => {
+      if (ctCountdownTimer) { clearInterval(ctCountdownTimer); ctCountdownTimer = null; }
+      stopClock();
+      clearInterval(toTimer);   toTimer   = null;
+      clearInterval(pauseTimer); pauseTimer = null;
+      _undoStack = [];
+      if (!restoreFromSnapshotString(serialized)) return;
+      hideStartScreen();
+      initController(true);
+    },
+  });
+}
+
 // ── PiP Preview ──
 let pipOpen = false;
 

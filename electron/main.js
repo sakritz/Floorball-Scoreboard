@@ -103,6 +103,19 @@ ipcMain.handle('state:saveBackup', async (event, serialized) => {
   }
 });
 
+// Manuelle Wiederherstellung (Menü "Datei → Spielstand aus Sicherung
+// wiederherstellen"). Liefert den rohen JSON-String, Bestätigung + Anwenden
+// übernimmt der Renderer (js/game-flow.js restoreStateFromBackupWithConfirm).
+function readStateBackup() {
+  try {
+    const raw = fs.readFileSync(STATE_BACKUP_FILE, 'utf8');
+    JSON.parse(raw); // nur zur Validierung, geladen wird der Rohstring
+    return raw;
+  } catch (e) {
+    return null;
+  }
+}
+
 // ── Spieltag-Vorlagen (gespeicherte Spiel-Konfigurationen) ───────────────────
 // Eine Datei im Electron-Nutzerverzeichnis statt localStorage: Logos werden
 // unkomprimiert als Data-URL gespeichert, mehrere Vorlagen könnten das
@@ -378,6 +391,24 @@ function buildMenu() {
         { label: 'Anzeige öffnen/schließen', accelerator: 'F12', click: toggleDisplayWindow },
         { type: 'separator' },
         { label: 'Vorlage laden', submenu: loadPresetSubmenu },
+        { type: 'separator' },
+        {
+          label: 'Spielstand aus Sicherung wiederherstellen…',
+          click: () => {
+            const raw = readStateBackup();
+            if (!raw) {
+              dialog.showMessageBox(controlWindow, {
+                type: 'info',
+                buttons: ['OK'],
+                title: 'Floorball Scoreboard',
+                message: 'Keine Sicherung gefunden',
+                detail: 'Es wurde noch kein Spielstand automatisch gesichert.',
+              });
+              return;
+            }
+            if (controlWindow) controlWindow.webContents.send('state:restoreBackup', raw);
+          },
+        },
         { type: 'separator' },
         { label: 'Beenden', accelerator: 'CmdOrCtrl+Q', click: () => { if (controlWindow) controlWindow.close(); } },
       ],
