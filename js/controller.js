@@ -168,6 +168,21 @@ function push() {
   }
 }
 
+// Wie pushAndRender(), aber saveState() höchstens 1x/2s – nur für den 100ms-Uhr-Tick.
+// push()/Render laufen weiter bei jedem Tick (flüssige Sekunden-Anzeige auf Zweitmonitor/OBS),
+// die localStorage-Persistenz braucht diese Frequenz nicht (vermeidet Quota-Risiko bei langen Spielen).
+let _lastTickSave = 0;
+function tickPushAndRender() {
+  push();
+  renderController();
+  renderPip(S);
+  const now = Date.now();
+  if (now - _lastTickSave >= 2000) {
+    saveState();
+    _lastTickSave = now;
+  }
+}
+
 // ── Responsive control bar sizing ──
 function updateControlBarSizes() {
   const bar = document.getElementById('view-controller');
@@ -240,7 +255,7 @@ function startClock() {
       onPeriodEnd();
       return;
     }
-    pushAndRender();
+    tickPushAndRender();
   }, 100); // 100ms poll – smooth and accurate
   pushAndRender();
 }
