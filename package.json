@@ -30,6 +30,7 @@
       "js/**/*",
       "img/**/*",
       "fonts/**/*",
+      "assets/**/*",
       "node_modules/**/*"
     ],
     "win": {

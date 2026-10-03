@@ -47,18 +47,30 @@ function toggleBuzzer() {
 
 function playBuzzer() {
   if (!S.buzzerEnabled) return;
-  _playBuzzerSound(S.buzzerSound || 'classic', false);
+  _playBuzzerSound(S.buzzerSound || 'default', false);
 }
 
 function playBuzzerShort() {
-  _playBuzzerSound(S.buzzerSound || 'classic', true);
+  _playBuzzerSound(S.buzzerSound || 'default', true);
+}
+
+// Fest mitgelieferte Aufnahme des echten Hallenbuzzers (assets/buzzer-default.wav),
+// läuft in allen Varianten (Electron, Browser, GitHub Pages) – kein Upload nötig.
+function _playBuiltInBuzzer(short) {
+  const audio = new Audio('assets/buzzer-default.wav');
+  audio.play().catch(() => showBuzzerWarning());
+  if (short) setTimeout(() => { audio.pause(); audio.currentTime = 0; }, 2000);
 }
 
 function _playBuzzerSound(type, short) {
   if (type === 'custom') {
-    if (!S.buzzerCustomData) return;
+    if (!S.buzzerCustomData) { showBuzzerWarning(); return; }
     const audio = new Audio(S.buzzerCustomData);
-    audio.play().catch(() => {});
+    audio.play().catch(() => showBuzzerWarning());
+    return;
+  }
+  if (type === 'default') {
+    _playBuiltInBuzzer(short);
     return;
   }
   try {
@@ -134,7 +146,18 @@ function _playBuzzerSound(type, short) {
       });
       setTimeout(() => ctx.close(), (dur + 0.2) * 1000);
     }
-  } catch(e) {}
+  } catch(e) { showBuzzerWarning(); }
+}
+
+// Sichtbarer Hinweis statt stillem Fehler (CLAUDE.md: keine Ausfälle ohne Hinweis am Spieltag)
+let _buzzerToastTimer = null;
+function showBuzzerWarning() {
+  const el = document.getElementById('ct-buzzer-toast');
+  if (!el) return;
+  el.textContent = '⚠ Buzzer-Ton konnte nicht abgespielt werden';
+  el.classList.add('visible');
+  clearTimeout(_buzzerToastTimer);
+  _buzzerToastTimer = setTimeout(() => el.classList.remove('visible'), 4000);
 }
 
 function loadCustomBuzzer(input) {
@@ -159,7 +182,7 @@ function loadCustomBuzzer(input) {
 
 function removeCustomBuzzer() {
   S.buzzerCustomData = null;
-  if (S.buzzerSound === 'custom') S.buzzerSound = 'classic';
+  if (S.buzzerSound === 'custom') S.buzzerSound = 'default';
   saveState();
   renderBuzzerSoundPicker();
 }
@@ -175,12 +198,13 @@ function setBuzzerSound(type) {
 function renderBuzzerSoundPicker() {
   const el = document.getElementById('ct-buzzer-sound-picker');
   if (!el) return;
-  const current = S.buzzerSound || 'classic';
+  const current = S.buzzerSound || 'default';
   const sounds = [
-    { id: 'classic', label: 'Classic' },
-    { id: 'horn',    label: 'Horn'    },
-    { id: 'beep',    label: 'Beep'    },
-    { id: 'bell',    label: 'Bell'    },
+    { id: 'default', label: 'Standard' },
+    { id: 'classic', label: 'Classic'  },
+    { id: 'horn',    label: 'Horn'     },
+    { id: 'beep',    label: 'Beep'     },
+    { id: 'bell',    label: 'Bell'     },
   ];
   el.innerHTML = `
     <div style="display:flex;gap:6px;flex-wrap:wrap;">

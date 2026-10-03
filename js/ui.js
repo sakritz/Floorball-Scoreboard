@@ -406,6 +406,10 @@ function setupSmApply() {
 function setupOnLogo(side, input) {
   const file = input.files[0];
   if (!file) return;
+  if (file.size > 2 * 1024 * 1024) {
+    alert('Logo-Datei zu groß (max. 2 MB). Bitte ein kleineres Bild verwenden.');
+    input.value = ''; return;
+  }
   const reader = new FileReader();
   reader.onload = e => {
     const url = e.target.result;

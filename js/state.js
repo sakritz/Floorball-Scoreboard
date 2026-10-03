@@ -32,7 +32,7 @@ let S = {
   buzzerEnabled: true,
   pauseBuzzerEnabled: true,
   timeoutBuzzerEnabled: true,
-  buzzerSound: 'classic',
+  buzzerSound: 'default', // fest mitgelieferter Hallenbuzzer (assets/buzzer-default.wav)
   buzzerCustomData: null, // base64 data URL of uploaded audio file
   musicControlEnabled: false, // Musiksteuerung (POC): Ordner/Hymnen liegen in electron-config, nicht hier
   gameStarted: false,    // true once clock has run for the first time
