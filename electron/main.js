@@ -126,6 +126,55 @@ function readStateBackup() {
   }
 }
 
+// ── Archivierung alter Spielstand-Sicherungen ────────────────────────────────
+// game-state-backup.json wird bei jedem saveState() überschrieben – ohne
+// Archivierung wäre der Stand eines beendeten Spiels (oder einer Absturz-
+// Sicherung) weg, sobald das nächste Spiel speichert. Zwei Aufrufstellen:
+// (1) beim App-Start, BEVOR irgendetwas neu speichern kann – deckt Absturz +
+//     normales Schließen/Neustarten ab, da dort kein Renderer-Code mehr läuft,
+//     der archivieren könnte.
+// (2) auf Zuruf vom Renderer bei endGame()/loadGamePreset() (js/game-flow.js)
+//     – deckt mehrere Spiele innerhalb derselben laufenden App-Sitzung ab.
+const ARCHIVE_DIR = path.join(app.getPath('userData'), 'game-archives');
+const ARCHIVE_WARN_THRESHOLD = 20;
+
+function archiveExistingBackup(parentWindow = null) {
+  try {
+    if (!fs.existsSync(STATE_BACKUP_FILE)) return;
+    if (!fs.existsSync(ARCHIVE_DIR)) fs.mkdirSync(ARCHIVE_DIR, { recursive: true });
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    fs.renameSync(STATE_BACKUP_FILE, path.join(ARCHIVE_DIR, `game-${stamp}.json`));
+    warnIfTooManyArchives(parentWindow);
+  } catch (e) {
+    // Kein Archiv zustande gekommen, aber auch kein Absturz – die laufende
+    // Sitzung darf dadurch nicht blockiert werden.
+  }
+}
+
+// Zeigt den Hinweis nur genau beim Überschreiten der Grenze (nicht bei jedem
+// weiteren Spiel erneut), damit das an einem Spieltag nicht nervt.
+function warnIfTooManyArchives(parentWindow) {
+  try {
+    const count = fs.readdirSync(ARCHIVE_DIR).filter(f => f.endsWith('.json')).length;
+    if (count !== ARCHIVE_WARN_THRESHOLD + 1) return;
+    dialog.showMessageBox(parentWindow, {
+      type: 'info',
+      buttons: ['Ordner öffnen', 'OK'],
+      defaultId: 1,
+      title: 'Floorball Scoreboard',
+      message: `${count} Spielstand-Archive gespeichert`,
+      detail: 'Es haben sich viele automatische Spielstand-Sicherungen angesammelt. Bei Bedarf können alte Archive manuell gelöscht werden.',
+    }).then(({ response }) => {
+      if (response === 0) shell.openPath(ARCHIVE_DIR);
+    });
+  } catch (e) {}
+}
+
+ipcMain.handle('state:archiveBackup', () => {
+  archiveExistingBackup(controlWindow);
+  return { ok: true };
+});
+
 // ── Spieltag-Vorlagen (gespeicherte Spiel-Konfigurationen) ───────────────────
 // Eine Datei im Electron-Nutzerverzeichnis statt localStorage: Logos werden
 // unkomprimiert als Data-URL gespeichert, mehrere Vorlagen könnten das
@@ -472,6 +521,11 @@ function buildMenu() {
 
 // ── App-Start ─────────────────────────────────────────────────────────────────
 app.whenReady().then(() => {
+  // Vor allem anderen: Sicherung der letzten Sitzung archivieren (deckt auch
+  // einen Absturz ab – ohne diesen Schritt würde die erste Speicherung der
+  // neuen Sitzung sie sofort überschreiben, siehe archiveExistingBackup()).
+  archiveExistingBackup();
+
   startLocalServer();
   buildMenu();
 

@@ -575,6 +575,10 @@ function endGame() {
     body: 'Der gespeicherte Spielstand wird gelöscht und der Setup-Dialog für ein neues Spiel geöffnet.',
     okLabel: 'Spiel beenden',
     onOk: () => {
+      // Sicherung dieses Spiels archivieren, bevor das nächste sie überschreibt
+      // (siehe electron/main.js archiveExistingBackup()).
+      if (window.gameStateBackup) window.gameStateBackup.archive().catch(() => {});
+
       if (ctCountdownTimer) { clearInterval(ctCountdownTimer); ctCountdownTimer = null; }
       stopClock();
       clearInterval(toTimer);   toTimer   = null;
@@ -613,6 +617,10 @@ function endGame() {
 // ohne zum Startbildschirm zurückzukehren – die Vorlage liefert bereits eine
 // vollständige Konfiguration.
 function loadGamePreset(config) {
+  // Sicherung des bisherigen Spiels archivieren, bevor die Vorlage es überschreibt
+  // (siehe electron/main.js archiveExistingBackup()).
+  if (window.gameStateBackup) window.gameStateBackup.archive().catch(() => {});
+
   if (ctCountdownTimer) { clearInterval(ctCountdownTimer); ctCountdownTimer = null; }
   stopClock();
   clearInterval(toTimer);   toTimer   = null;

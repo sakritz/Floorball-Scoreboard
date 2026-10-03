@@ -13,6 +13,9 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('gameStateBackup', {
   save: (serialized) => ipcRenderer.invoke('state:saveBackup', serialized),
   onRestore: (callback) => ipcRenderer.on('state:restoreBackup', (_event, serialized) => callback(serialized)),
+  // Archiviert die aktuelle Sicherung, bevor ein anderes Spiel sie überschreibt
+  // (siehe js/game-flow.js endGame()/loadGamePreset()).
+  archive: () => ipcRenderer.invoke('state:archiveBackup'),
 });
 
 contextBridge.exposeInMainWorld('gamePresets', {
