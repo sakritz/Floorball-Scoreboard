@@ -76,6 +76,16 @@ function startLocalServer() {
 
   server.on('error', (err) => {
     console.error(`Server-Fehler: ${err.message}`);
+    const detail = err.code === 'EADDRINUSE'
+      ? `Port ${PORT} wird bereits von einem anderen Programm verwendet (z. B. eine weitere, noch laufende Instanz von Floorball Scoreboard). Bitte das andere Programm/Fenster schließen und die App neu starten.`
+      : err.message;
+    dialog.showMessageBox(null, {
+      type: 'error',
+      buttons: ['OK'],
+      title: 'Floorball Scoreboard – Serverfehler',
+      message: 'Der lokale Server konnte nicht gestartet werden',
+      detail,
+    });
   });
 }
 

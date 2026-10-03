@@ -140,6 +140,18 @@ body.light-mode #view-controller .ct-bar-toggle.start {
 }
 #ct-buzzer-toast.visible { opacity: 1; }
 
+/* ── PERSISTENZ-WARNUNG TOAST ── */
+#ct-persistence-toast {
+  position: fixed; bottom: 168px; left: 50%; transform: translateX(-50%);
+  background: rgba(15,18,24,.96); border: 1px solid rgba(255,59,59,.5);
+  color: var(--red-t); padding: 9px 22px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  pointer-events: none; opacity: 0; transition: opacity .2s;
+  z-index: 9000; white-space: nowrap;
+}
+#ct-persistence-toast.visible { opacity: 1; }
+
 /* ── MUSIKSTEUERUNG BUTTONS (POC) ── */
 /* Jeder Button sitzt direkt in seiner Spalte (.ct-team-bar.home / .ct-clock-bar /
    .ct-team-bar.away), zwischen Teamname und Score-Reihe bzw. kurz über der Uhr –

@@ -21,7 +21,19 @@ function saveState() {
 
     // Zusätzliche Datei-Sicherung in Electron (kein localStorage-Quota, übersteht Browserdaten-Löschung)
     if (window.gameStateBackup) window.gameStateBackup.save(serialized).catch(() => {});
-  } catch(e) {}
+  } catch(e) { showPersistenceWarning(); }
+}
+
+// Sichtbarer Hinweis statt stillem Fehler (z.B. localStorage voll/deaktiviert) –
+// gleiches Muster wie showBuzzerWarning() in js/buzzer.js.
+let _persistenceToastTimer = null;
+function showPersistenceWarning() {
+  const el = document.getElementById('ct-persistence-toast');
+  if (!el) return;
+  el.textContent = '⚠ Spielstand konnte nicht gespeichert werden';
+  el.classList.add('visible');
+  clearTimeout(_persistenceToastTimer);
+  _persistenceToastTimer = setTimeout(() => el.classList.remove('visible'), 4000);
 }
 
 const STATE_MAX_AGE_MS = 15 * 60 * 1000; // 15 Minuten
