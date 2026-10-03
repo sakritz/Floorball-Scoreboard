@@ -7,6 +7,13 @@
 
 const { contextBridge, ipcRenderer } = require('electron');
 
+// Zusätzliche Datei-Sicherung des laufenden Spielstands (neben localStorage),
+// da dessen Browser-Quota bei langen Spielen mit großen Logo-Dateien eng werden kann.
+// Wird nur mitgeschrieben, nicht automatisch beim Start gelesen (siehe js/persistence.js).
+contextBridge.exposeInMainWorld('gameStateBackup', {
+  save: (serialized) => ipcRenderer.invoke('state:saveBackup', serialized),
+});
+
 contextBridge.exposeInMainWorld('gamePresets', {
   save: (name, config) => ipcRenderer.invoke('presets:save', { name, config }),
   list: () => ipcRenderer.invoke('presets:list'),

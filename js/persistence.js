@@ -3,7 +3,8 @@
 ────────────────────────────────────────────────────────────────────── */
 
 /* ─── PERSISTENCE ─────────────────────────────────────────────────── */
-const LS_KEY = 'floorball_state_v2';
+const LS_KEY        = 'floorball_state_v2';
+const LS_KEY_BACKUP = 'floorball_state_v2_backup'; // vorherige Version, falls der letzte Write korrupt war
 
 function saveState() {
   if (isScoreboard) return;
@@ -11,21 +12,31 @@ function saveState() {
     const snapshot = JSON.parse(JSON.stringify(S));
     snapshot._savedAt = Date.now();
     snapshot._clockMs = clockMs;
-    localStorage.setItem(LS_KEY, JSON.stringify(snapshot));
+    const serialized = JSON.stringify(snapshot);
+
+    // Rolling Backup: bisherigen Stand sichern, bevor er überschrieben wird
+    const prev = localStorage.getItem(LS_KEY);
+    if (prev) localStorage.setItem(LS_KEY_BACKUP, prev);
+    localStorage.setItem(LS_KEY, serialized);
+
+    // Zusätzliche Datei-Sicherung in Electron (kein localStorage-Quota, übersteht Browserdaten-Löschung)
+    if (window.gameStateBackup) window.gameStateBackup.save(serialized).catch(() => {});
   } catch(e) {}
 }
 
 const STATE_MAX_AGE_MS = 15 * 60 * 1000; // 15 Minuten
 
-function loadState() {
+// Lädt & wendet den State aus einem bestimmten localStorage-Key an. Wirft bei
+// kaputtem JSON, damit loadState() auf den Backup-Key ausweichen kann.
+function _tryLoadFrom(key) {
   try {
-    const raw = localStorage.getItem(LS_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return false;
     const saved = JSON.parse(raw);
 
     // Invalidate state older than 15 minutes
     if (saved._savedAt && (Date.now() - saved._savedAt) > STATE_MAX_AGE_MS) {
-      localStorage.removeItem(LS_KEY);
+      localStorage.removeItem(key);
       return false;
     }
 
@@ -53,6 +64,10 @@ function loadState() {
     prevAwayScore = S.awayScore;
     return true;
   } catch(e) { return false; }
+}
+
+function loadState() {
+  return _tryLoadFrom(LS_KEY) || _tryLoadFrom(LS_KEY_BACKUP);
 }
 
 // ── Beforeunload warning (only controller, only once game has started) ──

@@ -87,6 +87,22 @@ function stopLocalServer() {
   }
 }
 
+// ── Zusätzliche Datei-Sicherung des Spielstands ──────────────────────────────
+// Ergänzt (nicht ersetzt) die localStorage-Persistenz aus js/persistence.js:
+// kein Browser-Quota, übersteht auch ein Löschen der Browserdaten. Wird nur
+// mitgeschrieben, nicht automatisch beim Start gelesen. Async statt wie bei
+// den Presets, da dieser Call bis zu alle 2 Sek. während der Uhr läuft.
+const STATE_BACKUP_FILE = path.join(app.getPath('userData'), 'game-state-backup.json');
+
+ipcMain.handle('state:saveBackup', async (event, serialized) => {
+  try {
+    await fs.promises.writeFile(STATE_BACKUP_FILE, serialized, 'utf8');
+    return { ok: true };
+  } catch (e) {
+    return { ok: false };
+  }
+});
+
 // ── Spieltag-Vorlagen (gespeicherte Spiel-Konfigurationen) ───────────────────
 // Eine Datei im Electron-Nutzerverzeichnis statt localStorage: Logos werden
 // unkomprimiert als Data-URL gespeichert, mehrere Vorlagen könnten das
